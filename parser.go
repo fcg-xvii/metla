@@ -1,4 +1,4 @@
 package metla
 
-type Parser struct {
+type parser struct {
 }

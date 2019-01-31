@@ -1,4 +1,4 @@
 package metla
 
-type Template struct {
+type template struct {
 }

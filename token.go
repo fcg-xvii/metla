@@ -1,7 +1,7 @@
-type metla
+package metla
 
-type tokenInit func(parser*)
+//type tokenInit func(parser)
 
 type token interface {
-		
+	Data() ([]byte, error)
 }

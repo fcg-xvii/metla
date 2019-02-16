@@ -1,17 +1,24 @@
 package metla
 
 import (
-	"errors"
+	"bytes"
+	"fmt"
 )
 
 func checkValString(src []byte) bool {
-	return src[0] == '\'' || src[0] == "'"
+	fmt.Println("SRC >>> ", src)
+	return src[0] == '\'' || src[0] == '"'
 }
 
 func NewValString(source []byte) (res *valString, length int, err error) {
 	charID := source[0]
-	for...
-	
+	if index := bytes.IndexByte(source[1:], charID); index == -1 {
+		err = fmt.Errorf("Unclosed string value [%c]", charID)
+	} else {
+		res = &valString{string(source[1 : index+1])}
+		length = index + 2
+	}
+	return
 }
 
 type valString struct {

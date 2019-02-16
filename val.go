@@ -2,7 +2,7 @@ package metla
 
 import (
 	"errors"
-	_ "fmt"
+	"fmt"
 )
 
 type valueType byte
@@ -26,6 +26,7 @@ var (
 	valCheckers = []*valChecker{
 		&valChecker{valTypeInt, checkValInt},
 		&valChecker{valTypeFloat, checkValFloat},
+		&valChecker{valTypeString, checkValString},
 	}
 )
 
@@ -44,11 +45,7 @@ type val interface {
 	Data() ([]byte, error)
 }
 
-func initVal(source []byte) (res val, length int, err error) {
-	if len(source) == 0 {
-		return nil, errors.New("Value parse error :: source slice is empty")
-	}
-	types := getStartTypes(source[:1])
+func defineType(source []byte, types []*valChecker) []*valChecker {
 	count := len(source)
 	if count > 64 {
 		count = 64
@@ -66,13 +63,33 @@ func initVal(source []byte) (res val, length int, err error) {
 		if offset > 0 {
 			types = types[:offset]
 		}
+		fmt.Println("TL>>>", types)
 		if len(types) == 0 {
-			return nil, errors.New("Unexpected value type...")
+			return types
 		}
+	}
+	return types
+}
+
+func initVal(source []byte) (res val, length int, err error) {
+	if len(source) == 0 {
+		return nil, 0, errors.New("Value parse error :: source slice is empty")
+	}
+	types := getStartTypes(source[:1])
+	l := len(types)
+	switch {
+	case l == 0:
+		err = errors.New("Unexpected value type...")
+	case l > 1:
+		types = defineType(source, types)
 	}
 	switch types[0].valType {
 	case valTypeInt:
 		return newValInt(source)
+	case valTypeFloat:
+		return newValFloat(source)
+	case valTypeString:
+		return NewValString(source)
 	default:
 		return
 	}

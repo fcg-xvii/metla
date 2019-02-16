@@ -62,7 +62,7 @@ func (s *parser) parseToEndLine() (res token, err error) {
 			switch opType {
 			case opSet:
 				{
-					if res, err = initSet(s.markValString(0), s); err != nil {
+					if res, err = initSet(s.markVal(0), s); err != nil {
 						err = s.setupError(err.Error())
 						return
 					}
@@ -72,7 +72,9 @@ func (s *parser) parseToEndLine() (res token, err error) {
 			s.incPos()
 		}
 	}
-	return initVal(s.markVal(0))
+	var length int
+	res, length, err = initVal(s.markVal(0))
+	return
 }
 
 func (s *parser) passSpaces() {

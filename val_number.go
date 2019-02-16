@@ -65,7 +65,7 @@ func (s *valInt) Data() (res []byte, err error) {
 //////////////////////////////////////////////////////////
 
 func newValFloat(source []byte) (res *valInt, length int, err error) {
-
+	return
 }
 
 type valFloat struct {

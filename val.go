@@ -40,7 +40,7 @@ func getStartTypes(first []byte) (res []*valChecker) {
 	return res
 }
 
-func defineType(source []byte, types []*valChecker) []*valChecker {
+func defineType(p *parser, types []*valChecker) []*valChecker {
 	count := len(source)
 	if count > 64 {
 		count = 64
@@ -66,21 +66,21 @@ func defineType(source []byte, types []*valChecker) []*valChecker {
 	return types
 }
 
-func initVal(source []byte) (res value, length int, err error) {
+func initVal(p *parser) (res value, length int, err error) {
 	if len(source) == 0 {
 		return nil, 0, errors.New("Value parse error :: source slice is empty")
 	}
 	types := getStartTypes(source[:1])
-	fmt.Println("TPS", types)
+	//fmt.Println("TPS", types)
 	l := len(types)
 	switch {
 	case l == 0:
 		err = errors.New("Unexpected value type...")
 		return
 	case l > 1:
-		types = defineType(source, types)
+		types = defineType(p, types)
 	}
-	fmt.Println("SOURCE...", string(source), types)
+	//fmt.Println("SOURCE...", string(source), types)
 	switch types[0].valType {
 	case valTypeInt:
 		return newValInt(source)

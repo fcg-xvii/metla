@@ -12,9 +12,8 @@ func TestParser(t *testing.T) {
 	} else {
 		log.Println(string(content))
 		parser := newParser(content)
-		log.Println(parser.parseToEndLine())
-		a := []byte{1, 2, 3, 4, 5}
-		log.Println(a[:1])
+		log.Println(parser.parseDocument())
+		log.Println(parser.execList)
 		//log.Println("[" + string(parser.availableData()) + "]")
 	}
 }

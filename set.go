@@ -7,6 +7,7 @@ import (
 )
 
 func initSet(prefix []byte, p *parser) (res *set, err error) {
+	//fmt.Println("INIT_SET")
 	// Парсим наименования переменных
 	var names []string
 	sNames := bytes.Split(prefix, []byte{','})
@@ -21,11 +22,9 @@ func initSet(prefix []byte, p *parser) (res *set, err error) {
 	var values []token
 	for {
 		var t token
-		p.passSpaces() // Убираем пробелы ме
 		if t, err = p.parseToEndLine(); err == nil {
 			if val, check := t.(value); check {
 				values = append(values, val)
-				fmt.Println(values)
 				p.passSpaces()
 				if p.isEndLine() {
 					break
@@ -36,7 +35,7 @@ func initSet(prefix []byte, p *parser) (res *set, err error) {
 					return
 				}
 			} else {
-				err = fmt.Errorf("Token value expected...")
+				err = fmt.Errorf("Set token error :: Value token expected...")
 				fmt.Println(err)
 				return
 			}
@@ -49,6 +48,7 @@ func initSet(prefix []byte, p *parser) (res *set, err error) {
 		err = fmt.Errorf("Unexpected symbol [%c]", p.char())
 	} else {
 		res = &set{names, values}
+		p.incPos()
 	}
 	fmt.Println("SSSEETTT >> ", res, p.pos)
 	return
@@ -66,3 +66,5 @@ func (s *set) Data() ([]byte, error) {
 func (s *set) Type() operatorType {
 	return opSet
 }
+
+func (s *set) IsExecutable() bool { return true }

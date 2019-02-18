@@ -5,90 +5,41 @@ import (
 	"fmt"
 )
 
-type valueType byte
-type checkValMethod func([]byte) bool
+type valueCheckMethod func([]byte) bool
+type valueConstructor func(p *parser) (res token, err error)
 
-const (
-	valTypeInt valueType = iota
-	valTypeFloat
-	valTypeString
-	valTypeBool
-	valTypeNil
-	valTypePointer
-)
-
-type valChecker struct {
-	valType valueType
-	method  checkValMethod
+type valueCreator struct {
+	checker     valueCheckMethod
+	constructor valueConstructor
 }
 
 var (
-	valCheckers = []*valChecker{
-		&valChecker{valTypeInt, checkValInt},
-		&valChecker{valTypeFloat, checkValFloat},
-		&valChecker{valTypeString, checkValString},
-	}
+	creators               []*valueCreator
+	errValueUnexpectedType = errors.New("Unexpected value type")
 )
 
-func getStartTypes(first []byte) (res []*valChecker) {
+func getStartTypes(first []byte) (res []valueConstructor) {
 	fmt.Println(string(first))
-	for _, checker := range valCheckers {
-		if checker.method(first) {
-			res = append(res, checker)
+	for _, creator := range creators {
+		if creator.checker(first) {
+			res = append(res, creator.constructor)
 		}
 	}
-	return res
+	return
 }
 
-func defineType(p *parser, types []*valChecker) []*valChecker {
-	count := len(source)
-	if count > 64 {
-		count = 64
-	}
-	for i := 1; i < count; i++ {
-		offset := 0
-		for i, v := range types {
-			if offset > 0 {
-				types[i-offset] = v
-			}
-			if !v.method(source[:i]) {
-				offset++
-			}
-		}
-		if offset > 0 {
-			types = types[:offset]
-		}
-		fmt.Println("TL>>>", types)
-		if len(types) == 0 {
-			return types
-		}
-	}
-	return types
-}
-
-func initVal(p *parser) (res value, length int, err error) {
-	if len(source) == 0 {
-		return nil, 0, errors.New("Value parse error :: source slice is empty")
-	}
-	types := getStartTypes(source[:1])
-	//fmt.Println("TPS", types)
-	l := len(types)
-	switch {
-	case l == 0:
-		err = errors.New("Unexpected value type...")
-		return
-	case l > 1:
-		types = defineType(p, types)
-	}
-	//fmt.Println("SOURCE...", string(source), types)
-	switch types[0].valType {
-	case valTypeInt:
-		return newValInt(source)
-	case valTypeFloat:
-		return newValFloat(source)
-	case valTypeString:
-		return NewValString(source)
-	default:
+func initVal(p *parser) (res token, err error) {
+	// Если текущий символ соответствует завершению оператора или документа, это считается "пустым оператором". В даной ситуации ошибки не возникает
+	p.passSpaces()
+	if p.isEndLine() || p.isEndDocument() {
 		return
 	}
+	// Получаем данные от текущей позиции до конца строки и определяем возможные типы значений
+	p.setupMark()
+	if types := getStartTypes(p.endLineContent()); len(types) == 0 {
+		err = errValueUnexpectedType
+	} else {
+		res, err = types[0](p)
+	}
+	return
 }

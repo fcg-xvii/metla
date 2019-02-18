@@ -1,1 +1,1 @@
-x, y, z = "StringX","StringY","StringZ"
+a = [ 10, 20, 30 ]

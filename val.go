@@ -31,18 +31,13 @@ var (
 )
 
 func getStartTypes(first []byte) (res []*valChecker) {
+	fmt.Println(string(first))
 	for _, checker := range valCheckers {
 		if checker.method(first) {
 			res = append(res, checker)
 		}
 	}
 	return res
-}
-
-type val interface {
-	Val() interface{}
-	Type() valueType
-	Data() ([]byte, error)
 }
 
 func defineType(source []byte, types []*valChecker) []*valChecker {
@@ -71,18 +66,21 @@ func defineType(source []byte, types []*valChecker) []*valChecker {
 	return types
 }
 
-func initVal(source []byte) (res val, length int, err error) {
+func initVal(source []byte) (res value, length int, err error) {
 	if len(source) == 0 {
 		return nil, 0, errors.New("Value parse error :: source slice is empty")
 	}
 	types := getStartTypes(source[:1])
+	fmt.Println("TPS", types)
 	l := len(types)
 	switch {
 	case l == 0:
 		err = errors.New("Unexpected value type...")
+		return
 	case l > 1:
 		types = defineType(source, types)
 	}
+	fmt.Println("SOURCE...", string(source), types)
 	switch types[0].valType {
 	case valTypeInt:
 		return newValInt(source)

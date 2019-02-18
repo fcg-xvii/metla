@@ -1,7 +1,6 @@
 package metla
 
 import (
-	_ "fmt"
 	"strconv"
 )
 
@@ -29,21 +28,15 @@ func checkValFloat(src []byte) bool {
 //////////////////////////////////////////////////////////
 
 func newValInt(source []byte) (res *valInt, length int, err error) {
-	count := 0
 	for i, v := range source {
-		if !checkNumber(v) {
-			count = i
+		if !checkNumber(v) || i == len(source)-1 {
+			length = i + 1
 			break
 		}
 	}
 	res = new(valInt)
-	res.val, _ = strconv.ParseInt(string(source[:count]), 10, 64)
+	res.val, _ = strconv.ParseInt(string(source[:length]), 10, 64)
 	return
-	/*var val int64
-	if val, err = strconv.ParseInt(string(source), 10, 64); err == nil {
-		res = &valInt{val}
-	}
-	return*/
 }
 
 type valInt struct {
@@ -61,6 +54,8 @@ func (s *valInt) Type() valueType {
 func (s *valInt) Data() (res []byte, err error) {
 	return []byte(strconv.FormatInt(s.val, 10)), nil
 }
+
+func (s *valInt) String() string { return "[int :: {" + strconv.FormatInt(s.val, 10) + "}]" }
 
 //////////////////////////////////////////////////////////
 

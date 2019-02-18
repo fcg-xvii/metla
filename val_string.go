@@ -36,3 +36,5 @@ func (s *valString) Type() valueType {
 func (s *valString) Data() (res []byte, err error) {
 	return []byte(s.val), nil
 }
+
+func (s *valString) String() string { return "[string :: {" + s.val + "}]" }

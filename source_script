@@ -1,1 +1,1 @@
-x = "Stringggg...""
+x, y, z = "StringX","StringY","StringZ"

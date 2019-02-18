@@ -19,12 +19,16 @@ const (
 	scriptKeywordCheck parserState = iota
 )
 
+type mark struct {
+	pos, line, linePos int
+}
+
 type parser struct {
-	src                 []byte
-	line, linePos       int
-	pos, mark, lineMark int
-	execList            []token
-	state               parserState
+	src                []byte
+	pos, line, linePos int
+	_mark              mark
+	execList           []token
+	state              parserState
 }
 
 /*func (s *parser) parseDocment() (err error) {
@@ -51,7 +55,7 @@ type parser struct {
 	return
 }*/
 
-func (s *parser) markVal(rOffset int) []byte       { return s.src[s.mark : s.pos-rOffset] }
+func (s *parser) markVal(rOffset int) []byte       { return s.src[s._mark.pos : s.pos-rOffset] }
 func (s *parser) markValString(rOffset int) string { return string(s.markVal(rOffset)) }
 
 func (s *parser) parseToEndLine() (res token, err error) {
@@ -64,8 +68,8 @@ func (s *parser) parseToEndLine() (res token, err error) {
 				{
 					if res, err = initSet(s.markVal(0), s); err != nil {
 						err = s.setupError(err.Error())
-						return
 					}
+					return
 				}
 			}
 		} else {
@@ -73,7 +77,9 @@ func (s *parser) parseToEndLine() (res token, err error) {
 		}
 	}
 	var length int
-	res, length, err = initVal(s.markVal(0))
+	if res, length, err = initVal(s.markVal(0)); err == nil && length < s.pos {
+		s.rollbackMark(length)
+	}
 	return
 }
 
@@ -83,51 +89,28 @@ func (s *parser) passSpaces() {
 	}
 }
 
-/*func (s *parser) parseVarName() (result string, err error) {
-	s.passSpaces()
-	ch := s.src[s.pos]
-	s.setupMark()
-	if !checkLetter(ch) {
-		err = s.setupError(fmt.Sprintf("Unexpected keyword or variable first (%c)", ch))
-		return
-	}
-	s.incPos()
-	ch = s.src[s.pos]
-	for s.pos < len(s.src) && (checkVarChar(ch) || checkVarChar(ch)) {
-		s.incPos()
-		ch = s.src[s.pos]
-	}
-	result = string(s.src[s.mark:s.pos])
-	return
-}*/
-
-/*func (s *parser) parseOperator(prefix string) (op operator, err error) {
-	s.passSpaces()
-	ch := s.src[s.pos]
-	opType := checkOpType(ch)
-	switch opType {
-	case opSet:
-		{
-			if op, err = initSet(prefix, s); err != nil {
-				err = s.setupError(err.Error())
-			}
-		}
-	default:
-		{
-			return nil, s.setupError(fmt.Sprintf("Unexpected operator (%c)", ch))
-		}
-
-	}
-	return
-}*/
-
 func (s *parser) setupError(text string) (err error) {
 	err = fmt.Errorf("%s [ line: %d, position: %d ]", text, s.line, s.linePos)
 	return
 }
 
+func (s *parser) rollbackMark(forward int) {
+	s.pos, s.line, s.linePos = s._mark.pos, s._mark.line, s._mark.linePos
+	for i := 0; i < forward; i++ {
+		s.incPos()
+	}
+}
+
 func (s *parser) setupMark() {
-	s.mark = s.pos
+	s._mark.pos, s._mark.line, s._mark.linePos = s.pos, s.line, s.linePos
+}
+
+func (s *parser) endLineContent() []byte {
+	pos := s.pos
+	for pos < len(s.src) && !checkEndLine(s.src[pos]) {
+		pos++
+	}
+	return s.src[s.pos:pos]
 }
 
 func (s *parser) incPos() {
@@ -144,4 +127,16 @@ func (s *parser) incPos() {
 func (s *parser) availableData() []byte { return s.src[s.pos:] }
 func (s *parser) char() byte            { return s.src[s.pos] }
 func (s *parser) isEndDocument() bool   { return len(s.src) == s.pos }
-func (s *parser) isEndLine() bool       { ch := s.char(); return ch == '\n' || ch == ';' }
+func (s *parser) isEndLine() bool {
+	if s.isEndDocument() {
+		return true
+	} else {
+		return checkEndLine(s.char())
+	}
+}
+
+///////////////////////////////////////////////////////////////////
+
+func checkEndLine(ch byte) bool {
+	return ch == '\n' || ch == ';'
+}

@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	parseErrEOF = errors.New("EOF")
+	parseErrEOF            = errors.New("EOF")
+	parseUnexpectedLiteral = errors.New("Parser :: Unexpected literal")
 )
 
 // Инициализация парсера
@@ -36,7 +37,6 @@ func (s *parser) markValString(rOffset int) string { return string(s.markVal(rOf
 func (s *parser) parseDocument() (err error) {
 	var exec token
 	for err == nil && !s.isEndDocument() {
-		//fmt.Println("PPPPPOOOOOOSSSS >>>>>>", s.pos)
 		if exec, err = s.parseToEndLine(); err == nil {
 			if exec == nil {
 				s.incPos()
@@ -144,9 +144,25 @@ func (s *parser) incPos() {
 // Получение среза от текущей позиции до конца документа
 func (s *parser) availableData() []byte { return s.src[s.pos:] }
 
+func (s *parser) readName() ([]byte, error) {
+	s.setupMark()
+	if !checkLetter(s.char()) {
+		return nil, parseUnexpectedLiteral
+	}
+	s.incPos()
+	for !s.isEndDocument() && (checkLetter(s.char()) || checkNumber(s.char())) {
+		s.incPos()
+	}
+	return s.markVal(0), nil
+}
+
 // Получение символа по текущей позиции
 func (s *parser) char() byte {
-	return s.src[s.pos]
+	if s.pos < len(s.src) {
+		return s.src[s.pos]
+	} else {
+		return 0
+	}
 }
 
 // Проверка соответствия текущей позиции концу документа
@@ -166,4 +182,18 @@ func (s *parser) isEndLine() bool {
 // Проверка соответствия символу завершения оператора (ему соответствует символ конца строки или ";"
 func checkEndLine(ch byte) bool {
 	return ch == '\n' || ch == ';'
+}
+
+//Проверка соответствия первому символу наименования переменной (соответствует регулярке [0-9A-Za-z_])
+func checkLetter(ch byte) bool {
+	return (ch >= 97 && ch <= 122) || (ch >= 65 && ch <= 90) || ch == 95
+}
+
+func checkNumber(ch byte) bool {
+	return ch >= 48 && ch <= 57
+}
+
+// Шаблон checkLetter, на вхождеие добавлен символ '.'
+func checkVarChar(ch byte) bool {
+	return checkLetter(ch) || ch == '.'
 }

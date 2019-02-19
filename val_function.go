@@ -1,3 +1,7 @@
 package metla
 
-//func checkFunction()
+func checkFunction(src []byte) bool {
+	if !checkLetter(src[0]) {
+
+	}
+}

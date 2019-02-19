@@ -27,20 +27,6 @@ func checkOpType(ch byte) operatorType {
 	}
 }
 
-func checkNumber(ch byte) bool {
-	return ch >= 48 && ch <= 57
-}
-
-//Проверка соответствия первому символу наименования переменной (соответствует регулярке [0-9A-Za-z_])
-func checkLetter(ch byte) bool {
-	return (ch >= 97 && ch <= 122) || (ch >= 65 && ch <= 90) || ch == 95
-}
-
-// Шаблон checkLetter, на вхождеие добавлен символ '.'
-func checkVarChar(ch byte) bool {
-	return checkLetter(ch) || ch == '.'
-}
-
 ////////////////////////////////////
 
 // Идентификаторы операторов

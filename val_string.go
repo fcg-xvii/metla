@@ -23,16 +23,16 @@ func checkValString(src []byte) bool {
 
 // Конструктор строки.
 func NewValString(p *parser) (res token, err error) {
-	charID := p.char()     // Определяем, двойная или одинарная кавычка открыта
-	p.incPos()             // Смещаемся на начало строки
-	if !p.toChar(charID) { // Пытаемся найти закрывающую кавычку
-		err = fmt.Errorf("Unclosed string (start position: [%v:%v])", p._mark.linePos, p._mark.pos)
+	charID := p.Char()     // Определяем, двойная или одинарная кавычка открыта
+	p.IncPos()             // Смещаемся на начало строки
+	if !p.ToChar(charID) { // Пытаемся найти закрывающую кавычку
+		err = fmt.Errorf("Unclosed string (start position: [%v:%v])", p.MarkPos(), p.MarkPos())
 	} else {
 		// Закрывающая кавычка найдена. Инициализируем результирующее значение
 		res = &valString{
-			val: p.markValString(-1)[1:], // Обрезаем кавычки для результирующего значения
+			val: p.MarkValString(-1)[1:], // Обрезаем кавычки для результирующего значения
 		}
-		p.incPos()
+		p.IncPos()
 	}
 	return
 }

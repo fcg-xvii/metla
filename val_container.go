@@ -24,21 +24,21 @@ func checkValObject(src []byte) bool {
 
 func newValArray(p *parser) (res token, err error) {
 	var vals []token
-	p.incPos()
+	p.IncPos()
 	var t token
 loop:
-	for !p.isEndDocument() {
-		p.passEndLines()
+	for !p.IsEndDocument() {
+		p.PassEndLines()
 		if t, err = initVal(p); err != nil {
 			return nil, err
 		} else {
 			vals = append(vals, t)
-			p.passEndLines()
-			switch p.char() {
+			p.PassEndLines()
+			switch p.Char() {
 			case ',':
-				p.incPos()
+				p.IncPos()
 			case ']':
-				p.incPos()
+				p.IncPos()
 				break loop
 			}
 		}
@@ -72,34 +72,36 @@ func (s *valArray) IsExecutable() bool { return false }
 func newValObject(p *parser) (res token, err error) {
 	m := make(map[string]token)
 	var (
-		key []byte
-		val token
+		check bool
+		key   []byte
+		val   token
 	)
-	p.incPos()
-	for !p.isEndDocument() {
+	p.IncPos()
+	for !p.IsEndDocument() {
 		// Парсим
-		p.passEndLines()
-		if key, err = p.readName(); err == nil {
+		p.PassEndLines()
+		if key, check = p.ReadName(); check {
 			fmt.Println("KEY.....................", string(key))
-			p.passSpaces()
-			if p.char() != ':' {
-				err = fmt.Errorf("Unexpected symbol '%c', expected ':'", p.char())
+			p.PassSpaces()
+			if p.Char() != ':' {
+				err = fmt.Errorf("Unexpected symbol '%c', expected ':'", p.Char())
 				return
 			}
-			p.incPos()
+			p.IncPos()
 			if val, err = initVal(p); err != nil {
 				return
 			}
 			m[string(key)] = val
-			p.passEndLines()
-			switch p.char() {
+			p.PassEndLines()
+			switch p.Char() {
 			case ',':
-				p.incPos()
+				p.IncPos()
 			case '}':
-				p.incPos()
+				p.IncPos()
 				break
 			}
 		} else {
+			err = fmt.Errorf("Unexpected variable name...")
 			return
 		}
 	}

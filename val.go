@@ -30,13 +30,13 @@ func getStartTypes(first []byte) (res []valueConstructor) {
 
 func initVal(p *parser) (res token, err error) {
 	// Если текущий символ соответствует завершению оператора или документа, это считается "пустым оператором". В даной ситуации ошибки не возникает
-	p.passSpaces()
-	if p.isEndLine() || p.isEndDocument() {
+	p.PassSpaces()
+	if p.IsEndLine() || p.IsEndDocument() {
 		return
 	}
 	// Получаем данные от текущей позиции до конца строки и определяем возможные типы значений
-	p.setupMark()
-	if types := getStartTypes(p.endLineContent()); len(types) == 0 {
+	p.SetupMark()
+	if types := getStartTypes(p.EndLineContent()); len(types) == 0 {
 		err = errValueUnexpectedType
 	} else {
 		res, err = types[0](p)

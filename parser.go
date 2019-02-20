@@ -3,6 +3,8 @@ package metla
 import (
 	"errors"
 	"fmt"
+
+	"github.com/fcg-xvii/lineman"
 )
 
 var (
@@ -10,8 +12,59 @@ var (
 	parseUnexpectedLiteral = errors.New("Parser :: Unexpected literal")
 )
 
+func newParser(src []byte) *parser {
+	return &parser{lineman.NewCodeLine(src), nil}
+}
+
+type parser struct {
+	*lineman.CodeLine
+	execList []token // Срез результирующих токенов
+}
+
+func (s *parser) parseDocument() (err error) {
+	var exec token
+	for err == nil && !s.IsEndDocument() {
+		if exec, err = s.parseToEndLine(); err == nil {
+			if exec == nil {
+				s.IncPos()
+			} else if !exec.IsExecutable() {
+				err = fmt.Errorf("Executable token expected")
+			} else {
+				s.execList = append(s.execList, exec)
+			}
+		} else {
+			return
+		}
+	}
+	return
+}
+
+func (s *parser) parseToEndLine() (res token, err error) {
+	fmt.Println("=========================================================")
+	s.PassSpaces()
+	s.SetupMark()
+	for !s.IsEndLine() && !s.IsEndDocument() {
+		if opType := checkOpType(s.Char()); opType != opUndefined {
+			switch opType {
+			case opSet:
+				{
+					if res, err = initSet(s.MarkVal(0), s); err != nil {
+						err = s.InitError(err.Error())
+					}
+					return
+				}
+			}
+		} else {
+			s.IncPos()
+		}
+	}
+	s.RollbackMark(0)
+	res, err = initVal(s)
+	return
+}
+
 // Инициализация парсера
-func newParser(source []byte) *parser {
+/*func newParser(source []byte) *parser {
 	return &parser{src: source, line: 1, linePos: 1}
 }
 
@@ -196,4 +249,4 @@ func checkNumber(ch byte) bool {
 // Шаблон checkLetter, на вхождеие добавлен символ '.'
 func checkVarChar(ch byte) bool {
 	return checkLetter(ch) || ch == '.'
-}
+}*/

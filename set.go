@@ -17,7 +17,7 @@ func initSet(prefix []byte, p *parser) (res *set, err error) {
 	}
 	fmt.Println(names)
 	/////////////////////////////////////
-	p.incPos()
+	p.IncPos()
 	// Парсим значения (их может быть меньше, чем наименований из-за возвращаемых знаечений функции), но не больше
 	var values []token
 	for {
@@ -25,13 +25,13 @@ func initSet(prefix []byte, p *parser) (res *set, err error) {
 		if t, err = p.parseToEndLine(); err == nil {
 			if val, check := t.(value); check {
 				values = append(values, val)
-				p.passSpaces()
-				if p.isEndLine() {
+				p.PassSpaces()
+				if p.IsEndLine() {
 					break
-				} else if p.char() == ',' {
-					p.incPos()
+				} else if p.Char() == ',' {
+					p.IncPos()
 				} else {
-					err = fmt.Errorf("Unexpected symbol [%c], expected [',' or endline]", p.char())
+					err = fmt.Errorf("Unexpected symbol [%c], expected [',' or endline]", p.Char())
 					return
 				}
 			} else {
@@ -43,14 +43,14 @@ func initSet(prefix []byte, p *parser) (res *set, err error) {
 			return
 		}
 	}
-	p.passSpaces()
-	if !p.isEndLine() {
-		err = fmt.Errorf("Unexpected symbol [%c]", p.char())
+	p.PassSpaces()
+	if !p.IsEndLine() {
+		err = fmt.Errorf("Unexpected symbol [%c]", p.Char())
 	} else {
 		res = &set{names, values}
-		p.incPos()
+		p.IncPos()
 	}
-	fmt.Println("SSSEETTT >> ", res, p.pos)
+	fmt.Println("SSSEETTT >> ")
 	return
 }
 

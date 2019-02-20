@@ -8,6 +8,8 @@ package metla
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/fcg-xvii/lineman"
 )
 
 // Вшиваем креаторы valInt и valFloat в глобальный срез
@@ -24,7 +26,13 @@ func init() {
 // Проверка соответствия valInt (целого числа)
 // Будет совпадать, если хотя бы один символ к ряду является числом и не является точкой
 func checkValInt(src []byte) bool {
-	if !checkNumber(src[0]) {
+	//p := lineman.NewByteLine(src)
+	if lineman.CheckNumber(src[0]) {
+
+	}
+	return true
+
+	/*if !checkNumber(src[0]) {
 		return false
 	}
 	for _, v := range src {
@@ -36,7 +44,7 @@ func checkValInt(src []byte) bool {
 			}
 		}
 	}
-	return true
+	return true*/
 }
 
 // Проверка соответствия valFloat (числа с плавающей точкой)
@@ -44,11 +52,11 @@ func checkValInt(src []byte) bool {
 // 2-е точки к ряду не будут соответствовать типу (нет чисел с 2-я точками)
 func checkValFloat(src []byte) (pointArrived bool) {
 	fmt.Println("CHECK_VAL_FLOAT")
-	if !checkNumber(src[0]) {
+	if !lineman.CheckNumber(src[0]) {
 		return false
 	}
 	for _, v := range src[1:] {
-		if !checkNumber(v) {
+		if !lineman.CheckNumber(v) {
 			if v == '.' {
 				if pointArrived {
 					return false
@@ -67,11 +75,11 @@ func checkValFloat(src []byte) (pointArrived bool) {
 
 // Конструктор целого числа. Тут всё просто - находим ряд чисел
 func newValInt(p *parser) (token, error) {
-	for !p.isEndDocument() && checkNumber(p.char()) {
-		p.incPos()
+	for !p.IsEndDocument() && lineman.CheckNumber(p.Char()) {
+		p.IncPos()
 	}
 	res := new(valInt)
-	res.val, _ = strconv.ParseInt(p.markValString(0), 10, 64)
+	res.val, _ = strconv.ParseInt(p.MarkValString(0), 10, 64)
 	return res, nil
 }
 
@@ -94,16 +102,16 @@ func (s *valInt) IsExecutable() bool { return false }
 
 // Конструктор числа с плавающей точкой - тут так же всё просто, находим ряд чисел и точку
 func newValFloat(p *parser) (token, error) {
-	if !checkNumber(p.char()) {
-		err := fmt.Errorf("Unexpected float value [%c]", p.char())
+	if !lineman.CheckNumber(p.Char()) {
+		err := fmt.Errorf("Unexpected float value [%c]", p.Char())
 		return nil, err
 	}
-	p.incPos()
-	for !p.isEndDocument() && (checkNumber(p.char()) || p.char() == '.') {
-		p.incPos()
+	p.IncPos()
+	for !p.IsEndDocument() && (lineman.CheckNumber(p.Char()) || p.Char() == '.') {
+		p.IncPos()
 	}
 	res := new(valFloat)
-	res.val, _ = strconv.ParseFloat(p.markValString(0), 64)
+	res.val, _ = strconv.ParseFloat(p.MarkValString(0), 64)
 	return res, nil
 }
 

@@ -27,16 +27,11 @@ func init() {
 // Будет совпадать, если хотя бы один символ к ряду является числом и не является точкой
 func checkValInt(src []byte) bool {
 	//p := lineman.NewByteLine(src)
-	if lineman.CheckNumber(src[0]) {
-
-	}
-	return true
-
-	/*if !checkNumber(src[0]) {
+	if !lineman.CheckNumber(src[0]) {
 		return false
 	}
 	for _, v := range src {
-		if !checkNumber(v) {
+		if !lineman.CheckNumber(v) {
 			if v == '.' {
 				return false
 			} else {
@@ -44,14 +39,13 @@ func checkValInt(src []byte) bool {
 			}
 		}
 	}
-	return true*/
+	return true
 }
 
 // Проверка соответствия valFloat (числа с плавающей точкой)
 // Будет совпадать, если ряд начинается с числа и разделён (или заканчивается) одой точкой,
 // 2-е точки к ряду не будут соответствовать типу (нет чисел с 2-я точками)
 func checkValFloat(src []byte) (pointArrived bool) {
-	fmt.Println("CHECK_VAL_FLOAT")
 	if !lineman.CheckNumber(src[0]) {
 		return false
 	}

@@ -57,7 +57,6 @@ func (s *parser) parseToEndLine() (res token, err error) {
 		} else {
 			s.IncPos()
 		}
-		//fmt.Println("MAIN_LOOP...", opType)
 	}
 	s.RollbackMark(0)
 	fmt.Println("INIT_VAL")

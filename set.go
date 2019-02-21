@@ -7,8 +7,8 @@ import (
 )
 
 func initSet(prefix []byte, p *parser) (res *set, err error) {
-	//fmt.Println("INIT_SET")
 	// Парсим наименования переменных
+	fmt.Println("PREFIX", prefix)
 	var names []string
 	sNames := bytes.Split(prefix, []byte{','})
 	names = make([]string, len(sNames))
@@ -50,7 +50,7 @@ func initSet(prefix []byte, p *parser) (res *set, err error) {
 		res = &set{names, values}
 		p.IncPos()
 	}
-	fmt.Println("SSSEETTT >> ")
+	fmt.Println("SSSEETTT >>", names, values)
 	return
 }
 

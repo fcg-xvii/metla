@@ -12,7 +12,7 @@ import (
 func init() {
 	creators = append(creators, &valueCreator{
 		checker:     checkValString,
-		constructor: NewValString,
+		constructor: newValString,
 	})
 }
 
@@ -22,7 +22,7 @@ func checkValString(src []byte) bool {
 }
 
 // Конструктор строки.
-func NewValString(p *parser) (res token, err error) {
+func newValString(p *parser) (res token, err error) {
 	charID := p.Char()     // Определяем, двойная или одинарная кавычка открыта
 	p.IncPos()             // Смещаемся на начало строки
 	if !p.ToChar(charID) { // Пытаемся найти закрывающую кавычку

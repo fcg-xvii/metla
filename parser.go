@@ -28,7 +28,7 @@ func (s *parser) parseDocument() (err error) {
 			if exec == nil {
 				s.IncPos()
 			} else if !exec.IsExecutable() {
-				err = fmt.Errorf("Executable token expected")
+				err = fmt.Errorf("Document parse error :: Executable token expected")
 			} else {
 				s.execList = append(s.execList, exec)
 			}
@@ -57,8 +57,10 @@ func (s *parser) parseToEndLine() (res token, err error) {
 		} else {
 			s.IncPos()
 		}
+		//fmt.Println("MAIN_LOOP...", opType)
 	}
 	s.RollbackMark(0)
+	fmt.Println("INIT_VAL")
 	res, err = initVal(s)
 	return
 }

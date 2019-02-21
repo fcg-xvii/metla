@@ -16,8 +16,6 @@ func checkOpType(ch byte) operatorType {
 	switch ch {
 	case '+', '-', '*', '/', '>', '<', '!':
 		return opArifmetic
-	case '(':
-		return opFunction
 	case '=':
 		return opSet
 	case '\n':

@@ -4,6 +4,7 @@ package metla
 type token interface {
 	Data() ([]byte, error) // Получение значения
 	IsExecutable() bool
+	String() string
 }
 
 // Интерфейс контейнера значения

@@ -97,7 +97,7 @@ func (s *valInt) IsExecutable() bool { return false }
 // Конструктор числа с плавающей точкой - тут так же всё просто, находим ряд чисел и точку
 func newValFloat(p *parser) (token, error) {
 	if !lineman.CheckNumber(p.Char()) {
-		err := fmt.Errorf("Unexpected float value [%c]", p.Char())
+		err := fmt.Errorf("Float parse error :: Unexpected float value [%c]", p.Char())
 		return nil, err
 	}
 	p.IncPos()

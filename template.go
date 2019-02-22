@@ -5,15 +5,20 @@ import (
 	"io"
 )
 
-func newTemplate(filePath string) (*template, error) {
+func newTemplate(content ContentMethod, filePath string) (*template, error) {
 
+	return nil, nil
 }
 
 type template struct {
-	files []string
-	exec  []token
+	storage    *storage
+	content    ContentMethod
+	files      []string
+	exec       []token
+	updateMark interface{}
 }
 
-func (s *template) exec(w io.Writer, vals map[string]interface{}) []byte {
-	fmt.Println("EXEC...")
+func (s *template) execute(w io.Writer, vals map[string]interface{}) ([]byte, error) {
+	//fmt.Println("EXEC...")
+	return nil, nil
 }

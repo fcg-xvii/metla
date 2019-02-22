@@ -15,7 +15,7 @@ type valueCreator struct {
 
 var (
 	creators               []*valueCreator
-	errValueUnexpectedType = errors.New("Unexpected value type")
+	errValueUnexpectedType = errors.New("Value init error :: Unexpected value type")
 )
 
 func getStartTypes(first []byte) (res []valueConstructor) {

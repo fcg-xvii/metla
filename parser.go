@@ -12,13 +12,14 @@ var (
 	parseUnexpectedLiteral = errors.New("Parser :: Unexpected literal")
 )
 
-func newParser(src []byte) *parser {
-	return &parser{lineman.NewCodeLine(src), nil}
+func newParser(src []byte, tpl *template, root *metla) *parser {
+	return &parser{lineman.NewCodeLine(src), tpl, root}
 }
 
 type parser struct {
 	*lineman.CodeLine
-	execList []token // Срез результирующих токенов
+	tpl  *template
+	root *Metla
 }
 
 func (s *parser) parseDocument() (err error) {
@@ -61,6 +62,34 @@ func (s *parser) parseToEndLine() (res token, err error) {
 	s.RollbackMark(0)
 	fmt.Println("INIT_VAL")
 	res, err = initVal(s)
+	return
+}
+
+func (s *parser) parseCallBack(callback func(*parser) bool) (res token, err error) {
+	s.SetupMark()
+	for callback(s) {
+		s.PassSpaces()
+		if opType := checkOpType(s.Char()); opType != opUndefined {
+			fmt.Println("OPT", opType)
+			return
+			/*switch opType {
+				case opSet:
+			}*/
+		} else {
+			fmt.Println("S_POS")
+			if name, check := s.ReadName(); check {
+				if keyword, check := getKeywordConstructor(string(name)); check {
+					return keyword(s)
+				}
+			} else {
+				s.IncPos()
+			}
+		}
+	}
+	return
+}
+
+func (s *parser) parseTempalate() (res token, err error) {
 	return
 }
 

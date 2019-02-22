@@ -68,3 +68,5 @@ func (s *set) Type() operatorType {
 }
 
 func (s *set) IsExecutable() bool { return true }
+
+func (s *set) String() string { return "[set {}}" }

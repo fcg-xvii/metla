@@ -1,15 +1,14 @@
 package metla
 
 import (
+	_ "bytes"
+	"errors"
+	"io/ioutil"
 	"log"
 	"os"
-	"io/ioutil"
 	"testing"
+	"time"
 )
-
-type CheckMetod func(string) bool
-type ContentMethod func(string) ([]byte, interface{}, error)
-type UpdateMethod func(string, interface{}) ([]byte, bool, interface{}, error)
 
 func check(path string) (res bool) {
 	if info, err := os.Stat(path); err == nil {
@@ -18,29 +17,53 @@ func check(path string) (res bool) {
 	return
 }
 
-func content(path string) (res []byte, marker interface{}, err error) {
+func content(path string, marker interface{}) (res []byte, check bool, newMarker interface{}, err error) {
 	var info os.FileInfo
 	if info, err = os.Stat(path); err == nil {
-		marker = info.ModTime()
-		res, err = ioutil.ReadAll()
+		if marker != nil {
+			var markerTime time.Time
+			if markerTime, check = marker.(time.Time); check {
+				check = !markerTime.Equal(info.ModTime())
+			} else {
+				err = errors.New("Unexpected marker type. [time.Time] expected")
+			}
+		} else {
+			check = true
+		}
+		if check {
+			newMarker = info.ModTime()
+			res, err = ioutil.ReadFile(path)
+		}
 	}
 	return
 }
 
-func update(path string, interface{}) (res []byte, check bool, marker interface{}, err error) {
-	
-}
-
 func TestParser(t *testing.T) {
-	/*if content, err := ioutil.ReadFile("source_script"); err != nil {
+	if content, err := ioutil.ReadFile("source_script"); err != nil {
 		t.Error(err)
 	} else {
 		log.Println(string(content))
-		parser := newParser(content)
-		log.Println(parser.parseDocument())
-		log.Println(parser.execList)
+		pObj := newParser(content)
+		log.Println(pObj.parseCallBack(func(p *parser) bool {
+			return !p.IsEndLine()
+		}))
+		//log.Println(parser.execList)
 		//log.Println("[" + string(parser.availableData()) + "]")
-	}*/
+	}
 
-	tpl := newTemplate("source_script")
+	//tpl, err := newTemplate("source_script")
+	//log.Println(tpl, err)
+
+	/*metla := New(check, content)
+	data := map[string]interface{}{
+		"one": 1,
+	}
+	var content []byte
+	buf := bytes.NewBuffer(content)
+	if err := metla.Content("source_script", buf, data); err != nil {
+		t.Error(err)
+	} else {
+		log.Println("==========================================")
+		log.Println(content)
+	}*/
 }

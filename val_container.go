@@ -77,6 +77,7 @@ func newValObject(p *parser) (res token, err error) {
 		val   token
 	)
 	p.IncPos()
+loop:
 	for !p.IsEndDocument() {
 		// Парсим
 		p.PassEndLines()
@@ -84,7 +85,7 @@ func newValObject(p *parser) (res token, err error) {
 			fmt.Println("KEY.....................", string(key))
 			p.PassSpaces()
 			if p.Char() != ':' {
-				err = fmt.Errorf("Unexpected symbol '%c', expected ':'", p.Char())
+				err = fmt.Errorf("Object parse error :: Unexpected symbol '%c', expected ':'", p.Char())
 				return
 			}
 			p.IncPos()
@@ -97,11 +98,14 @@ func newValObject(p *parser) (res token, err error) {
 			case ',':
 				p.IncPos()
 			case '}':
+				//fmt.Println("ENDDDDDD .............................")
 				p.IncPos()
-				break
+				break loop
+			default:
+				err = fmt.Errorf("Object parse error :: Unexpected symbol '%c', ',' or '}' expected", p.Char())
 			}
 		} else {
-			err = fmt.Errorf("Unexpected variable name...")
+			err = fmt.Errorf("Object parse error :: Unexpected variable name...")
 			return
 		}
 	}

@@ -1,8 +1,9 @@
 package metla
 
 import (
+	"fmt"
 	"io"
-	_ "log"
+	"log"
 	"sync"
 )
 
@@ -33,17 +34,29 @@ func (s *Metla) getTemplate(path string) (res *template, check bool) {
 }
 
 func (s *Metla) Content(path string, w io.Writer, vals map[string]interface{}) (err error) {
-	/*log.Println("CHECK")
+	log.Println("METLA :: CONTENT")
 	if tpl, check := s.getTemplate(path); check {
 		tpl.execute(w, vals)
 	} else {
 		s.locker.Lock()
 		if tpl, check := s.tpls[path]; !check {
 			if s.check(path) {
-
+				tpl = newTemplate(s, path)
+				s.tpls[path] = tpl
+				s.locker.Unlock()
+				err = tpl.execute(w, vals)
+				return
+			} else {
+				err = fmt.Errorf("Document not found [%v]", path)
 			}
+		} else {
+			s.locker.Unlock()
+			err = tpl.execute(w, vals)
+			return
 		}
 		s.locker.Unlock()
-	}*/
-	return nil
+	}
+	return
 }
+
+//func (s *Metla) tplArrived(t)

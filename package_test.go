@@ -1,7 +1,7 @@
 package metla
 
 import (
-	_ "bytes"
+	"bytes"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -12,7 +12,7 @@ import (
 
 func check(path string) (res bool) {
 	if info, err := os.Stat(path); err == nil {
-		return info.IsDir()
+		return !info.IsDir()
 	}
 	return
 }
@@ -20,6 +20,7 @@ func check(path string) (res bool) {
 func content(path string, marker interface{}) (res []byte, check bool, newMarker interface{}, err error) {
 	var info os.FileInfo
 	if info, err = os.Stat(path); err == nil {
+		newMarker = info.ModTime()
 		if marker != nil {
 			var markerTime time.Time
 			if markerTime, check = marker.(time.Time); check {
@@ -31,7 +32,6 @@ func content(path string, marker interface{}) (res []byte, check bool, newMarker
 			check = true
 		}
 		if check {
-			newMarker = info.ModTime()
 			res, err = ioutil.ReadFile(path)
 		}
 	}
@@ -39,17 +39,45 @@ func content(path string, marker interface{}) (res []byte, check bool, newMarker
 }
 
 func TestParser(t *testing.T) {
-	if content, err := ioutil.ReadFile("source_script"); err != nil {
+	root := New(check, content)
+
+	var content []byte
+	buf := bytes.NewBuffer(content)
+
+	data := map[string]interface{}{
+		"one": 1,
+	}
+
+	if err := root.Content("source_script", buf, data); err != nil {
+		log.Println("ERR", err)
+	} else {
+		log.Println("OK", string(content))
+	}
+	//time.Sleep(time.Second * 5)
+
+	/*for {
+
+		if err := root.Content("source_script", buf, data); err != nil {
+			log.Println("ERR", err)
+		} else {
+			log.Println("OK", string(content))
+		}
+		time.Sleep(time.Second * 5)
+	}*/
+
+	/*if content, err := ioutil.ReadFile("source_script"); err != nil {
 		t.Error(err)
 	} else {
-		log.Println(string(content))
+		//root := New(check, content)
+
+		//log.Println(string(content))
 		pObj := newParser(content)
 		log.Println(pObj.parseCallBack(func(p *parser) bool {
 			return !p.IsEndLine()
 		}))
 		//log.Println(parser.execList)
 		//log.Println("[" + string(parser.availableData()) + "]")
-	}
+	}*/
 
 	//tpl, err := newTemplate("source_script")
 	//log.Println(tpl, err)

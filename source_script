@@ -1,5 +1,4 @@
-include "okokoko" {
-	one: 1
-	two: 2
-	three: 3
-}
+<!doctype html>
+<html lang="ru">
+	<head>{{ colonel }}</head>
+</html>

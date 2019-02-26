@@ -36,6 +36,23 @@ func (s *parser) parseDocument() (err error) {
 	return
 }
 
+func (s *parser) parsePrint() error {
+	for !s.IsEndDocument() {
+		s.PassSpaces()
+		if token, err := initVal(p); err == nil {
+			s.PassSpaces()
+			if !s.PosMatchSlice('}}') {
+				return errors.New("Document parse error :: Unexpected end of print token")	
+			} else {
+				
+			}
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 /*func (s *parser) parseDocument() (err error) {
 	var exec token
 	for err == nil && !s.IsEndDocument() {

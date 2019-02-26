@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "errors"
 	"fmt"
+	"io"
 )
 
 func initSet(prefix []byte, p *parser) (res *set, err error) {
@@ -59,8 +60,8 @@ type set struct {
 	values []token
 }
 
-func (s *set) Data() ([]byte, error) {
-	return nil, nil
+func (s *set) Data(w io.Writer, sto *storage) error {
+	return nil
 }
 
 func (s *set) Type() operatorType {

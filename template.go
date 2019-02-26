@@ -37,11 +37,13 @@ func (s *template) execute(w io.Writer, vals map[string]interface{}) (err error)
 			err = s.parse(source)
 		}
 		if err == nil {
-			fmt.Println("TEMPLATE_EXECUTE")
-			err = s.exec(w, vals)
+			//fmt.Println("TEMPLATE_EXECUTE")
+			sto := newStorage(vals)
+			err = s.exec(w, sto)
 		}
 	}
 	s.locker.Unlock()
+	fmt.Println(s.tokenList)
 	return
 }
 
@@ -50,7 +52,11 @@ func (s *template) parse(src []byte) error {
 	return parser.parseDocument()
 }
 
-func (s *template) exec(w io.Writer, vals map[string]interface{}) error {
-	// todo template exec tokens
-	return nil
+func (s *template) exec(w io.Writer, sto *storage) (err error) {
+	for _, v := range s.tokenList {
+		if err = v.Data(w, sto); err != nil {
+			return
+		}
+	}
+	return
 }

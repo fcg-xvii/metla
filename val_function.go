@@ -2,6 +2,7 @@ package metla
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/fcg-xvii/lineman"
 )
@@ -69,8 +70,8 @@ func (s *valFunction) Val() interface{} {
 	return s.name
 }
 
-func (s *valFunction) Data() (res []byte, err error) {
-	return []byte(s.name), nil
+func (s *valFunction) Data(w io.Writer, sto *storage) (err error) {
+	return
 }
 
 func (s *valFunction) IsExecutable() bool { return true }

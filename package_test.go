@@ -51,7 +51,7 @@ func TestParser(t *testing.T) {
 	if err := root.Content("source_script", buf, data); err != nil {
 		log.Println("ERR", err)
 	} else {
-		log.Println("OK", string(content))
+		log.Println("OK", len(content))
 	}
 	//time.Sleep(time.Second * 5)
 

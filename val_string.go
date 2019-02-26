@@ -6,6 +6,7 @@ package metla
 
 import (
 	"fmt"
+	"io"
 )
 
 // Добавляем креатор строки в глобальный срез
@@ -45,8 +46,9 @@ func (s *valString) Val() interface{} {
 	return s.val
 }
 
-func (s *valString) Data() (res []byte, err error) {
-	return []byte(s.val), nil
+func (s *valString) Data(w io.Writer, sto *storage) (err error) {
+	_, err = w.Write([]byte(s.val))
+	return
 }
 
 func (s *valString) String() string     { return "[string :: {" + s.val + "}]" }

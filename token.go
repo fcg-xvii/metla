@@ -1,8 +1,12 @@
 package metla
 
+import (
+	"io"
+)
+
 // Общий интерфейс объекта результирующих данных
 type token interface {
-	Data() ([]byte, error) // Получение значения
+	Data(io.Writer, *storage) error // Запись результирующих данных в выходной поток
 	IsExecutable() bool
 	String() string
 }

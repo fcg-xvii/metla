@@ -3,6 +3,7 @@ package metla
 import (
 	"errors"
 	"fmt"
+	"io"
 )
 
 func init() {
@@ -42,11 +43,12 @@ func (s *keyInclude) Val() interface{} {
 	return s.tplPath
 }
 
-func (s *keyInclude) Data() (res []byte, err error) {
-	return nil, nil
+func (s *keyInclude) Data(w io.Writer, sto *storage) error {
+	return nil
 }
 
 func (s *keyInclude) String() string {
 	return "[include :: {" + s.tplPath.String() + "}, { " + s.paramsToken.String() + " }]"
 }
+
 func (s *keyInclude) IsExecutable() bool { return true }

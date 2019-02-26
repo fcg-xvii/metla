@@ -22,35 +22,44 @@ type parser struct {
 	root *Metla
 }
 
+func (s *parser) flushTextToken() {
+	if content := s.MarkVal(0); len(content) > 0 {
+		s.tpl.tokenList = append(s.tpl.tokenList, &tokenText{content})
+	}
+}
+
 func (s *parser) parseDocument() (err error) {
-	for !s.IsEndDocument() {
+	for !s.IsEndDocument() && err == nil {
 		s.MarkPos()
-		s.ToChar('{')
-		switch s.NextChar() {
-		case '{':
-			fmt.Println("PRINT_DOC")
-			return
+		bracketOpen := s.ToChar('{')
+		s.flushTextToken()
+		if bracketOpen {
+			switch s.NextChar() {
+			case '{':
+				{
+					s.ForwardPos(2)
+					err = s.parsePrint()
+				}
+			}
 		}
 	}
-	err = fmt.Errorf("OOOOO")
 	return
 }
 
 func (s *parser) parsePrint() error {
-	for !s.IsEndDocument() {
+	s.PassSpaces()
+	if token, err := initVal(s); err == nil {
 		s.PassSpaces()
-		if token, err := initVal(p); err == nil {
-			s.PassSpaces()
-			if !s.PosMatchSlice('}}') {
-				return errors.New("Document parse error :: Unexpected end of print token")	
-			} else {
-				
-			}
+		if !s.PosMatchSlice([]byte("}}")) {
+			return errors.New("Document parse error :: Unexpected end of print token")
 		} else {
-			return err
+			s.tpl.tokenList = append(s.tpl.tokenList, &tokenPrint{token})
+			s.ForwardPos(2)
+			return nil
 		}
+	} else {
+		return err
 	}
-	return nil
 }
 
 /*func (s *parser) parseDocument() (err error) {

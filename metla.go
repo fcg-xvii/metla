@@ -26,6 +26,16 @@ type Metla struct {
 	tpls    map[string]*template
 }
 
+func (s *Metla) Content(path string, w io.Writer, vals map[string]interface{}) error {
+	log.Println("METLA :: CONTENT")
+	if tpl, err := s.template(path); err == nil {
+		//sto := newStorage(vals)
+		return tpl.execute(w, vals)
+	} else {
+		return err
+	}
+}
+
 func (s *Metla) getTemplate(path string) (res *template, check bool) {
 	s.locker.RLock()
 	res, check = s.tpls[path]
@@ -33,28 +43,19 @@ func (s *Metla) getTemplate(path string) (res *template, check bool) {
 	return
 }
 
-func (s *Metla) Content(path string, w io.Writer, vals map[string]interface{}) (err error) {
-	log.Println("METLA :: CONTENT")
-	if tpl, check := s.getTemplate(path); check {
-		tpl.execute(w, vals)
-	} else {
-		s.locker.Lock()
-		if tpl, check := s.tpls[path]; !check {
-			if s.check(path) {
-				tpl = newTemplate(s, path)
-				s.tpls[path] = tpl
-				s.locker.Unlock()
-				err = tpl.execute(w, vals)
-				return
-			} else {
-				err = fmt.Errorf("Document not found [%v]", path)
+func (s *Metla) template(path string) (res *template, err error) {
+	var check bool
+	if res, check = s.getTemplate(path); !check {
+		if s.check(path) {
+			s.locker.Lock()
+			if res, check = s.tpls[path]; !check {
+				res = newTemplate(s, path)
+				s.tpls[path] = res
 			}
-		} else {
 			s.locker.Unlock()
-			err = tpl.execute(w, vals)
-			return
+		} else {
+			err = fmt.Errorf("Document not found :: [%v]", path)
 		}
-		s.locker.Unlock()
 	}
 	return
 }

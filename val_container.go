@@ -2,6 +2,7 @@ package metla
 
 import (
 	"fmt"
+	"io"
 )
 
 func init() {
@@ -56,8 +57,8 @@ func (s *valArray) Val() interface{} {
 	return s.vals
 }
 
-func (s *valArray) Data() (res []byte, err error) {
-	//return []byte(s.val), nil
+func (s *valArray) Data(w io.Writer, sto *storage) (err error) {
+	_, err = w.Write([]byte(s.String()))
 	return
 }
 
@@ -122,9 +123,9 @@ func (s *valObject) Val() interface{} {
 	return s.vals
 }
 
-func (s *valObject) Data() (res []byte, err error) {
+func (s *valObject) Data(w io.Writer, sto *storage) error {
 	//return []byte(s.val), nil
-	return
+	return nil
 }
 
 func (s *valObject) String() string {

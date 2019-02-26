@@ -7,6 +7,7 @@ package metla
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 
 	"github.com/fcg-xvii/lineman"
@@ -85,8 +86,9 @@ func (s *valInt) Val() interface{} {
 	return s.val
 }
 
-func (s *valInt) Data() (res []byte, err error) {
-	return []byte(strconv.FormatInt(s.val, 10)), nil
+func (s *valInt) Data(w io.Writer, sto *storage) (err error) {
+	_, err = w.Write([]byte(strconv.FormatInt(s.val, 10)))
+	return
 }
 
 func (s *valInt) String() string     { return "[int :: {" + strconv.FormatInt(s.val, 10) + "}]" }
@@ -117,8 +119,9 @@ func (s *valFloat) Val() interface{} {
 	return s.val
 }
 
-func (s *valFloat) Data() ([]byte, error) {
-	return []byte(strconv.FormatFloat(s.val, 'F', -1, 64)), nil
+func (s *valFloat) Data(w io.Writer, sto *storage) (err error) {
+	_, err = w.Write([]byte(strconv.FormatFloat(s.val, 'F', -1, 64)))
+	return
 }
 
 func (s *valFloat) String() string {

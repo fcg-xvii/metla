@@ -53,10 +53,19 @@ func (s *template) parse(src []byte) error {
 }
 
 func (s *template) exec(w io.Writer, sto *storage) (err error) {
+	var execObj execObject
 	for _, v := range s.tokenList {
-		if err = v.Data(w, sto); err != nil {
+		if execObj, err = v.execObject(sto, s); err != nil {
+			fmt.Println("Exec error ::", err)
 			return
 		}
+		if err = execObj.Data(w); err != nil {
+			fmt.Println("ExecObj error ::", err)
+			return
+		}
+		/*if err = v.Data(w, sto); err != nil {
+			return
+		}*/
 	}
 	return
 }

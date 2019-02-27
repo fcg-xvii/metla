@@ -49,17 +49,10 @@ loop:
 	return
 }
 
+/////////////////////////////////////////////////////////////////
+
 type valArray struct {
 	vals []token
-}
-
-func (s *valArray) Val() interface{} {
-	return s.vals
-}
-
-func (s *valArray) Data(w io.Writer, sto *storage) (err error) {
-	_, err = w.Write([]byte(s.String()))
-	return
 }
 
 func (s *valArray) String() string {
@@ -67,6 +60,39 @@ func (s *valArray) String() string {
 }
 
 func (s *valArray) IsExecutable() bool { return false }
+
+func (s *valArray) execObject(sto *storage, tpl *template) (res execObject, err error) {
+	vals := make([]execObject, len(s.vals))
+	for i, v := range s.vals {
+		if vals[i], err = v.execObject(sto, tpl); err != nil {
+			return
+		}
+	}
+	res = &valArrayExec{vals}
+	return
+}
+
+//////////////////////////////////////////////////////////////////
+
+type valArrayExec struct {
+	vals []execObject
+}
+
+func (s *valArrayExec) Data(w io.Writer) (err error) {
+	_, err = w.Write([]byte(s.String()))
+	return
+}
+
+func (s *valArrayExec) String() string {
+	return fmt.Sprintf("[array { %v }]", s.vals)
+}
+
+func (s *valArrayExec) IsNil() bool          { return s.vals == nil }
+func (s *valArrayExec) Type() execObjectType { return execObjectArray }
+
+func (s *valArrayExec) Val() interface{}    { return s.vals }
+func (s *valArrayExec) Vals() []interface{} { return []interface{}{s.vals} }
+func (s *valArrayExec) ValSingle() bool     { return true }
 
 //////////////////////////////////////////////////////////////////
 
@@ -123,13 +149,44 @@ func (s *valObject) Val() interface{} {
 	return s.vals
 }
 
-func (s *valObject) Data(w io.Writer, sto *storage) error {
-	//return []byte(s.val), nil
-	return nil
-}
-
 func (s *valObject) String() string {
 	return fmt.Sprintf("[object :: { %v }]", s.vals)
 }
 
 func (s *valObject) IsExecutable() bool { return false }
+
+func (s *valObject) execObject(sto *storage, tpl *template) (res execObject, err error) {
+	vals := make(map[string]execObject)
+	for key, val := range s.vals {
+		if vals[key], err = val.execObject(sto, tpl); err == nil {
+			return
+		}
+	}
+	res = &valObjectExec{vals}
+	return
+}
+
+///////////////////////////////////////////////////////////////////
+
+type valObjectExec struct {
+	vals map[string]execObject
+}
+
+func (s *valObjectExec) Data(w io.Writer) (err error) {
+	_, err = w.Write([]byte(s.String()))
+	return
+}
+
+func (s *valObjectExec) IsNil() bool { return s.vals == nil }
+
+func (s *valObjectExec) String() string {
+	return fmt.Sprintf("[object { %v }]", s.vals)
+}
+
+func (s *valObjectExec) Type() execObjectType {
+	return execObjectObject
+}
+
+func (s *valObjectExec) Val() interface{}    { return s.vals }
+func (s *valObjectExec) Vals() []interface{} { return []interface{}{s.vals} }
+func (s *valObjectExec) ValSingle() bool     { return true }

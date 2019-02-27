@@ -24,7 +24,7 @@ func newKeyInclude(p *parser) (t token, err error) {
 					if !p.IsEndDocument() || !p.IsEndLine() {
 						err = fmt.Errorf("Include parse error :: Unespected symbol [%c], end line expected", p.Char())
 					} else {
-						t = &keyInclude{tplPath: pathToken, paramsToken: paramsToken}
+						t = &keyInclude{tplPath: pathToken, params: paramsToken}
 						//fmt.Println("INCLUDE", t)
 					}
 				}
@@ -35,20 +35,43 @@ func newKeyInclude(p *parser) (t token, err error) {
 }
 
 type keyInclude struct {
-	tplPath     token
-	paramsToken token
+	tplPath token
+	params  token
 }
 
-func (s *keyInclude) Val() interface{} {
-	return s.tplPath
-}
-
-func (s *keyInclude) Data(w io.Writer, sto *storage) error {
-	return nil
+func (s *keyInclude) execObject(sto *storage, tpl *template) (res execObject, err error) {
+	var tplPath execObject
+	if tplPath, err = s.tplPath.execObject(sto, tpl); err == nil {
+		if tplPath.Type() != execObjectString {
+			err = fmt.Errorf("Include token exec error :: Unexpected include path token [%s], expected [string] type", tplPath.Type())
+			return
+		}
+	}
+	r := execObjectInclude{sto: sto}
+	if r.tpl, err = tpl.root.template(tplPath.Val().(string)); err != nil {
+		return
+	}
+	r.params, err = s.params.execObject(sto, tpl)
+	return
 }
 
 func (s *keyInclude) String() string {
-	return "[include :: {" + s.tplPath.String() + "}, { " + s.paramsToken.String() + " }]"
+	return "[include :: {" + s.tplPath.String() + "}, { " + s.params.String() + " }]"
 }
 
 func (s *keyInclude) IsExecutable() bool { return true }
+
+////////////////////////////////////////////////////////////////////
+
+type execObjectInclude struct {
+	tpl    *template
+	params execObject
+	sto    *storage
+}
+
+func (s *execObjectInclude) Data(w io.Writer) (err error) {
+	// Создать слой параметров в sto
+	err = s.tpl.exec(w, s.sto)
+	// Прибить слой параметрв в sto
+	return
+}

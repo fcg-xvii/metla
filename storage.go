@@ -2,6 +2,7 @@ package metla
 
 import (
 	"fmt"
+	"reflect"
 )
 
 func layoutFromMap(src map[string]interface{}) *storageLayout {
@@ -88,4 +89,8 @@ func (s *storage) setValue(key string, value interface{}) {
 type variable struct {
 	key   string
 	value interface{}
+}
+
+func (s *variable) Kind() reflect.Kind {
+	return reflect.ValueOf(s.value).Kind()
 }

@@ -3,6 +3,7 @@ package metla
 import (
 	"fmt"
 	"io"
+	"reflect"
 
 	"github.com/fcg-xvii/lineman"
 )
@@ -55,14 +56,14 @@ loop:
 		}
 	}
 	res = &valFunction{
-		name: name,
+		name: string(name),
 		args: args,
 	}
 	return
 }
 
 type valFunction struct {
-	name []byte
+	name string
 	args []token
 }
 
@@ -70,13 +71,52 @@ func (s *valFunction) Val() interface{} {
 	return s.name
 }
 
-func (s *valFunction) Data(w io.Writer, sto *storage) (err error) {
-	return
-}
-
 func (s *valFunction) IsExecutable() bool { return true }
 
 func (s *valFunction) String() string {
 	res := fmt.Sprintf("[function :: { %v }, args : { %v }]", string(s.name), s.args)
 	return res
+}
+
+func (s *valFunction) execObject(sto *storage, tpl *template) (res execObject, err error) {
+	if f, check := sto.findVariable(s.name); check {
+		if f.Kind() != reflect.Func {
+			err = fmt.Errorf("Function exec error :: unexpected variable type [%v], [Func] expected", f.Kind())
+		} else {
+			res = &valFunctionExec{f, make([]execObject, len(s.args))}
+			for i, v := range s.args {
+				if res.args[i], err = v.execObject(sto, tpl); err != nil {
+					return
+				}
+			}
+		}
+	} else {
+		err = fmt.Errorf("Function exec error :: [%s] not found", s.name)
+	}
+	return
+}
+
+//////////////////////////////////////////////////////////
+
+type valFunctionExec struct {
+	f    *variable
+	args []execObject
+}
+
+func (s *valFunctionExec) Data(w io.Writer) (err error) {
+	fVal := reflect.ValueOf(s.f.value)
+	if fVal.Kind() != reflect.Func {
+		err = fmt.Errorf("Function exec error :: variable [%v] is not a function", s.f.key)
+	} else {
+		rArgs := make([]reflect.Value, 0, len(s.args))
+		for i, v := range s.args {
+			if v.ValSingle() {
+				rArgs = append(rArgs, reflect.ValueOf(v.Val()))
+			} else {
+				for _, v := range v.Vals() {
+
+				}
+			}
+		}
+	}
 }

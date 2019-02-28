@@ -114,9 +114,34 @@ func (s *valFunctionExec) Data(w io.Writer) (err error) {
 				rArgs = append(rArgs, reflect.ValueOf(v.Val()))
 			} else {
 				for _, v := range v.Vals() {
-
+					rArgs = append(rArgs, reflect.ValueOf(v))
 				}
 			}
 		}
 	}
+	return
+}
+
+func (s *valFunctionExec) IsNil() bool {
+	return s.f.IsNil()
+}
+
+func (s *valFunctionExec) String() string {
+	return "[function { " + s.f.key + " }]"
+}
+
+func (s *valFunctionExec) Type() execObjectType {
+	return execObjectFunction
+}
+
+func (s *valFunctionExec) Val() interface{} {
+	rVal := reflect.ValueOf(s.f.value)
+}
+
+func (s *valFunctionExec) Vals() []interface{} {
+
+}
+
+func (s *valFunctionExec) ValSingle() bool {
+	return false
 }

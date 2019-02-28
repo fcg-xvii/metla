@@ -94,6 +94,8 @@ func (s *valInt) Data(w io.Writer, sto *storage) (err error) {
 func (s *valInt) String() string     { return "[int :: {" + strconv.FormatInt(s.val, 10) + "}]" }
 func (s *valInt) IsExecutable() bool { return false }
 
+//func (s *valInt)
+
 //////////////////////////////////////////////////////////
 
 // Конструктор числа с плавающей точкой - тут так же всё просто, находим ряд чисел и точку

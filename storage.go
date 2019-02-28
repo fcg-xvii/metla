@@ -94,3 +94,7 @@ type variable struct {
 func (s *variable) Kind() reflect.Kind {
 	return reflect.ValueOf(s.value).Kind()
 }
+
+func (s *variable) IsNil() bool {
+	return reflect.ValueOf(s.value).IsNil()
+}

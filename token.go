@@ -16,6 +16,8 @@ const (
 	execObjectByteSlice
 	execObjectNil
 	execObjectToken
+	execObjectFunction
+	execObjectMethod
 )
 
 var (
@@ -29,6 +31,8 @@ var (
 		"byteSlice",
 		"nil",
 		"token",
+		"function",
+		"method",
 	}
 )
 

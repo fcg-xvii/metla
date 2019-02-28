@@ -83,12 +83,13 @@ func (s *valFunction) execObject(sto *storage, tpl *template) (res execObject, e
 		if f.Kind() != reflect.Func {
 			err = fmt.Errorf("Function exec error :: unexpected variable type [%v], [Func] expected", f.Kind())
 		} else {
-			res = &valFunctionExec{f, make([]execObject, len(s.args))}
+			args := make([]execObject, len(s.args))
 			for i, v := range s.args {
-				if res.args[i], err = v.execObject(sto, tpl); err != nil {
+				if args[i], err = v.execObject(sto, tpl); err != nil {
 					return
 				}
 			}
+			res = &valFunctionExec{f, args}
 		}
 	} else {
 		err = fmt.Errorf("Function exec error :: [%s] not found", s.name)
@@ -104,21 +105,7 @@ type valFunctionExec struct {
 }
 
 func (s *valFunctionExec) Data(w io.Writer) (err error) {
-	fVal := reflect.ValueOf(s.f.value)
-	if fVal.Kind() != reflect.Func {
-		err = fmt.Errorf("Function exec error :: variable [%v] is not a function", s.f.key)
-	} else {
-		rArgs := make([]reflect.Value, 0, len(s.args))
-		for i, v := range s.args {
-			if v.ValSingle() {
-				rArgs = append(rArgs, reflect.ValueOf(v.Val()))
-			} else {
-				for _, v := range v.Vals() {
-					rArgs = append(rArgs, reflect.ValueOf(v))
-				}
-			}
-		}
-	}
+	_, err = s.call()
 	return
 }
 
@@ -130,18 +117,69 @@ func (s *valFunctionExec) String() string {
 	return "[function { " + s.f.key + " }]"
 }
 
-func (s *valFunctionExec) Type() execObjectType {
-	return execObjectFunction
+func (s *valFunctionExec) Type() reflect.Kind {
+	return reflect.Func
 }
 
-func (s *valFunctionExec) Val() interface{} {
-	rVal := reflect.ValueOf(s.f.value)
+func (s *valFunctionExec) Val() (interface{}, error) {
+	if vals, err := s.Vals(); err == nil && len(vals) > 0 {
+		return vals[0], err
+	} else {
+		return nil, err
+	}
+	/*if rRes, err := s.call(); err == nil {
+		if len(rRes) > 0 {
+			return rRes[0].Interface(), nil
+		}
+	} else {
+		return nil, err
+	}*/
 }
 
-func (s *valFunctionExec) Vals() []interface{} {
-
+func (s *valFunctionExec) Vals() (res []interface{}, err error) {
+	var rRes []reflect.Value
+	if rRes, err = s.call(); err == nil {
+		if len(rRes) > 0 {
+			res = make([]interface{}, len(rRes))
+			for i, v := range rRes {
+				res[i] = v.Interface()
+			}
+		}
+	}
+	return
 }
 
 func (s *valFunctionExec) ValSingle() bool {
 	return false
+}
+
+func (s *valFunctionExec) call() (res []reflect.Value, err error) {
+	fVal := reflect.ValueOf(s.f.value)
+	if fVal.Kind() != reflect.Func {
+		err = fmt.Errorf("Function exec error :: variable [%v] is not a function", s.f.key)
+	} else {
+		rArgs := make([]reflect.Value, 0, len(s.args))
+		for _, v := range s.args {
+			if v.ValSingle() {
+				var val interface{}
+				if val, err = v.Val(); err == nil {
+					rArgs = append(rArgs, reflect.ValueOf(val))
+				}
+			} else {
+				var vals []interface{}
+				if vals, err = v.Vals(); err == nil {
+					for _, v := range vals {
+						rArgs = append(rArgs, reflect.ValueOf(v))
+					}
+				}
+			}
+		}
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("Function call fatal error (panic) :: %v", r)
+			}
+		}()
+		res = fVal.Call(rArgs)
+	}
+	return
 }

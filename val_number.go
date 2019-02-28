@@ -8,6 +8,7 @@ package metla
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"strconv"
 
 	"github.com/fcg-xvii/lineman"
@@ -68,7 +69,7 @@ func checkValFloat(src []byte) (pointArrived bool) {
 
 //////////////////////////////////////////////////////////
 
-// Конструктор целого числа. Тут всё просто - находим ряд чисел
+// Конструктор целого числа. Тут всё просто - находим ряд цифр
 func newValInt(p *parser) (token, error) {
 	for !p.IsEndDocument() && lineman.CheckNumber(p.Char()) {
 		p.IncPos()
@@ -82,11 +83,15 @@ type valInt struct {
 	val int64
 }
 
-func (s *valInt) Val() interface{} {
-	return s.val
+func (s *valInt) Val() (interface{}, error) {
+	return s.val, nil
 }
 
-func (s *valInt) Data(w io.Writer, sto *storage) (err error) {
+func (s *valInt) Vals() ([]interface{}, error) {
+	return []interface{}{s.val}, nil
+}
+
+func (s *valInt) Data(w io.Writer) (err error) {
 	_, err = w.Write([]byte(strconv.FormatInt(s.val, 10)))
 	return
 }
@@ -94,7 +99,13 @@ func (s *valInt) Data(w io.Writer, sto *storage) (err error) {
 func (s *valInt) String() string     { return "[int :: {" + strconv.FormatInt(s.val, 10) + "}]" }
 func (s *valInt) IsExecutable() bool { return false }
 
-//func (s *valInt)
+func (s *valInt) execObject(sto *storage, tpl *template) (execObject, error) {
+	return s, nil
+}
+
+func (s *valInt) IsNil() bool        { return false }
+func (s *valInt) Type() reflect.Kind { return reflect.Int64 }
+func (s *valInt) ValSingle() bool    { return true }
 
 //////////////////////////////////////////////////////////
 
@@ -117,11 +128,7 @@ type valFloat struct {
 	val float64
 }
 
-func (s *valFloat) Val() interface{} {
-	return s.val
-}
-
-func (s *valFloat) Data(w io.Writer, sto *storage) (err error) {
+func (s *valFloat) Data(w io.Writer) (err error) {
 	_, err = w.Write([]byte(strconv.FormatFloat(s.val, 'F', -1, 64)))
 	return
 }
@@ -129,4 +136,21 @@ func (s *valFloat) Data(w io.Writer, sto *storage) (err error) {
 func (s *valFloat) String() string {
 	return "[float :: {" + strconv.FormatFloat(s.val, 'f', -1, 64) + "}]"
 }
+
 func (s *valFloat) IsExecutable() bool { return false }
+
+func (s *valFloat) execObject(sto *storage, tpl *template) (execObject, error) {
+	return s, nil
+}
+
+func (s *valFloat) Val() (interface{}, error) {
+	return s.val, nil
+}
+
+func (s *valFloat) Vals() ([]interface{}, error) {
+	return []interface{}{s.val}, nil
+}
+
+func (s *valFloat) IsNil() bool        { return false }
+func (s *valFloat) Type() reflect.Kind { return reflect.Float64 }
+func (s *valFloat) ValSingle() bool    { return true }

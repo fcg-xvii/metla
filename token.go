@@ -2,9 +2,10 @@ package metla
 
 import (
 	"io"
+	"reflect"
 )
 
-type execObjectType byte
+/*type execObjectType byte
 
 const (
 	execObjectUndefined = iota
@@ -42,7 +43,7 @@ func (s execObjectType) String() string {
 	} else {
 		return execObjectTypeString[s]
 	}
-}
+}*/
 
 // Общий интерфейс объекта результирующих данных
 type token interface {
@@ -59,9 +60,9 @@ type value interface {
 
 type execObject interface {
 	Data(io.Writer) error // Запись результирующих данных в выходной поток
-	Type() execObjectType
-	Val() interface{}
-	Vals() []interface{}
+	Type() reflect.Kind
+	Val() (interface{}, error)
+	Vals() ([]interface{}, error)
 	ValSingle() bool
 	IsNil() bool
 	String() string

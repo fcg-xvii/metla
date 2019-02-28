@@ -2,6 +2,7 @@ package metla
 
 import (
 	"io"
+	"reflect"
 	"strconv"
 )
 
@@ -22,9 +23,9 @@ func (s *tokenText) String() string {
 	return "[text :: { []byte :: len:" + strconv.Itoa(len(s.src)) + " }]"
 }
 
-func (s *tokenText) IsExecutable() bool   { return false }
-func (s *tokenText) IsNil() bool          { return false }
-func (s *tokenText) Type() execObjectType { return execObjectToken }
-func (s *tokenText) Val() interface{}     { return s.src }
-func (s *tokenText) Vals() []interface{}  { return []interface{}{s.src} }
-func (s *tokenText) ValSingle() bool      { return true }
+func (s *tokenText) IsExecutable() bool           { return false }
+func (s *tokenText) IsNil() bool                  { return false }
+func (s *tokenText) Type() reflect.Kind           { return reflect.Slice }
+func (s *tokenText) Val() (interface{}, error)    { return s.src, nil }
+func (s *tokenText) Vals() ([]interface{}, error) { return []interface{}{s.src}, nil }
+func (s *tokenText) ValSingle() bool              { return true }

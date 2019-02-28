@@ -2,6 +2,7 @@ package metla
 
 import (
 	"io"
+	"reflect"
 )
 
 type tokenPrint struct {
@@ -36,20 +37,20 @@ func (s *execObjectPrint) IsNil() bool {
 	return false
 }
 
-func (s *execObjectPrint) Type() execObjectType {
-	return execObjectToken
+func (s *execObjectPrint) Type() reflect.Kind {
+	return s.val.Type()
 }
 
-func (s *execObjectPrint) Val() interface{} {
+func (s *execObjectPrint) Val() (interface{}, error) {
 	return s.val.Val()
 }
 
-func (s *execObjectPrint) Vals() []interface{} {
-	return []interface{}{s.val.Val()}
+func (s *execObjectPrint) Vals() ([]interface{}, error) {
+	return s.val.Vals()
 }
 
 func (s *execObjectPrint) ValSingle() bool {
-	return true
+	return s.val.ValSingle()
 }
 
 func (s *execObjectPrint) String() string {

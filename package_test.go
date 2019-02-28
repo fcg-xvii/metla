@@ -10,14 +10,42 @@ import (
 	"time"
 )
 
-func check(path string) (res bool) {
+//type Check func(string, interface{}) UpdateState
+//type ContentMethod func(string, interface{}) ([]byte, interface{}, UpdateState)
+
+func check(path string, marker interface{}) (res UpdateState) {
 	if info, err := os.Stat(path); err == nil {
-		return !info.IsDir()
+		if mark != nil {
+			if mTime := marker.(time.Time); mTime.Equal(info.ModTime()) {
+				res = UpdateNotNeeded
+			} else {
+				res = UpdateNeeded
+			}
+		}
+	} else {
+		res = ResourceNotFound
 	}
 	return
 }
 
-func content(path string, marker interface{}) (res []byte, check bool, newMarker interface{}, err error) {
+func content(path string, marker interface{}) (res []byte, newMarker interface{}, res UpdateState) {
+	if info, err := os.Stat(path); err == nil {
+		newMarker = info.ModTime()
+		if marker == nil {
+			res = UpdateNeeded
+		} else {
+			if markerTime, check := marker.(time.Time); check && markerTime.Equal(info.ModTime()) {
+				res = UpdateNotNeeded
+			} else {
+				res = UpdateNeeded
+			}
+		}
+	} else {
+		res = ResourceNotFound
+	}
+}
+
+/*func content(path string, marker interface{}) (res []byte, check bool, newMarker interface{}, err error) {
 	var info os.FileInfo
 	if info, err = os.Stat(path); err == nil {
 		newMarker = info.ModTime()
@@ -36,7 +64,7 @@ func content(path string, marker interface{}) (res []byte, check bool, newMarker
 		}
 	}
 	return
-}
+}*/
 
 func TestParser(t *testing.T) {
 	root := New(check, content)
@@ -53,6 +81,7 @@ func TestParser(t *testing.T) {
 	} else {
 		log.Println("OK", len(content))
 	}
+
 	//time.Sleep(time.Second * 5)
 
 	/*for {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 )
 
 func init() {
@@ -42,16 +43,19 @@ type keyInclude struct {
 func (s *keyInclude) execObject(sto *storage, tpl *template) (res execObject, err error) {
 	var tplPath execObject
 	if tplPath, err = s.tplPath.execObject(sto, tpl); err == nil {
-		if tplPath.Type() != execObjectString {
+		if tplPath.Type() != reflect.String {
 			err = fmt.Errorf("Include token exec error :: Unexpected include path token [%s], expected [string] type", tplPath.Type())
 			return
 		}
 	}
 	r := execObjectInclude{sto: sto}
-	if r.tpl, err = tpl.root.template(tplPath.Val().(string)); err != nil {
-		return
+	var val interface{}
+	if val, err = tplPath.Val(); err == nil {
+		if r.tpl, err = tpl.root.template(val.(string)); err != nil {
+			return
+		}
+		r.params, err = s.params.execObject(sto, tpl)
 	}
-	r.params, err = s.params.execObject(sto, tpl)
 	return
 }
 

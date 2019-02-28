@@ -3,6 +3,7 @@ package metla
 import (
 	"fmt"
 	"io"
+	"reflect"
 )
 
 func init() {
@@ -87,12 +88,12 @@ func (s *valArrayExec) String() string {
 	return fmt.Sprintf("[array { %v }]", s.vals)
 }
 
-func (s *valArrayExec) IsNil() bool          { return s.vals == nil }
-func (s *valArrayExec) Type() execObjectType { return execObjectArray }
+func (s *valArrayExec) IsNil() bool        { return s.vals == nil }
+func (s *valArrayExec) Type() reflect.Kind { return reflect.Slice }
 
-func (s *valArrayExec) Val() interface{}    { return s.vals }
-func (s *valArrayExec) Vals() []interface{} { return []interface{}{s.vals} }
-func (s *valArrayExec) ValSingle() bool     { return true }
+func (s *valArrayExec) Val() (interface{}, error)    { return s.vals, nil }
+func (s *valArrayExec) Vals() ([]interface{}, error) { return []interface{}{s.vals}, nil }
+func (s *valArrayExec) ValSingle() bool              { return true }
 
 //////////////////////////////////////////////////////////////////
 
@@ -183,10 +184,7 @@ func (s *valObjectExec) String() string {
 	return fmt.Sprintf("[object { %v }]", s.vals)
 }
 
-func (s *valObjectExec) Type() execObjectType {
-	return execObjectObject
-}
-
-func (s *valObjectExec) Val() interface{}    { return s.vals }
-func (s *valObjectExec) Vals() []interface{} { return []interface{}{s.vals} }
-func (s *valObjectExec) ValSingle() bool     { return true }
+func (s *valObjectExec) Type() reflect.Kind           { return reflect.Map }
+func (s *valObjectExec) Val() (interface{}, error)    { return s.vals, nil }
+func (s *valObjectExec) Vals() ([]interface{}, error) { return []interface{}{s.vals}, nil }
+func (s *valObjectExec) ValSingle() bool              { return true }

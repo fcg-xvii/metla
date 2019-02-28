@@ -2,7 +2,6 @@ package metla
 
 import (
 	"bytes"
-	"errors"
 	_ "errors"
 	"fmt"
 	"io"
@@ -108,12 +107,11 @@ type execObjectSet struct {
 }
 
 func (s *execObjectSet) Data(w io.Writer) (err error) {
-	count := 0
 	if len(s.values) == 1 {
 		_, err = s.setupVariable(0, 0)
 	} else {
 		var varIndex, count int
-		for i, v := range s.values {
+		for i, _ := range s.values {
 			if count, err = s.setupVariable(varIndex, i); err == nil && varIndex+count < len(s.vars) {
 				varIndex += count
 			} else {
@@ -128,18 +126,27 @@ func (s *execObjectSet) setupVariable(varIndex, valIndex int) (count int, err er
 	val := s.values[valIndex]
 	if val.ValSingle() {
 		count = 1
-		s.vars[varIndex] = val
+		var iface interface{}
+		if iface, err = val.Val(); err == nil {
+			s.vars[varIndex].value = iface
+		}
 	} else {
-		var index int
-		for i, v := range val.Vals() {
-			if index = varIndex + i; index < len(s.vars) {
-				s.vars[varIndex+i].value = v
-				count++
-			} else {
-				return
+		var (
+			index int
+			vals  []interface{}
+		)
+		if vals, err = val.Vals(); err == nil {
+			for i, v := range vals {
+				if index = varIndex + i; index < len(s.vars) {
+					s.vars[varIndex+i].value = v
+					count++
+				} else {
+					return
+				}
 			}
 		}
 	}
+	return
 }
 
 /*func (s *execObjectSet) Data(w io.Writer) (err error) {

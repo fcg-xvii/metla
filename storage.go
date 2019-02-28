@@ -32,7 +32,7 @@ func (s *storageLayout) appendVariable(key string, val interface{}) (res *variab
 }
 
 func (s *storageLayout) findVariable(key string) (res *variable, check bool) {
-	for i := len(s.list); i >= 0; i-- {
+	for i := len(s.list) - 1; i >= 0; i-- {
 		res = s.list[i]
 		if res.key == key {
 			return res, true

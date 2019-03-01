@@ -30,6 +30,7 @@ func (s *template) execute(w io.Writer, vals map[string]interface{}) (err error)
 		{
 			s.root.removeTempalte(s.objPath)
 			err = fmt.Errorf("Document not found :: [%v]", path)
+			return
 		}
 	case UpdateNeeded:
 		{
@@ -41,14 +42,35 @@ func (s *template) execute(w io.Writer, vals map[string]interface{}) (err error)
 			s.locker.Unlock()
 		}
 	}
-	s.locker.RLock()
-	if err != nil {
+	if s.err != nil {
 		s.locker.RUnlock()
 		return
 	}
 	err = s.exec(w, vals)
 	s.locker.RUnlock()
 	return
+}
+
+func (s *template) parse(src []byte) error {
+	parser := newParser(src, s, s.root)
+	return parser.parseDocument()
+}
+
+func (s *tempalte) result(sto *storage) (*templateResult, error) {
+	if s.err != nil {
+		return s.err
+	}
+	s.locker.RLock()
+	res := &templateResult{make([]execObject, len(s.tokenList))}
+	for i, v := range s.tokenList {
+
+	}
+}
+
+////////////////////////////////////////////////////////////////////////
+
+type templateResult struct {
+	list []execObject
 }
 
 /*func (s *template) execute(w io.Writer, vals map[string]interface{}) (err error) {
@@ -102,9 +124,3 @@ func (s *template) exec(w io.Writer, sto *storage) (err error) {
 
 	tplResult =
 }*/
-
-////////////////////////////////////////////////////////////////////////
-
-type templateResult struct {
-	list []execObject
-}

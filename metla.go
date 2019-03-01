@@ -15,6 +15,19 @@ const (
 	ResourceNotFound
 )
 
+func (s UpdateState) String() string {
+	switch s {
+	case UpdateNotNeeded:
+		return "UpdateNotNeeded"
+	case UpdateNeeded:
+		return "UpdateNeeded"
+	case ResourceNotFound:
+		return "ResourceNotFound"
+	default:
+		return "UpdateStateUndefined"
+	}
+}
+
 type CheckMethod func(string, interface{}) UpdateState
 type ContentMethod func(string, interface{}) ([]byte, interface{}, UpdateState)
 
@@ -37,7 +50,6 @@ type Metla struct {
 func (s *Metla) Content(path string, w io.Writer, vals map[string]interface{}) error {
 	log.Println("METLA :: CONTENT")
 	if tpl, err := s.template(path); err == nil {
-		//sto := newStorage(vals)
 		return tpl.execute(w, vals)
 	} else {
 		return err
@@ -66,6 +78,14 @@ func (s *Metla) template(path string) (res *template, err error) {
 		}
 	}
 	return
+}
+
+func (s *Metla) templateResult(path string, sto *storage) (*templateResult, error) {
+	if tpl, err := s.template(path); err == nil {
+		return tpl.result(sto)
+	} else {
+		return nil, err
+	}
 }
 
 func (s *Metla) removeTempalte(path string) {

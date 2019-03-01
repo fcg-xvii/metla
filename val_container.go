@@ -188,3 +188,4 @@ func (s *valObjectExec) Type() reflect.Kind           { return reflect.Map }
 func (s *valObjectExec) Val() (interface{}, error)    { return s.vals, nil }
 func (s *valObjectExec) Vals() ([]interface{}, error) { return []interface{}{s.vals}, nil }
 func (s *valObjectExec) ValSingle() bool              { return true }
+func (s *valObjectExec) Map() map[string]execObject   { return s.vals }

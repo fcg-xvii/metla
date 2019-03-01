@@ -7,7 +7,7 @@ import (
 
 func layoutFromMap(src map[string]interface{}) *storageLayout {
 	res := &storageLayout{
-		list: make([]*variable, len(src)),
+		list: make([]*variable, 0, len(src)),
 	}
 	count := 0
 	for key, val := range src {
@@ -32,6 +32,7 @@ func (s *storageLayout) appendVariable(key string, val interface{}) (res *variab
 }
 
 func (s *storageLayout) findVariable(key string) (res *variable, check bool) {
+	fmt.Println("list >>> ", s.list, len(s.list)-1)
 	for i := len(s.list) - 1; i >= 0; i-- {
 		res = s.list[i]
 		if res.key == key {
@@ -44,7 +45,9 @@ func (s *storageLayout) findVariable(key string) (res *variable, check bool) {
 //////////////////////////////////////////////////////////////////////
 
 func newStorage(src map[string]interface{}) *storage {
+	fmt.Println("MAP.........", src)
 	layout := layoutFromMap(src)
+	fmt.Println("LAY.........", layout)
 	return &storage{
 		layouts: []*storageLayout{layout},
 		layout:  layout,
@@ -56,10 +59,11 @@ type storage struct {
 	layout  *storageLayout
 }
 
-func (s *storage) newLayout() {
+func (s *storage) newLayout() *storageLayout {
 	layout := new(storageLayout)
 	s.layouts = append(s.layouts, layout)
 	s.layout = layout
+	return layout
 }
 
 func (s *storage) dropLayout() {
@@ -80,10 +84,6 @@ func (s *storage) findVariable(key string) (res *variable, check bool) {
 
 func (s *storage) appendValue(key string, value interface{}) (res *variable, err error) {
 	return s.layout.appendVariable(key, value)
-}
-
-func (s *storage) setValue(key string, value interface{}) {
-
 }
 
 type variable struct {

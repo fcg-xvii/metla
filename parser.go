@@ -22,6 +22,10 @@ type parser struct {
 	root *Metla
 }
 
+func (s *parser) IsEndCode() bool {
+	return s.Char() == '%' && s.NextChar() == '}'
+}
+
 func (s *parser) flushTextToken() {
 	if content := s.MarkVal(0); len(content) > 0 {
 		s.tpl.tokenList = append(s.tpl.tokenList, &tokenText{content})
@@ -29,18 +33,34 @@ func (s *parser) flushTextToken() {
 }
 
 func (s *parser) parseDocument() (err error) {
+	passMark := false
 	for !s.IsEndDocument() && err == nil {
-		s.MarkPos()
+		if !passMark {
+			s.SetupMark()
+		}
 		bracketOpen := s.ToChar('{')
-		s.flushTextToken()
 		if bracketOpen {
 			switch s.NextChar() {
 			case '{':
 				{
+					s.flushTextToken()
 					s.ForwardPos(2)
 					err = s.parsePrint()
 				}
+			case '%':
+				{
+					s.flushTextToken()
+					s.ForwardPos(2)
+					err = s.parseCode()
+				}
+			default:
+				{
+					s.IncPos()
+					passMark = true
+				}
 			}
+		} else {
+			s.flushTextToken()
 		}
 	}
 	return
@@ -62,30 +82,28 @@ func (s *parser) parsePrint() error {
 	}
 }
 
-/*func (s *parser) parseDocument() (err error) {
-	var exec token
-	for err == nil && !s.IsEndDocument() {
-		if exec, err = s.parseToEndLine(); err == nil {
-			if exec == nil {
-				s.IncPos()
-			} else if !exec.IsExecutable() {
-				err = fmt.Errorf("Document parse error :: Executable token expected")
-			} else {
-				//s.execList = append(s.execList, exec)
-				s.tpl.tokenList = append(s.tpl.tokenList, exec)
-			}
-		} else {
+func (s *parser) parseCode() (err error) {
+	var t token
+	for !s.IsEndDocument() && !s.IsEndCode() {
+		if t, err = s.parseToEndLine(); err != nil {
 			return
+		} else {
+			fmt.Println("++++++++++++++++++++++++", t)
+			s.tpl.tokenList = append(s.tpl.tokenList, t)
+			s.IncPos()
 		}
 	}
+	if s.IsEndDocument() {
+		err = errors.New("Unclosed code tag")
+	}
 	return
-}*/
+}
 
 func (s *parser) parseToEndLine() (res token, err error) {
 	fmt.Println("=========================================================")
 	s.PassSpaces()
 	s.SetupMark()
-	for !s.IsEndLine() && !s.IsEndDocument() {
+	for !s.IsEndLine() && !s.IsEndDocument() && !s.IsEndCode() {
 		if opType := checkOpType(s.Char()); opType != opUndefined {
 			switch opType {
 			case opSet:

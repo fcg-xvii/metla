@@ -48,19 +48,30 @@ func (s *keyInclude) execObject(sto *storage, tpl *template) (res execObject, er
 			return
 		}
 	}
-	r := execObjectInclude{sto: sto}
 	var val interface{}
 	if val, err = tplPath.Val(); err == nil {
-		if r.tpl, err = tpl.root.template(val.(string)); err != nil {
+		sto.newLayout()
+		if s.params != nil {
+			var params execObject
+			if params, err = s.params.execObject(sto, tpl); err != nil {
+				return
+			}
+			for key, val := range params.(*valObjectExec).Map() {
+				sto.appendValue(key, val)
+			}
+		}
+		var tplRes *templateResult
+		if tplRes, err = tpl.root.templateResult(val.(string), sto); err != nil {
 			return
 		}
-		r.params, err = s.params.execObject(sto, tpl)
+		sto.dropLayout()
+		res = &execObjectInclude{tplRes}
 	}
 	return
 }
 
 func (s *keyInclude) String() string {
-	return "[include :: {" + s.tplPath.String() + "}, { " + s.params.String() + " }]"
+	return "[include :: { " + s.tplPath.String() + " }, { " + s.params.String() + " }]"
 }
 
 func (s *keyInclude) IsExecutable() bool { return true }
@@ -68,14 +79,27 @@ func (s *keyInclude) IsExecutable() bool { return true }
 ////////////////////////////////////////////////////////////////////
 
 type execObjectInclude struct {
-	tpl    *template
-	params execObject
-	sto    *storage
+	tpl *templateResult
 }
 
 func (s *execObjectInclude) Data(w io.Writer) (err error) {
-	// Создать слой параметров в sto
-	err = s.tpl.exec(w, s.sto)
-	// Прибить слой параметрв в sto
+	s.tpl.exec(w)
 	return
 }
+
+func (s *execObjectInclude) IsNil() bool { return false }
+
+func (s *execObjectInclude) String() string { return "include..." }
+
+// reflect.Kind тип не очень подходит в этом случае?
+func (s *execObjectInclude) Type() reflect.Kind { return reflect.Invalid }
+
+func (s *execObjectInclude) Val() (interface{}, error) {
+	return nil, errors.New("Include method is not like value")
+}
+
+func (s *execObjectInclude) Vals() ([]interface{}, error) {
+	return nil, errors.New("Include method is not like values")
+}
+
+func (s *execObjectInclude) ValSingle() bool { return true }

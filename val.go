@@ -2,7 +2,7 @@ package metla
 
 import (
 	"errors"
-	"fmt"
+	_ "fmt"
 )
 
 type valueCheckMethod func([]byte) bool
@@ -19,7 +19,7 @@ var (
 )
 
 func getStartTypes(first []byte) (res []valueConstructor) {
-	fmt.Println(string(first))
+	//fmt.Println(string(first))
 	for _, creator := range creators {
 		if creator.checker(first) {
 			res = append(res, creator.constructor)

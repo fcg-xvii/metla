@@ -2,7 +2,7 @@ package metla
 
 import (
 	"errors"
-	_ "fmt"
+	"fmt"
 )
 
 type valueCheckMethod func([]byte) bool
@@ -29,16 +29,19 @@ func getStartTypes(first []byte) (res []valueConstructor) {
 }
 
 func initVal(p *parser) (res token, err error) {
+	fmt.Println("INIT_VALL", string(p.EndLineContent()))
 	// Если текущий символ соответствует завершению оператора или документа, это считается "пустым оператором". В даной ситуации ошибки не возникает
 	p.PassSpaces()
-	if p.IsEndLine() || p.IsEndDocument() {
+	if p.IsEndLine() || p.IsEndDocument() || p.IsEndCode() {
 		return
 	}
 	// Получаем данные от текущей позиции до конца строки и определяем возможные типы значений
 	p.SetupMark()
 	if types := getStartTypes(p.EndLineContent()); len(types) == 0 {
+		fmt.Println("No types")
 		err = errValueUnexpectedType
 	} else {
+		fmt.Println("ST", types)
 		res, err = types[0](p)
 	}
 	return

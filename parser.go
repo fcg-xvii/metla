@@ -52,6 +52,7 @@ func (s *parser) parseDocument() (err error) {
 					s.flushTextToken()
 					s.ForwardPos(2)
 					err = s.parseCode()
+					fmt.Println("RRRTTTTT", err)
 				}
 			default:
 				{
@@ -87,11 +88,18 @@ func (s *parser) parseCode() (err error) {
 	for !s.IsEndDocument() && !s.IsEndCode() {
 		if t, err = s.parseToEndLine(); err != nil {
 			return
-		} else {
+		} else if t != nil {
 			fmt.Println("++++++++++++++++++++++++", t)
-			s.tpl.tokenList = append(s.tpl.tokenList, t)
-			s.IncPos()
+			fmt.Println(t.IsExecutable())
+			if t.IsExecutable() {
+				s.tpl.tokenList = append(s.tpl.tokenList, t)
+			} else {
+				fmt.Println("ERRRRRRRRRRRRRRRRRTTTTTTTTTTTTTT")
+				err = fmt.Errorf("Code parse error :: Evaluted but not used [%s]", t)
+				return
+			}
 		}
+		s.IncPos()
 	}
 	if s.IsEndDocument() {
 		err = errors.New("Unclosed code tag")

@@ -89,12 +89,9 @@ func (s *parser) parseCode() (err error) {
 		if t, err = s.parseToEndLine(); err != nil {
 			return
 		} else if t != nil {
-			fmt.Println("++++++++++++++++++++++++", t)
-			fmt.Println(t.IsExecutable())
 			if t.IsExecutable() {
 				s.tpl.tokenList = append(s.tpl.tokenList, t)
 			} else {
-				fmt.Println("ERRRRRRRRRRRRRRRRRTTTTTTTTTTTTTT")
 				err = fmt.Errorf("Code parse error :: Evaluted but not used [%s]", t)
 				return
 			}
@@ -104,11 +101,11 @@ func (s *parser) parseCode() (err error) {
 	if s.IsEndDocument() {
 		err = errors.New("Unclosed code tag")
 	}
+	s.ForwardPos(2)
 	return
 }
 
 func (s *parser) parseToEndLine() (res token, err error) {
-	fmt.Println("=========================================================")
 	s.PassSpaces()
 	s.SetupMark()
 	for !s.IsEndLine() && !s.IsEndDocument() && !s.IsEndCode() {

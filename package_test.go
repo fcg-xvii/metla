@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+func printMethod(s interface{}) {
+	log.Println(s)
+}
+
 func check(path string, marker interface{}) (res UpdateState) {
 	if info, err := os.Stat(path); err == nil {
 		if marker != nil {
@@ -62,6 +66,7 @@ func TestParser(t *testing.T) {
 	data := map[string]interface{}{
 		"one":     1,
 		"colonel": "Hello, WORLD!",
+		"print":   printMethod,
 	}
 
 	if err := root.Content("source_script", &buf, data); err != nil {

@@ -87,10 +87,12 @@ type templateResult struct {
 	list []execObject
 }
 
-func (s *templateResult) exec(w io.Writer) {
+func (s *templateResult) exec(w io.Writer) (err error) {
 	//fmt.Println("Exec...", s.list, "!!!!!", w)
 	for _, v := range s.list {
-		fmt.Println("====", v)
-		v.Data(w)
+		if err = v.Data(w); err != nil {
+			return
+		}
 	}
+	return
 }

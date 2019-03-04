@@ -32,7 +32,7 @@ func newValString(p *parser) (res token, err error) {
 	} else {
 		// Закрывающая кавычка найдена. Инициализируем результирующее значение
 		res = &valString{
-			val: p.MarkValString(-1)[1:], // Обрезаем кавычки для результирующего значения
+			val: p.MarkValString(0)[1:], // Обрезаем кавычки для результирующего значения
 		}
 		p.IncPos()
 	}

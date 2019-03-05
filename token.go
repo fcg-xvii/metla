@@ -5,46 +5,6 @@ import (
 	"reflect"
 )
 
-/*type execObjectType byte
-
-const (
-	execObjectUndefined = iota
-	execObjectString
-	execObjectInteger
-	execObjectFloat
-	execObjectObject
-	execObjectArray
-	execObjectByteSlice
-	execObjectNil
-	execObjectToken
-	execObjectFunction
-	execObjectMethod
-)
-
-var (
-	execObjectTypeString = []string{
-		"undefined",
-		"string",
-		"integer",
-		"float",
-		"object",
-		"array",
-		"byteSlice",
-		"nil",
-		"token",
-		"function",
-		"method",
-	}
-)
-
-func (s execObjectType) String() string {
-	if s < 0 || int(s) >= len(execObjectTypeString) {
-		return execObjectTypeString[0]
-	} else {
-		return execObjectTypeString[s]
-	}
-}*/
-
 // Общий интерфейс объекта результирующих данных
 type token interface {
 	execObject(*storage, *template) (execObject, error)

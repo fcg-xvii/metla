@@ -28,7 +28,6 @@ func init() {
 // Проверка соответствия valInt (целого числа)
 // Будет совпадать, если хотя бы один символ к ряду является числом и не является точкой
 func checkValInt(src []byte) bool {
-	//p := lineman.NewByteLine(src)
 	if !lineman.CheckNumber(src[0]) {
 		return false
 	}

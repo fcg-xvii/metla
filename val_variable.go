@@ -17,19 +17,16 @@ func init() {
 }
 
 func checkValVariable(src []byte) bool {
-	//fmt.Println("VARIABLE", string(src[0]))
 	if lineman.CheckFirsNameChar(src) > 0 {
-		//fmt.Println("ACCPETED")
 		for i := 1; i < len(src); i++ {
 			if lineman.CheckBodyNameChar(src[i:]) == 0 {
-				fmt.Println("===", string(src[i]))
 				res := src[i] != '(' && src[i] != '['
-				//fmt.Println("RRREESSSSS", res)
 				return res
 			}
 		}
+		return true
 	}
-	return true
+	return false
 }
 
 // Конструктор строки.

@@ -108,6 +108,13 @@ func (s *parser) parseCode() (err error) {
 func (s *parser) parseToEndLine() (res token, err error) {
 	s.PassSpaces()
 	s.SetupMark()
+	if name, check := s.ReadName(); check {
+		fmt.Println("NAMEEEEEEEEEE", string(name))
+		if keyword, check := getKeywordConstructor(string(name)); check {
+			return keyword(s)
+		}
+	}
+	s.RollbackMark(0)
 	for !s.IsEndLine() && !s.IsEndDocument() && !s.IsEndCode() {
 		if opType := checkOpType(s.Char()); opType != opUndefined {
 			switch opType {

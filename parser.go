@@ -83,18 +83,19 @@ func (s *parser) parsePrint() error {
 	}
 }
 
+func (s *parser) appendExecToken(t token) {
+	if t != nil {
+		s.tpl.tokenList = append(s.tpl.tokenList, t)
+	}
+}
+
 func (s *parser) parseCode() (err error) {
 	var t token
 	for !s.IsEndDocument() && !s.IsEndCode() {
-		if t, err = s.parseToEndLine(); err != nil {
+		if t, err = s.parseExecLine(); err == nil {
+			s.appendExecToken(t)
+		} else {
 			return
-		} else if t != nil {
-			if t.IsExecutable() {
-				s.tpl.tokenList = append(s.tpl.tokenList, t)
-			} else {
-				err = fmt.Errorf("Code parse error :: Evaluted but not used [%s]", t)
-				return
-			}
 		}
 		s.IncPos()
 	}
@@ -105,8 +106,86 @@ func (s *parser) parseCode() (err error) {
 	return
 }
 
+func (s *parser) parseExecLine() (t token, err error) {
+	if t, err = s.parseToEndLine(); err == nil && t != nil && !t.IsExecutable() {
+		err = fmt.Errorf("Code parse error :: Evaluted but not used [%s]", t)
+	}
+	return
+}
+
+// Парсим до открытия тега кода
+func (s *parser) parseToCode() (err error) {
+	passMark := false
+	for !s.IsEndDocument() && err == nil {
+		if !passMark {
+			s.SetupMark()
+		}
+		bracketOpen := s.ToChar('{')
+		if bracketOpen {
+			switch s.NextChar() {
+			case '{':
+				{
+					s.flushTextToken()
+					s.ForwardPos(2)
+					err = s.parsePrint()
+				}
+			case '%':
+				{
+					return
+				}
+			default:
+				{
+					s.IncPos()
+					passMark = true
+				}
+			}
+		} else {
+			s.flushTextToken()
+		}
+	}
+	return
+
+}
+
+// Парсим код до закрывающего тега (вызывается конструкторами ключевиков)
+func (s *parser) parseCodeToCloseTag(tagName string, parent tokenParent) (err error) {
+	var t token
+	for !s.IsEndDocument() {
+		s.PassSpaces()
+		if s.IsEndCode() {
+			if err = s.parseToCode(); err != nil {
+				return
+			}
+		}
+
+		s.SetupMark()
+		if name, check := s.ReadNameSpaces(); check && string(name) == tagName {
+			fmt.Println("Name...")
+			return nil
+		}
+		s.RollbackMark(0)
+
+		if t, err = s.parseExecLine(); err != nil {
+			return
+		} else {
+			fmt.Println(t, s.EndLineContent())
+			parent.appendChild(t)
+			s.IncPos()
+		}
+	}
+	return fmt.Errorf("Unexpected end of document, [%v] expected", string(tagName))
+}
+
+// Парсим код до конца строки
 func (s *parser) parseToEndLine() (res token, err error) {
 	s.PassSpaces()
+
+	// Если после пропуска пробелов конец строки, нет смысла работать дальше
+	if s.IsEndLine() {
+		return
+	}
+
+	// Возможно первое слово - ключевик команды. Если это так - парсим команду
 	s.SetupMark()
 	if name, check := s.ReadName(); check {
 		fmt.Println("NAMEEEEEEEEEE", string(name))
@@ -115,6 +194,8 @@ func (s *parser) parseToEndLine() (res token, err error) {
 		}
 	}
 	s.RollbackMark(0)
+
+	// Проверяем операторы (присваивание, арифметика, т.д.)
 	for !s.IsEndLine() && !s.IsEndDocument() && !s.IsEndCode() {
 		if opType := checkOpType(s.Char()); opType != opUndefined {
 			switch opType {
@@ -131,35 +212,9 @@ func (s *parser) parseToEndLine() (res token, err error) {
 		}
 	}
 	s.RollbackMark(0)
+
+	// Если это не ключевик, то это исполняемый объект, пробуем его распарсить
 	fmt.Println("INIT_VAL")
 	res, err = initVal(s)
-	return
-}
-
-func (s *parser) parseCallBack(callback func(*parser) bool) (res token, err error) {
-	s.SetupMark()
-	for callback(s) {
-		s.PassSpaces()
-		if opType := checkOpType(s.Char()); opType != opUndefined {
-			fmt.Println("OPT", opType)
-			return
-			/*switch opType {
-				case opSet:
-			}*/
-		} else {
-			fmt.Println("S_POS")
-			if name, check := s.ReadName(); check {
-				if keyword, check := getKeywordConstructor(string(name)); check {
-					return keyword(s)
-				}
-			} else {
-				s.IncPos()
-			}
-		}
-	}
-	return
-}
-
-func (s *parser) parseTempalate() (res token, err error) {
 	return
 }

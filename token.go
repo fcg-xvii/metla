@@ -1,6 +1,7 @@
 package metla
 
 import (
+	"fmt"
 	"io"
 	"reflect"
 )
@@ -43,4 +44,17 @@ func checkIfaceInt(i interface{}) (res int64, check bool) {
 		res = val.Int()
 	}
 	return
+}
+
+type rawInfoRecord struct {
+	tplName   string
+	line, pos int
+}
+
+func (s *rawInfoRecord) positionWarning(text string) error {
+	return fmt.Errorf("Warning [%v %v:%v]: %v", s.tplName, s.line, s.pos, text)
+}
+
+func (s *rawInfoRecord) fatalError(text string) error {
+	return fmt.Errorf("Fatal error [%v %v:%v]: %v", s.tplName, s.line, s.pos, text)
 }

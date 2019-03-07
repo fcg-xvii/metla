@@ -25,7 +25,6 @@ type template struct {
 }
 
 func (s *template) execute(w io.Writer, vals map[string]interface{}) error {
-	//fmt.Println("TPL :: Execute", s.updateMark, s.root.check(s.objPath, s.updateMark))
 	switch s.root.check(s.objPath, s.updateMark) {
 	case ResourceNotFound:
 		{
@@ -63,7 +62,7 @@ func (s *template) parse(src []byte) error {
 
 func (s *template) result(sto *storage) (*templateResult, error) {
 	s.locker.RLock()
-	fmt.Println("Result...", s.tokenList)
+	//fmt.Println("Result...", s.tokenList)
 	if s.err != nil {
 		s.locker.RUnlock()
 		return nil, s.err
@@ -88,7 +87,6 @@ type templateResult struct {
 }
 
 func (s *templateResult) exec(w io.Writer) (err error) {
-	//fmt.Println("Exec...", s.list, "!!!!!", w)
 	for _, v := range s.list {
 		if err = v.Data(w); err != nil {
 			return

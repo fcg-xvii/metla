@@ -1,8 +1,4 @@
 {%
-	for i in 1:100
-		for j in 10:20
-			print(j)
-		endfor
-		print("***************")
-	endfor
+	100, y, z = 10, 20, 30
+	twink(x, int(y))
 %}

@@ -57,13 +57,15 @@ loop:
 		}
 	}
 	res = &valFunction{
-		name: string(name),
-		args: args,
+		rawInfoRecord: &rawInfoRecord{p.tpl.objPath, p.MarkLine(), p.MarkLinePos()},
+		name:          string(name),
+		args:          args,
 	}
 	return
 }
 
 type valFunction struct {
+	*rawInfoRecord
 	name string
 	args []token
 }
@@ -82,7 +84,7 @@ func (s *valFunction) String() string {
 func (s *valFunction) execObject(sto *storage, tpl *template) (res execObject, err error) {
 	if f, check := sto.findVariable(s.name); check {
 		if f.Kind() != reflect.Func {
-			err = fmt.Errorf("Function exec error :: unexpected variable type [%v], [Func] expected", f.Kind())
+			err = s.fatalError(fmt.Sprintf("Unexpected variable type [%v], [Func] expected", f.Kind()))
 		} else {
 			args := make([]execObject, len(s.args))
 			for i, v := range s.args {
@@ -90,10 +92,10 @@ func (s *valFunction) execObject(sto *storage, tpl *template) (res execObject, e
 					return
 				}
 			}
-			res = &valFunctionExec{f, args}
+			res = &valFunctionExec{s.rawInfoRecord, f, args}
 		}
 	} else {
-		err = fmt.Errorf("Function exec error :: [%s] not found", s.name)
+		err = s.fatalError(fmt.Sprintf("Function [%s] not found", s.name))
 	}
 	return
 }
@@ -101,14 +103,15 @@ func (s *valFunction) execObject(sto *storage, tpl *template) (res execObject, e
 //////////////////////////////////////////////////////////
 
 type valFunctionExec struct {
+	*rawInfoRecord
 	f    *variable
 	args []execObject
 }
 
 func (s *valFunctionExec) Data(w io.Writer) (err error) {
 	if _, err = s.call(); err != nil {
-		warnContent := "{{ Warning! Exec function { " + s.f.key + " } error :: " + err.Error() + " }}"
-		_, err = w.Write([]byte(warnContent))
+		content := s.positionWarning(err.Error())
+		_, err = w.Write([]byte(content.Error()))
 	}
 	return
 }

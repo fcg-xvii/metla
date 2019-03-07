@@ -32,7 +32,6 @@ func (s *storageLayout) appendVariable(key string, val interface{}) (res *variab
 }
 
 func (s *storageLayout) findVariable(key string) (res *variable, check bool) {
-	fmt.Println("list >>> ", s.list, len(s.list)-1)
 	for i := len(s.list) - 1; i >= 0; i-- {
 		res = s.list[i]
 		if res.key == key {
@@ -45,9 +44,9 @@ func (s *storageLayout) findVariable(key string) (res *variable, check bool) {
 //////////////////////////////////////////////////////////////////////
 
 func newStorage(src map[string]interface{}) *storage {
-	fmt.Println("MAP.........", src)
+	//fmt.Println("MAP.........", src)
 	layout := layoutFromMap(src)
-	fmt.Println("LAY.........", layout)
+	//fmt.Println("LAY.........", layout)
 	return &storage{
 		layouts: []*storageLayout{layout},
 		layout:  layout,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fcg-xvii/lineman"
+	"github.com/golang-collections/collections/stack"
 )
 
 var (
@@ -13,13 +14,14 @@ var (
 )
 
 func newParser(src []byte, tpl *template, root *Metla) *parser {
-	return &parser{lineman.NewCodeLine(src), tpl, root}
+	return &parser{lineman.NewCodeLine(src), tpl, root, stack.New()}
 }
 
 type parser struct {
 	*lineman.CodeLine
-	tpl  *template
-	root *Metla
+	tpl       *template
+	root      *Metla
+	codeStack *stack.Stack
 }
 
 func (s *parser) IsEndCode() bool {
@@ -52,7 +54,6 @@ func (s *parser) parseDocument() (err error) {
 					s.flushTextToken()
 					s.ForwardPos(2)
 					err = s.parseCode()
-					fmt.Println("RRRTTTTT", err)
 				}
 			default:
 				{
@@ -188,33 +189,64 @@ func (s *parser) parseToEndLine() (res token, err error) {
 	// Возможно первое слово - ключевик команды. Если это так - парсим команду
 	s.SetupMark()
 	if name, check := s.ReadName(); check {
-		fmt.Println("NAMEEEEEEEEEE", string(name))
 		if keyword, check := getKeywordConstructor(string(name)); check {
 			return keyword(s)
 		}
 	}
 	s.RollbackMark(0)
-
-	// Проверяем операторы (присваивание, арифметика, т.д.)
 	for !s.IsEndLine() && !s.IsEndDocument() && !s.IsEndCode() {
+		s.PassSpaces()
 		if opType := checkOpType(s.Char()); opType != opUndefined {
 			switch opType {
 			case opSet:
 				{
-					if res, err = initSet(s.MarkVal(0), s); err != nil {
+					if res, err = initSet(s); err != nil {
 						err = s.InitError(err.Error())
 					}
 					return
 				}
 			}
-		} else {
+		} else if s.Char() == ',' {
 			s.IncPos()
+		} else {
+			s.SetupMark()
+			if res, err = initVal(s); err == nil {
+				s.codeStack.Push(res)
+			} else {
+				return
+			}
 		}
 	}
-	s.RollbackMark(0)
-
-	// Если это не ключевик, то это исполняемый объект, пробуем его распарсить
-	fmt.Println("INIT_VAL")
-	res, err = initVal(s)
 	return
+}
+
+func (s *parser) ParseArgs(stop byte) (err error) {
+	var t token
+	s.PassSpaces()
+
+	// Если после пропуска пробелов конец строки, нет смысла работать дальше
+	if s.IsEndLine() {
+		err = fmt.Errorf("Unexpected end line, '%c' expected", stop)
+		return
+	}
+	for !s.IsEndLine() && !s.IsEndDocument() && !s.IsEndCode() {
+		if s.Char() == ',' {
+			s.IncPos()
+		} else if s.Char() == stop {
+			return
+		} else {
+			s.SetupMark()
+			if t, err = initVal(s); err == nil {
+				s.codeStack.Push(t)
+			} else {
+				return
+			}
+		}
+	}
+	err = s.positionError(fmt.Sprintf("Unexpected symbol '%c', '%c' expected", s.Char(), stop))
+	return
+}
+
+func (s *parser) positionError(text string) error {
+	return fmt.Errorf("Error [%v %v:%v]: %v", s.tpl.objPath, s.MarkLine(), s.MarkLinePos(), text)
 }

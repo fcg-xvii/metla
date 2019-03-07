@@ -1,54 +1,40 @@
 package metla
 
 import (
-	"bytes"
 	_ "errors"
 	"fmt"
 	"io"
 	"reflect"
 )
 
-func initSet(prefix []byte, p *parser) (res *set, err error) {
+func initSet(p *parser) (res *set, err error) {
 	// Парсим наименования переменных
 	//fmt.Println("PREFIX", prefix)
-	var names []string
-	sNames := bytes.Split(prefix, []byte{','})
-	names = make([]string, len(sNames))
-	for i, v := range sNames {
-		names[i] = string(bytes.TrimSpace(v))
+	var vars []string
+	for p.codeStack.Peek() != nil {
+		if val, check := p.codeStack.Pop().(*valVariable); !check {
+			err = fmt.Errorf("Unexpected variable type %v, variable expected", val)
+			return
+		} else {
+			vars = append([]string{val.name}, vars...)
+		}
 	}
-	fmt.Println(names)
+	fmt.Println("VARS", vars)
 	/////////////////////////////////////
 	p.IncPos()
 	// Парсим значения (их может быть меньше, чем наименований из-за возвращаемых знаечений функции), но не больше
 	var values []token
-	for {
-		var t token
-		if t, err = p.parseToEndLine(); err == nil {
-			values = append(values, t)
-			p.PassSpaces()
-			if p.IsEndLine() {
-				break
-			} else if p.Char() == ',' {
-				p.IncPos()
-			} else {
-				err = fmt.Errorf("Unexpected symbol [%c], expected [',' or endline]", p.Char())
-				return
-			}
-		} else {
-			err = fmt.Errorf("Set token error :: Value token expected...")
-			fmt.Println(err)
-			return
+	if _, err = p.parseToEndLine(); err == nil {
+		for p.codeStack.Peek() != nil {
+			values = append([]token{p.codeStack.Pop().(token)}, values...)
 		}
 	}
 	p.PassSpaces()
 	if !p.IsEndLine() {
 		err = fmt.Errorf("Unexpected symbol [%c]", p.Char())
 	} else {
-		res = &set{names, values, false}
-		p.IncPos()
+		res = &set{vars, values, false}
 	}
-	//fmt.Println("SSSEETTT >>", names, values)
 	return
 }
 

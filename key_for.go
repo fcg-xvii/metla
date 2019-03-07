@@ -69,11 +69,19 @@ func newCycleIn(index token, p *parser) (t token, err error) {
 
 	fmt.Println("ELC", string(p.EndLineContent()))
 	p.ForwardPos(2)
-	var left token
+	var (
+		left token
+		name string
+	)
 	if left, err = initVal(p); err != nil {
 		return
+	} else {
+		v, check := left.(*varVariable); !check {
+			err = fmt.Errorf("Keyword [for] parse error :: Index var must be variable")
+		}		
 	}
-	p.PassSpaces()
+
+		p.PassSpaces()
 	if p.Char() != ':' {
 		err = fmt.Errorf("Keyword [for] parse error :: unexpected char after left side '%c', ':' expected", p.Char())
 	}
@@ -93,11 +101,41 @@ func newCycleIn(index token, p *parser) (t token, err error) {
 /////////////////////////////////////////////////////////////////////////////////////////
 
 type cycleIn struct {
+	indexVarName string
 	*cycle
 	left, right token
 }
 
-func (s *cycleIn) execObject(*storage, *template) (res execObject, err error) {
+func (s *cycleIn) execObject(sto *storage, tpl *template) (res execObject, err error) {
+	sto.newLayout()
+	defer sto.dropLayout()
+	var indexObj execObject
+	if indexObj, err = s.index.execObject(sto, tpl); err == nil {
+		if index, check := indexObj.(*valVariableExec); !check {
+			err = fmt.Errorf("Cycle prepare error :: index var must be variable type")
+		} else {
+			var leftObj, rightObj execObject
+			if leftObj, err = s.left.execObject(sto, tpl); err != nil {
+				return
+			}
+			if rightObj, err = s.right.execObject(sto, tpl); err != nil {
+				return
+			}
+			in := &cycleInExec{
+				cycleExec: &cycleExec{index: index.v, childs: make([]execObject, len(s.childs))},
+				left:      leftObj,
+				right:     rightObj,
+			}
+			for i, v := range s.childs {
+				if leftObj, err = v.execObject(sto, tpl); err == nil {
+					in.childs[i] = leftObj
+				} else {
+					return
+				}
+			}
+			res = in
+		}
+	}
 	return
 }
 
@@ -123,10 +161,10 @@ func (s *cycleInExec) Data(w io.Writer) (err error) {
 		return
 	}
 	if lNum, check = checkIfaceInt(lVal); !check {
-		w.Write([]byte(fmt.Sprint("Cycle exec error :: left value must be integer, not [%v]", reflect.ValueOf(lVal).Kind())))
+		w.Write([]byte(fmt.Sprintf("Cycle exec error :: left value must be integer, not [%v]", reflect.ValueOf(lVal).Kind())))
 	}
 	if rNum, check = checkIfaceInt(lVal); !check {
-		w.Write([]byte(fmt.Sprint("Cycle exec error :: right value must be integer, not [%v]", reflect.ValueOf(rVal).Kind())))
+		w.Write([]byte(fmt.Sprintf("Cycle exec error :: right value must be integer, not [%v]", reflect.ValueOf(rVal).Kind())))
 	}
 	for {
 		if lNum > rNum {
@@ -141,3 +179,16 @@ func (s *cycleInExec) Data(w io.Writer) (err error) {
 		lNum++
 	}
 }
+
+func (s *cycleInExec) IsNil() bool {
+	return false
+}
+
+func (s *cycleInExec) String() string {
+	return "[cycle in...]"
+}
+
+func (s *cycleInExec) Type() reflect.Kind           { return reflect.Invalid }
+func (s *cycleInExec) Val() (interface{}, error)    { return nil, nil }
+func (s *cycleInExec) Vals() ([]interface{}, error) { return nil, nil }
+func (s *cycleInExec) ValSingle() bool              { return true }

@@ -84,3 +84,7 @@ func (s *valVariableExec) Val() (interface{}, error) {
 func (s *valVariableExec) Vals() ([]interface{}, error) {
 	return []interface{}{s.v.value}, nil
 }
+
+/*func (s *valVariable) Data(w io.Writer) (err error) {
+	return
+}*/

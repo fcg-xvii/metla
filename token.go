@@ -39,7 +39,7 @@ func checkKindInt(t reflect.Kind) bool {
 
 func checkIfaceInt(i interface{}) (res int64, check bool) {
 	val := reflect.ValueOf(i)
-	if check = checkKindInt(val); check {
+	if check = checkKindInt(val.Kind()); check {
 		res = val.Int()
 	}
 	return

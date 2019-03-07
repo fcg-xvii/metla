@@ -5,11 +5,12 @@ import (
 	_ "errors"
 	"fmt"
 	"io"
+	"reflect"
 )
 
 func initSet(prefix []byte, p *parser) (res *set, err error) {
 	// Парсим наименования переменных
-	fmt.Println("PREFIX", prefix)
+	//fmt.Println("PREFIX", prefix)
 	var names []string
 	sNames := bytes.Split(prefix, []byte{','})
 	names = make([]string, len(sNames))
@@ -24,23 +25,19 @@ func initSet(prefix []byte, p *parser) (res *set, err error) {
 	for {
 		var t token
 		if t, err = p.parseToEndLine(); err == nil {
-			if val, check := t.(value); check {
-				values = append(values, val)
-				p.PassSpaces()
-				if p.IsEndLine() {
-					break
-				} else if p.Char() == ',' {
-					p.IncPos()
-				} else {
-					err = fmt.Errorf("Unexpected symbol [%c], expected [',' or endline]", p.Char())
-					return
-				}
+			values = append(values, t)
+			p.PassSpaces()
+			if p.IsEndLine() {
+				break
+			} else if p.Char() == ',' {
+				p.IncPos()
 			} else {
-				err = fmt.Errorf("Set token error :: Value token expected...")
-				fmt.Println(err)
+				err = fmt.Errorf("Unexpected symbol [%c], expected [',' or endline]", p.Char())
 				return
 			}
 		} else {
+			err = fmt.Errorf("Set token error :: Value token expected...")
+			fmt.Println(err)
 			return
 		}
 	}
@@ -51,7 +48,7 @@ func initSet(prefix []byte, p *parser) (res *set, err error) {
 		res = &set{names, values, false}
 		p.IncPos()
 	}
-	fmt.Println("SSSEETTT >>", names, values)
+	//fmt.Println("SSSEETTT >>", names, values)
 	return
 }
 
@@ -84,6 +81,7 @@ func (s *set) execObject(sto *storage, tpl *template) (res execObject, err error
 			return
 		}
 	}
+	res = &execObjectSet{vars, vals}
 	return
 }
 
@@ -149,39 +147,15 @@ func (s *execObjectSet) setupVariable(varIndex, valIndex int) (count int, err er
 	return
 }
 
-/*func (s *execObjectSet) Data(w io.Writer) (err error) {
-	count := 0
-	if len(s.values) == 1 {
-		_, err = s.setupVariable(0, 0)
-	} else {
-		var varIndex, count int
-		for i, v := range s.values {
-			if count, err = s.setupVariable(varIndex, i); err == nil && varIndex+count < len(s.vars) {
-				varIndex += count
-			} else {
-				return
-			}
-		}
-	}
-	return
+func (s *execObjectSet) IsNil() bool {
+	return false
 }
 
-func (s *execObjectSet) setupVariable(varIndex, valIndex int) (count int, err error) {
-	val := s.values[valIndex]
-	count = val.ValsCount()
-	if count == 0 {
-		err = errors.New("Set exec error :: token values result count is 0. Count must be > 0")
-	} else if count == 1 {
-		s.vars[varIndex].value = val.Val()
-	} else {
-		var index int
-		for i, v := range val.Vals() {
-			if index = varIndex + i; index < len(s.vars) {
-				s.vars[varIndex+i].value = v
-			} else {
-				return
-			}
-		}
-	}
-	return
-}*/
+func (s *execObjectSet) String() string {
+	return "[set...]"
+}
+
+func (s *execObjectSet) Type() reflect.Kind           { return reflect.Invalid }
+func (s *execObjectSet) Val() (interface{}, error)    { return nil, nil }
+func (s *execObjectSet) Vals() ([]interface{}, error) { return nil, nil }
+func (s *execObjectSet) ValSingle() bool              { return true }

@@ -20,7 +20,7 @@ type tokenParent interface {
 // Интерфейс контейнера значения
 type value interface {
 	token
-	Val() interface{}
+	Val() (interface{}, error)
 }
 
 type execObject interface {

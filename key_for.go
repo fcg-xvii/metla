@@ -66,22 +66,23 @@ type cycleExec struct {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func newCycleIn(index token, p *parser) (t token, err error) {
-
-	fmt.Println("ELC", string(p.EndLineContent()))
 	p.ForwardPos(2)
 	var (
-		left token
-		name string
+		left         token
+		indexVarName string
 	)
 	if left, err = initVal(p); err != nil {
 		return
 	} else {
-		v, check := left.(*varVariable); !check {
+		if v, check := index.(*valVariable); !check {
 			err = fmt.Errorf("Keyword [for] parse error :: Index var must be variable")
-		}		
+			return
+		} else {
+			indexVarName = v.name
+		}
 	}
 
-		p.PassSpaces()
+	p.PassSpaces()
 	if p.Char() != ':' {
 		err = fmt.Errorf("Keyword [for] parse error :: unexpected char after left side '%c', ':' expected", p.Char())
 	}
@@ -90,8 +91,7 @@ func newCycleIn(index token, p *parser) (t token, err error) {
 	if right, err = initVal(p); err != nil {
 		return
 	}
-	fmt.Println("LRRRRR", left, right)
-	in := cycleIn{&cycle{index, nil}, left, right}
+	in := cycleIn{indexVarName, &cycle{index, nil}, left, right}
 	if err = p.parseCodeToCloseTag("endfor", &in); err == nil {
 		t = &in
 	}
@@ -109,6 +109,7 @@ type cycleIn struct {
 func (s *cycleIn) execObject(sto *storage, tpl *template) (res execObject, err error) {
 	sto.newLayout()
 	defer sto.dropLayout()
+	sto.appendValue(s.indexVarName, nil)
 	var indexObj execObject
 	if indexObj, err = s.index.execObject(sto, tpl); err == nil {
 		if index, check := indexObj.(*valVariableExec); !check {
@@ -152,6 +153,8 @@ func (s *cycleInExec) Data(w io.Writer) (err error) {
 		lNum, rNum int64
 		check      bool
 	)
+
+	// Получаем значения левой и правой части условия цикла
 	if lVal, err = s.left.Val(); err != nil {
 		_, err = w.Write([]byte(err.Error()))
 		return
@@ -160,23 +163,45 @@ func (s *cycleInExec) Data(w io.Writer) (err error) {
 		_, err = w.Write([]byte(err.Error()))
 		return
 	}
+
+	// Проверяем, чтобы их значения были целочисленными
 	if lNum, check = checkIfaceInt(lVal); !check {
 		w.Write([]byte(fmt.Sprintf("Cycle exec error :: left value must be integer, not [%v]", reflect.ValueOf(lVal).Kind())))
 	}
-	if rNum, check = checkIfaceInt(lVal); !check {
+	if rNum, check = checkIfaceInt(rVal); !check {
 		w.Write([]byte(fmt.Sprintf("Cycle exec error :: right value must be integer, not [%v]", reflect.ValueOf(rVal).Kind())))
 	}
+
+	// Определяем условие - инкремент или декремент
+	inc := true
+	if lNum > rNum {
+		inc = false
+	}
+
+	//fmt.Println(s.childs)
+
+	// Проход основного цикла
 	for {
-		if lNum > rNum {
-			return nil
+		// Завершаем при условном равенстве
+		if lNum == rNum {
+			return
 		}
-		s.index.value = lNum
+
+		s.index.value = lNum // Присваиваем  значение индексу
+
+		// Проходим по дочерним элементам
 		for _, v := range s.childs {
 			if err := v.Data(w); err != nil {
 				return err
 			}
 		}
-		lNum++
+
+		// Сдвигаем индекс дальше
+		if inc {
+			lNum++
+		} else {
+			lNum--
+		}
 	}
 }
 

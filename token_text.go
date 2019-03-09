@@ -7,6 +7,7 @@ import (
 )
 
 type tokenText struct {
+	*rawInfoRecord
 	src []byte
 }
 

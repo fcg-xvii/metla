@@ -54,6 +54,7 @@ func (s *parser) parseDocument() (err error) {
 					s.flushTextToken()
 					s.ForwardPos(2)
 					err = s.parseCode()
+
 				}
 			default:
 				{
@@ -249,4 +250,8 @@ func (s *parser) ParseArgs(stop byte) (err error) {
 
 func (s *parser) positionError(text string) error {
 	return fmt.Errorf("Error [%v %v:%v]: %v", s.tpl.objPath, s.MarkLine(), s.MarkLinePos(), text)
+}
+
+func (s *parser) infoRecordFromMark() *rawInfoRecord {
+	return &rawInfoRecord{tplName: s.tpl.objPath, line: s.MarkLine(), pos: s.MarkLinePos()}
 }

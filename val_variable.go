@@ -34,12 +34,13 @@ func newValVariable(p *parser) (res token, err error) {
 	if name, check := p.ReadName(); !check {
 		err = errors.New("Variable parse error :: Unexpected name")
 	} else {
-		res = &valVariable{string(name)}
+		res = &valVariable{p.infoRecordFromMark(), string(name)}
 	}
 	return
 }
 
 type valVariable struct {
+	*rawInfoRecord
 	name string
 }
 
@@ -61,6 +62,7 @@ func (s *valVariable) execObject(sto *storage, tpl *template) (execObject, error
 ///////////////////////////////////////////////////////////////////
 
 type valVariableExec struct {
+	*rawInfoRecord
 	v *variable
 }
 

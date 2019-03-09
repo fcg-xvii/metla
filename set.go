@@ -9,17 +9,26 @@ import (
 
 func initSet(p *parser) (res *set, err error) {
 	// Парсим наименования переменных
-	//fmt.Println("PREFIX", prefix)
-	var vars []string
+	var (
+		vars []string
+		v    interface{}
+	)
+	// Пока стек не пустой
 	for p.codeStack.Peek() != nil {
-		if val, check := p.codeStack.Pop().(*valVariable); !check {
-			err = fmt.Errorf("Unexpected variable type %v, variable expected", val)
+		v = p.codeStack.Pop() // Достаём токен из стека
+		// Если токен не является наименованием переменной, возвращаем ошибку или добавляем наименование переменной в список
+		if val, check := v.(*valVariable); !check {
+			err = fmt.Errorf("Unexpected variable type %v, variable name expected", v)
 			return
 		} else {
 			vars = append([]string{val.name}, vars...)
 		}
 	}
-	fmt.Println("VARS", vars)
+	// Если список наименований переменных пуст, возвращаем ошибку
+	if len(vars) == 0 {
+		err = fmt.Errorf("Set left side is empty")
+		return
+	}
 	/////////////////////////////////////
 	p.IncPos()
 	// Парсим значения (их может быть меньше, чем наименований из-за возвращаемых знаечений функции), но не больше

@@ -53,6 +53,7 @@ loop:
 /////////////////////////////////////////////////////////////////
 
 type valArray struct {
+	*rawInfoRecord
 	vals []token
 }
 
@@ -76,6 +77,7 @@ func (s *valArray) execObject(sto *storage, tpl *template) (res execObject, err 
 //////////////////////////////////////////////////////////////////
 
 type valArrayExec struct {
+	*rawInfoRecord
 	vals []execObject
 }
 
@@ -170,6 +172,7 @@ func (s *valObject) execObject(sto *storage, tpl *template) (res execObject, err
 ///////////////////////////////////////////////////////////////////
 
 type valObjectExec struct {
+	*rawInfoRecord
 	vals map[string]execObject
 }
 

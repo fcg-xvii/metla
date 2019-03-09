@@ -11,6 +11,7 @@ type token interface {
 	execObject(*storage, *template) (execObject, error)
 	IsExecutable() bool
 	String() string
+	fatalError(string) error
 }
 
 // Интерфейс токена, который может содержать блок дочерних токенов
@@ -32,6 +33,7 @@ type execObject interface {
 	ValSingle() bool
 	IsNil() bool
 	String() string
+	positionWarning(string) error
 }
 
 func checkKindInt(t reflect.Kind) bool {
@@ -51,10 +53,10 @@ type rawInfoRecord struct {
 	line, pos int
 }
 
-func (s *rawInfoRecord) positionWarning(text string) error {
-	return fmt.Errorf("Warning [%v %v:%v]: %v", s.tplName, s.line, s.pos, text)
-}
-
 func (s *rawInfoRecord) fatalError(text string) error {
 	return fmt.Errorf("Fatal error [%v %v:%v]: %v", s.tplName, s.line, s.pos, text)
+}
+
+func (s *rawInfoRecord) positionWarning(text string) error {
+	return fmt.Errorf("Warning [%v %v:%v]: %v", s.tplName, s.line, s.pos, text)
 }

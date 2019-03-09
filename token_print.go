@@ -6,6 +6,7 @@ import (
 )
 
 type tokenPrint struct {
+	*rawInfoRecord
 	val token
 }
 

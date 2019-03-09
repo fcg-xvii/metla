@@ -73,12 +73,13 @@ func newValInt(p *parser) (token, error) {
 	for !p.IsEndDocument() && lineman.CheckNumber(p.Char()) {
 		p.IncPos()
 	}
-	res := new(valInt)
+	res := &valInt{rawInfoRecord: p.infoRecordFromMark()}
 	res.val, _ = strconv.ParseInt(p.MarkValString(0), 10, 64)
 	return res, nil
 }
 
 type valInt struct {
+	*rawInfoRecord
 	val int64
 }
 
@@ -124,6 +125,7 @@ func newValFloat(p *parser) (token, error) {
 }
 
 type valFloat struct {
+	*rawInfoRecord
 	val float64
 }
 

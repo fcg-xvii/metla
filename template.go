@@ -37,7 +37,7 @@ func (s *template) execute(w io.Writer, vals map[string]interface{}) error {
 			s.locker.Lock()
 			if content, newMark, state := s.root.content(s.objPath, s.updateMark); state == UpdateNeeded {
 				s.updateMark = newMark
-				s.parse(content)
+				s.err = s.parse(content)
 			}
 			s.locker.Unlock()
 		}

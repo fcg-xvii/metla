@@ -25,7 +25,7 @@ func newKeyInclude(p *parser) (t token, err error) {
 					if !p.IsEndDocument() || !p.IsEndLine() {
 						err = fmt.Errorf("Include parse error :: Unespected symbol [%c], end line expected", p.Char())
 					} else {
-						t = &keyInclude{tplPath: pathToken, params: paramsToken}
+						t = &keyInclude{rawInfoRecord: p.infoRecordFromMark(), tplPath: pathToken, params: paramsToken}
 						//fmt.Println("INCLUDE", t)
 					}
 				}
@@ -36,6 +36,7 @@ func newKeyInclude(p *parser) (t token, err error) {
 }
 
 type keyInclude struct {
+	*rawInfoRecord
 	tplPath token
 	params  token
 }
@@ -65,7 +66,7 @@ func (s *keyInclude) execObject(sto *storage, tpl *template) (res execObject, er
 			return
 		}
 		sto.dropLayout()
-		res = &execObjectInclude{tplRes}
+		res = &execObjectInclude{s.rawInfoRecord, tplRes}
 	}
 	return
 }
@@ -79,6 +80,7 @@ func (s *keyInclude) IsExecutable() bool { return true }
 ////////////////////////////////////////////////////////////////////
 
 type execObjectInclude struct {
+	*rawInfoRecord
 	tpl *templateResult
 }
 

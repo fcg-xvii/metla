@@ -31,6 +31,7 @@ func newKeyFor(p *parser) (t token, err error) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type cycle struct {
+	*rawInfoRecord
 	index  token
 	childs []token
 }
@@ -59,6 +60,7 @@ func (s *cycle) appendChild(t token) {
 }
 
 type cycleExec struct {
+	*rawInfoRecord
 	index  *variable
 	childs []execObject
 }
@@ -91,7 +93,7 @@ func newCycleIn(index token, p *parser) (t token, err error) {
 	if right, err = initVal(p); err != nil {
 		return
 	}
-	in := cycleIn{indexVarName, &cycle{index, nil}, left, right}
+	in := cycleIn{indexVarName, &cycle{p.infoRecordFromMark(), index, nil}, left, right}
 	if err = p.parseCodeToCloseTag("endfor", &in); err == nil {
 		t = &in
 	}
@@ -143,6 +145,7 @@ func (s *cycleIn) execObject(sto *storage, tpl *template) (res execObject, err e
 /////////////////////////////////////////////////////////////////////////////////////////
 
 type cycleInExec struct {
+	*rawInfoRecord
 	*cycleExec
 	left, right execObject
 }

@@ -42,7 +42,7 @@ func (s *template) execute(w io.Writer, vals map[string]interface{}) error {
 			s.locker.Unlock()
 		}
 	}
-	fmt.Println("Update proceed...", s.err)
+	fmt.Println("Update proceed...")
 	if s.err != nil {
 		return s.err
 	}
@@ -69,7 +69,7 @@ func (s *template) result(sto *storage) (*templateResult, error) {
 	}
 	res := &templateResult{make([]execObject, 0, len(s.tokenList))}
 	for _, v := range s.tokenList {
-		if eObj, err := v.execObject(sto, s); err == nil {
+		if eObj, err := v.execObject(sto, s, nil); err == nil {
 			res.list = append(res.list, eObj)
 		} else {
 			s.locker.RUnlock()

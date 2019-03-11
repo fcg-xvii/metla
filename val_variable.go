@@ -1,7 +1,6 @@
 package metla
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -32,7 +31,7 @@ func checkValVariable(src []byte) bool {
 // Конструктор строки.
 func newValVariable(p *parser) (res token, err error) {
 	if name, check := p.ReadName(); !check {
-		err = errors.New("Variable parse error :: Unexpected name")
+		err = p.positionError("Variable parse error :: Unexpected name")
 	} else {
 		res = &valVariable{p.infoRecordFromMark(), string(name)}
 	}
@@ -51,11 +50,11 @@ func (s *valVariable) Val() interface{} {
 func (s *valVariable) String() string     { return "[variable :: { " + s.name + " }]" }
 func (s *valVariable) IsExecutable() bool { return false }
 
-func (s *valVariable) execObject(sto *storage, tpl *template) (execObject, error) {
+func (s *valVariable) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
 	if v, check := sto.findVariable(s.name); !check {
 		return nil, fmt.Errorf("Variable not found [%v]", s.name)
 	} else {
-		return &valVariableExec{v}, nil
+		return &valVariableExec{s.rawInfoRecord, v}, nil
 	}
 }
 
@@ -85,4 +84,8 @@ func (s *valVariableExec) Val() (interface{}, error) {
 
 func (s *valVariableExec) Vals() ([]interface{}, error) {
 	return []interface{}{s.v.value}, nil
+}
+
+func (s *valVariableExec) receiveEvent(name string, params []interface{}) bool {
+	return false
 }

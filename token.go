@@ -8,7 +8,7 @@ import (
 
 // Общий интерфейс объекта результирующих данных
 type token interface {
-	execObject(*storage, *template) (execObject, error)
+	execObject(sto *storage, tpl *template, parent execObject) (execObject, error)
 	IsExecutable() bool
 	String() string
 	fatalError(string) error
@@ -34,6 +34,7 @@ type execObject interface {
 	IsNil() bool
 	String() string
 	positionWarning(string) error
+	receiveEvent(name string, params []interface{}) bool
 }
 
 func checkKindInt(t reflect.Kind) bool {
@@ -59,4 +60,21 @@ func (s *rawInfoRecord) fatalError(text string) error {
 
 func (s *rawInfoRecord) positionWarning(text string) error {
 	return fmt.Errorf("Warning [%v %v:%v]: %v", s.tplName, s.line, s.pos, text)
+}
+
+type eventExec struct {
+	parent execObject
+}
+
+func (s *eventExec) sendEvent(name string, params []interface{}) {
+	if s.parent != nil {
+		//s.parent.re
+	}
+}
+
+func (s *eventExec) receiveEvent(name string, params []interface{}) bool {
+	if s.parent != nil {
+		return s.parent.receiveEvent(name, params)
+	}
+	return false
 }

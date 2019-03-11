@@ -11,7 +11,7 @@ type tokenText struct {
 	src []byte
 }
 
-func (s *tokenText) execObject(*storage, *template) (execObject, error) {
+func (s *tokenText) execObject(*storage, *template, execObject) (execObject, error) {
 	return s, nil
 }
 
@@ -23,6 +23,8 @@ func (s *tokenText) Data(w io.Writer) (err error) {
 func (s *tokenText) String() string {
 	return "[text :: { []byte :: len:" + strconv.Itoa(len(s.src)) + " }]"
 }
+
+func (s *tokenText) receiveEvent(name string, params []interface{}) bool { return false }
 
 func (s *tokenText) IsExecutable() bool           { return false }
 func (s *tokenText) IsNil() bool                  { return false }

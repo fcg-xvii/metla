@@ -41,9 +41,9 @@ type keyInclude struct {
 	params  token
 }
 
-func (s *keyInclude) execObject(sto *storage, tpl *template) (res execObject, err error) {
+func (s *keyInclude) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	var tplPath execObject
-	if tplPath, err = s.tplPath.execObject(sto, tpl); err == nil {
+	if tplPath, err = s.tplPath.execObject(sto, tpl, parent); err == nil {
 		if tplPath.Type() != reflect.String {
 			err = fmt.Errorf("Include token exec error :: Unexpected include path token [%s], expected [string] type", tplPath.Type())
 			return
@@ -54,7 +54,7 @@ func (s *keyInclude) execObject(sto *storage, tpl *template) (res execObject, er
 		sto.newLayout()
 		if s.params != nil {
 			var params execObject
-			if params, err = s.params.execObject(sto, tpl); err != nil {
+			if params, err = s.params.execObject(sto, tpl, nil); err != nil {
 				return
 			}
 			for key, val := range params.(*valObjectExec).Map() {
@@ -66,7 +66,7 @@ func (s *keyInclude) execObject(sto *storage, tpl *template) (res execObject, er
 			return
 		}
 		sto.dropLayout()
-		res = &execObjectInclude{s.rawInfoRecord, tplRes}
+		res = &execObjectInclude{s.rawInfoRecord, &eventExec{parent}, tplRes}
 	}
 	return
 }
@@ -81,6 +81,7 @@ func (s *keyInclude) IsExecutable() bool { return true }
 
 type execObjectInclude struct {
 	*rawInfoRecord
+	*eventExec
 	tpl *templateResult
 }
 

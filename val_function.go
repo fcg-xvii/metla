@@ -81,18 +81,20 @@ func (s *valFunction) String() string {
 	return res
 }
 
-func (s *valFunction) execObject(sto *storage, tpl *template) (res execObject, err error) {
+func (s *valFunction) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
+	fObj := valFunctionExec{rawInfoRecord: s.rawInfoRecord}
 	if f, check := sto.findVariable(s.name); check {
 		if f.Kind() != reflect.Func {
 			err = s.fatalError(fmt.Sprintf("Unexpected variable type [%v], [Func] expected", f.Kind()))
 		} else {
 			args := make([]execObject, len(s.args))
 			for i, v := range s.args {
-				if args[i], err = v.execObject(sto, tpl); err != nil {
+				if args[i], err = v.execObject(sto, tpl, &fObj); err != nil {
 					return
 				}
 			}
-			res = &valFunctionExec{s.rawInfoRecord, f, args}
+			fObj.f, fObj.args, res = f, args, &fObj
+			//res = &valFunctionExec{s.rawInfoRecord, f, args}
 		}
 	} else {
 		err = s.fatalError(fmt.Sprintf("Function [%s] not found", s.name))
@@ -189,3 +191,5 @@ func (s *valFunctionExec) call() (res []reflect.Value, err error) {
 	}
 	return
 }
+
+func (s *valFunctionExec) receiveEvent(name string, params []interface{}) bool { return false }

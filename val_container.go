@@ -45,7 +45,7 @@ loop:
 			}
 		}
 	}
-	res = &valArray{vals}
+	res = &valArray{p.infoRecordFromMark(), vals}
 	fmt.Println(res)
 	return
 }
@@ -63,14 +63,14 @@ func (s *valArray) String() string {
 
 func (s *valArray) IsExecutable() bool { return false }
 
-func (s *valArray) execObject(sto *storage, tpl *template) (res execObject, err error) {
+func (s *valArray) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	vals := make([]execObject, len(s.vals))
 	for i, v := range s.vals {
-		if vals[i], err = v.execObject(sto, tpl); err != nil {
+		if vals[i], err = v.execObject(sto, tpl, nil); err != nil {
 			return
 		}
 	}
-	res = &valArrayExec{vals}
+	res = &valArrayExec{s.rawInfoRecord, vals}
 	return
 }
 
@@ -96,6 +96,8 @@ func (s *valArrayExec) Type() reflect.Kind { return reflect.Slice }
 func (s *valArrayExec) Val() (interface{}, error)    { return s.vals, nil }
 func (s *valArrayExec) Vals() ([]interface{}, error) { return []interface{}{s.vals}, nil }
 func (s *valArrayExec) ValSingle() bool              { return true }
+
+func (s *valArrayExec) receiveEvent(name string, params []interface{}) bool { return false }
 
 //////////////////////////////////////////////////////////////////
 
@@ -139,12 +141,13 @@ loop:
 			return
 		}
 	}
-	res = &valObject{m}
+	res = &valObject{p.infoRecordFromMark(), m}
 	fmt.Println("==================", res)
 	return
 }
 
 type valObject struct {
+	*rawInfoRecord
 	vals map[string]token
 }
 
@@ -158,14 +161,14 @@ func (s *valObject) String() string {
 
 func (s *valObject) IsExecutable() bool { return false }
 
-func (s *valObject) execObject(sto *storage, tpl *template) (res execObject, err error) {
+func (s *valObject) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	vals := make(map[string]execObject)
 	for key, val := range s.vals {
-		if vals[key], err = val.execObject(sto, tpl); err == nil {
+		if vals[key], err = val.execObject(sto, tpl, nil); err == nil {
 			return
 		}
 	}
-	res = &valObjectExec{vals}
+	res = &valObjectExec{s.rawInfoRecord, vals}
 	return
 }
 
@@ -192,3 +195,5 @@ func (s *valObjectExec) Val() (interface{}, error)    { return s.vals, nil }
 func (s *valObjectExec) Vals() ([]interface{}, error) { return []interface{}{s.vals}, nil }
 func (s *valObjectExec) ValSingle() bool              { return true }
 func (s *valObjectExec) Map() map[string]execObject   { return s.vals }
+
+func (s *valObjectExec) receiveEvent(name string, params []interface{}) bool { return false }

@@ -30,7 +30,7 @@ func (s *parser) IsEndCode() bool {
 
 func (s *parser) flushTextToken() {
 	if content := s.MarkVal(0); len(content) > 0 {
-		s.tpl.tokenList = append(s.tpl.tokenList, &tokenText{content})
+		s.tpl.tokenList = append(s.tpl.tokenList, &tokenText{s.infoRecordFromMark(), content})
 	}
 }
 
@@ -76,7 +76,7 @@ func (s *parser) parsePrint() error {
 		if !s.PosMatchSlice([]byte("}}")) {
 			return errors.New("Document parse error :: Unexpected end of print token")
 		} else {
-			s.tpl.tokenList = append(s.tpl.tokenList, &tokenPrint{token})
+			s.tpl.tokenList = append(s.tpl.tokenList, &tokenPrint{s.infoRecordFromMark(), token})
 			s.ForwardPos(2)
 			return nil
 		}
@@ -201,9 +201,7 @@ func (s *parser) parseToEndLine() (res token, err error) {
 			switch opType {
 			case opSet:
 				{
-					if res, err = initSet(s); err != nil {
-						err = s.InitError(err.Error())
-					}
+					res, err = initSet(s)
 					return
 				}
 			}

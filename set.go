@@ -11,14 +11,14 @@ func initSet(p *parser) (res *set, err error) {
 	// Парсим наименования переменных
 	var (
 		vars []string
-		v    interface{}
+		v    token
 	)
 	// Пока стек не пустой
 	for p.codeStack.Peek() != nil {
-		v = p.codeStack.Pop() // Достаём токен из стека
+		v = p.codeStack.Pop().(token) // Достаём токен из стека
 		// Если токен не является наименованием переменной, возвращаем ошибку или добавляем наименование переменной в список
 		if val, check := v.(*valVariable); !check {
-			err = fmt.Errorf("Unexpected variable type %v, variable name expected", v)
+			err = v.fatalError(fmt.Sprintf("Unexpected variable type %v, variable name expected", v))
 			return
 		} else {
 			vars = append([]string{val.name}, vars...)
@@ -42,18 +42,19 @@ func initSet(p *parser) (res *set, err error) {
 	if !p.IsEndLine() {
 		err = fmt.Errorf("Unexpected symbol [%c]", p.Char())
 	} else {
-		res = &set{vars, values, false}
+		res = &set{p.infoRecordFromMark(), vars, values, false}
 	}
 	return
 }
 
 type set struct {
+	*rawInfoRecord
 	names  []string
 	values []token
 	create bool
 }
 
-func (s *set) execObject(sto *storage, tpl *template) (res execObject, err error) {
+func (s *set) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	vars, vals := make([]*variable, len(s.names)), make([]execObject, len(s.values))
 	if s.create {
 		for i, v := range s.names {
@@ -72,11 +73,11 @@ func (s *set) execObject(sto *storage, tpl *template) (res execObject, err error
 		}
 	}
 	for i, v := range s.values {
-		if vals[i], err = v.execObject(sto, tpl); err != nil {
+		if vals[i], err = v.execObject(sto, tpl, nil); err != nil {
 			return
 		}
 	}
-	res = &execObjectSet{vars, vals}
+	res = &execObjectSet{s.rawInfoRecord, &eventExec{parent}, vars, vals}
 	return
 }
 
@@ -95,6 +96,8 @@ func (s *set) String() string { return "[set {}}" }
 //////////////////////////////////////////////////////////////////////
 
 type execObjectSet struct {
+	*rawInfoRecord
+	*eventExec
 	vars   []*variable
 	values []execObject
 }

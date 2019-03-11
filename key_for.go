@@ -11,7 +11,6 @@ func init() {
 }
 
 func newKeyFor(p *parser) (t token, err error) {
-	fmt.Println("FOR_ERROR", string(p.EndLineContent()))
 	var index token
 	p.PassSpaces()
 	if index, err = newValVariable(p); err != nil {
@@ -61,6 +60,7 @@ func (s *cycle) appendChild(t token) {
 
 type cycleExec struct {
 	*rawInfoRecord
+	*eventExec
 	index  *variable
 	childs []execObject
 }
@@ -68,6 +68,7 @@ type cycleExec struct {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func newCycleIn(index token, p *parser) (t token, err error) {
+	fmt.Println("CYCLE_IN" + string(p.EndLineContent()))
 	p.ForwardPos(2)
 	var (
 		left         token
@@ -108,29 +109,32 @@ type cycleIn struct {
 	left, right token
 }
 
-func (s *cycleIn) execObject(sto *storage, tpl *template) (res execObject, err error) {
+func (s *cycleIn) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	sto.newLayout()
 	defer sto.dropLayout()
 	sto.appendValue(s.indexVarName, nil)
 	var indexObj execObject
-	if indexObj, err = s.index.execObject(sto, tpl); err == nil {
+	if indexObj, err = s.index.execObject(sto, tpl, nil); err == nil {
 		if index, check := indexObj.(*valVariableExec); !check {
 			err = fmt.Errorf("Cycle prepare error :: index var must be variable type")
 		} else {
 			var leftObj, rightObj execObject
-			if leftObj, err = s.left.execObject(sto, tpl); err != nil {
+			if leftObj, err = s.left.execObject(sto, tpl, nil); err != nil {
 				return
 			}
-			if rightObj, err = s.right.execObject(sto, tpl); err != nil {
+			if rightObj, err = s.right.execObject(sto, tpl, nil); err != nil {
 				return
 			}
 			in := &cycleInExec{
-				cycleExec: &cycleExec{index: index.v, childs: make([]execObject, len(s.childs))},
-				left:      leftObj,
-				right:     rightObj,
+				cycleExec: &cycleExec{
+					index:  index.v,
+					childs: make([]execObject, len(s.childs)),
+				},
+				left:  leftObj,
+				right: rightObj,
 			}
 			for i, v := range s.childs {
-				if leftObj, err = v.execObject(sto, tpl); err == nil {
+				if leftObj, err = v.execObject(sto, tpl, in); err == nil {
 					in.childs[i] = leftObj
 				} else {
 					return
@@ -181,12 +185,10 @@ func (s *cycleInExec) Data(w io.Writer) (err error) {
 		inc = false
 	}
 
-	//fmt.Println(s.childs)
-
 	// Проход основного цикла
 	for {
-		// Завершаем при условном равенстве
-		if lNum == rNum {
+		// Проверяем условие цикла. Выходим при невыполнении
+		if (inc && lNum > rNum) || (!inc && lNum < rNum) {
 			return
 		}
 
@@ -197,6 +199,11 @@ func (s *cycleInExec) Data(w io.Writer) (err error) {
 			if err := v.Data(w); err != nil {
 				return err
 			}
+		}
+
+		if lNum, check = s.index.value.(int64); !check {
+			err = s.positionWarning(fmt.Sprintf("Unexpected cycle index type [%T], int64 expected", s.index.value))
+			return
 		}
 
 		// Сдвигаем индекс дальше

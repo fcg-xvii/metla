@@ -38,7 +38,7 @@ func initVal(p *parser) (res token, err error) {
 	// Получаем данные от текущей позиции до конца строки и определяем возможные типы значений
 	p.SetupMark()
 	if types := getStartTypes(p.EndLineContent()); len(types) == 0 {
-		err = errValueUnexpectedType
+		err = p.positionError(errValueUnexpectedType.Error())
 	} else {
 		res, err = types[0](p)
 	}

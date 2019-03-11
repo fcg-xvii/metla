@@ -41,10 +41,32 @@ func checkKindInt(t reflect.Kind) bool {
 	return t == reflect.Int64 || t == reflect.Int32 || t == reflect.Int16 || t == reflect.Int8 || t == reflect.Int
 }
 
+func checkKindFloat(t reflect.Kind) bool {
+	return t == reflect.Float32 || t == reflect.Float64
+}
+
 func checkIfaceInt(i interface{}) (res int64, check bool) {
 	val := reflect.ValueOf(i)
 	if check = checkKindInt(val.Kind()); check {
 		res = val.Int()
+	}
+	return
+}
+
+func checkIfaceFloat(i interface{}) (res float64, check bool) {
+	val := reflect.ValueOf(i)
+	if check := checkKindFloat(val.Kind()); check {
+		res = val.Float()
+	}
+	return
+}
+
+func checkIfaceNumber(i interface{}) (check, integer bool) {
+	val := reflect.ValueOf(i)
+	if check = checkKindInt(val.Kind()); check {
+		integer = true
+	} else {
+		check = checkKindFloat(val.Kind())
 	}
 	return
 }

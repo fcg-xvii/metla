@@ -1,5 +1,4 @@
 {%
-	for i in 10 : 0
-		print(i)
-	endfor
+	i = 10 + (10 + 5) * 10
+	print(i)
 %}

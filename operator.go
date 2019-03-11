@@ -14,7 +14,7 @@ const (
 
 func checkOpType(ch byte) operatorType {
 	switch ch {
-	case '+', '-', '*', '/', '>', '<', '!':
+	case '+', '-', '*', '/', '(':
 		return opArifmetic
 	case '=':
 		return opSet
@@ -25,13 +25,6 @@ func checkOpType(ch byte) operatorType {
 	}
 }
 
-////////////////////////////////////
-
-// Идентификаторы операторов
-
-////////////////////////////////////
-
-type operator interface {
-	Type() operatorType
-	Data() ([]byte, error)
+func isOpArifmetic(op byte) bool {
+	return op == '+' || op == '-' || op == '*' || op == '/'
 }

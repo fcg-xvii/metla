@@ -26,7 +26,7 @@ func initSet(p *parser) (res *set, err error) {
 	}
 	// Если список наименований переменных пуст, возвращаем ошибку
 	if len(vars) == 0 {
-		err = fmt.Errorf("Set left side is empty")
+		err = p.positionError("Set left side is empty")
 		return
 	}
 	/////////////////////////////////////
@@ -40,7 +40,7 @@ func initSet(p *parser) (res *set, err error) {
 	}
 	p.PassSpaces()
 	if !p.IsEndLine() {
-		err = fmt.Errorf("Unexpected symbol [%c]", p.Char())
+		err = p.positionError(fmt.Sprintf("Unexpected symbol [%c]", p.Char()))
 	} else {
 		res = &set{p.infoRecordFromMark(), vars, values, false}
 	}

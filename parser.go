@@ -200,10 +200,9 @@ func (s *parser) parseToEndLine() (res token, err error) {
 		if opType := checkOpType(s.Char()); opType != opUndefined {
 			switch opType {
 			case opSet:
-				{
-					res, err = initSet(s)
-					return
-				}
+				return initSet(s)
+			case opArifmetic:
+				return initArifmetic(s)
 			}
 		} else if s.Char() == ',' {
 			s.IncPos()

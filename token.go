@@ -6,12 +6,16 @@ import (
 	"reflect"
 )
 
+type positionInformer interface {
+	fatalError(string) error
+}
+
 // Общий интерфейс объекта результирующих данных
 type token interface {
+	positionInformer
 	execObject(sto *storage, tpl *template, parent execObject) (execObject, error)
 	IsExecutable() bool
 	String() string
-	fatalError(string) error
 }
 
 // Интерфейс токена, который может содержать блок дочерних токенов
@@ -22,10 +26,13 @@ type tokenParent interface {
 // Интерфейс контейнера значения
 type value interface {
 	token
+	Type() reflect.Kind
+	IsStatic() bool
 	StaticVal() interface{}
 	Bool() bool
 	Float() float64
 	Int() int64
+	IsNil() bool
 }
 
 type execObject interface {
@@ -72,6 +79,10 @@ func checkIfaceNumber(i interface{}) (check, integer bool) {
 		check = checkKindFloat(val.Kind())
 	}
 	return
+}
+
+func canInt(val float64) bool {
+	return val == float64(int64(val))
 }
 
 type rawInfoRecord struct {

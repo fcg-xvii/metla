@@ -42,6 +42,7 @@ func (s *valBoolean) execObject(*storage, *template, execObject) (execObject, er
 
 func (s *valBoolean) IsExecutable() bool                                  { return false }
 func (s *valBoolean) Type() reflect.Kind                                  { return reflect.Bool }
+func (s *valBoolean) IsStatic() bool                                      { return true }
 func (s *valBoolean) StaticVal() interface{}                              { return s.val }
 func (s *valBoolean) Bool() bool                                          { return s.val }
 func (s *valBoolean) Float() float64                                      { return float64(s.Int()) }
@@ -64,6 +65,7 @@ func (s *valBoolean) String() (res string) {
 	if s.val {
 		res = "true"
 	}
+	res = "[bool { " + res + " }]"
 	return
 }
 
@@ -78,7 +80,7 @@ func (s *valNil) execObject(*storage, *template, execObject) (execObject, error)
 }
 
 func (s *valNil) IsExecutable() bool                                  { return false }
-func (s *valNil) Type() reflect.Kind                                  { return reflect.Bool }
+func (s *valNil) Type() reflect.Kind                                  { return reflect.Invalid }
 func (s *valNil) StaticVal() interface{}                              { return nil }
 func (s *valNil) IsNil() bool                                         { return true }
 func (s *valNil) Val() (interface{}, error)                           { return nil, nil }

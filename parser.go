@@ -197,7 +197,7 @@ func (s *parser) parseToEndLine() (res token, err error) {
 	s.RollbackMark(0)
 	for !s.IsEndLine() && !s.IsEndDocument() && !s.IsEndCode() {
 		s.PassSpaces()
-		if opType := checkOpType(s.Char()); opType != opUndefined {
+		if opType := checkOpType(s.Char(), s.NextChar()); opType != opUndefined {
 			switch opType {
 			case opSet:
 				return initSet(s)

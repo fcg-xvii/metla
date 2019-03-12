@@ -12,19 +12,18 @@ const (
 	opSet
 )
 
-func checkOpType(ch byte) operatorType {
-	switch ch {
-	case '+', '-', '*', '/', '(':
+func checkOpType(lh, rh byte) operatorType {
+	switch lh {
+	case '+', '-', '*', '/', '(', '!':
 		return opArifmetic
 	case '=':
-		return opSet
+		if rh != '=' {
+			return opSet
+		}
+		return opArifmetic
 	case '\n':
 		return opEndLine
 	default:
 		return opUndefined
 	}
-}
-
-func isOpArifmetic(op byte) bool {
-	return op == '+' || op == '-' || op == '*' || op == '/'
 }

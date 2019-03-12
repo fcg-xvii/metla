@@ -83,31 +83,26 @@ type valInt struct {
 	val int64
 }
 
-func (s *valInt) Val() (interface{}, error) {
-	return s.val, nil
-}
-
-func (s *valInt) Vals() ([]interface{}, error) {
-	return []interface{}{s.val}, nil
-}
-
 func (s *valInt) Data(w io.Writer) (err error) {
 	_, err = w.Write([]byte(strconv.FormatInt(s.val, 10)))
 	return
 }
 
-func (s *valInt) String() string     { return "[int :: {" + strconv.FormatInt(s.val, 10) + "}]" }
-func (s *valInt) IsExecutable() bool { return false }
-
 func (s *valInt) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
 	return s, nil
 }
 
+func (s *valInt) Vals() ([]interface{}, error)                        { return []interface{}{s.val}, nil }
+func (s *valInt) Val() (interface{}, error)                           { return s.val, nil }
+func (s *valInt) String() string                                      { return "[int :: {" + strconv.FormatInt(s.val, 10) + "}]" }
+func (s *valInt) IsExecutable() bool                                  { return false }
 func (s *valInt) receiveEvent(name string, params []interface{}) bool { return false }
-
-func (s *valInt) IsNil() bool        { return false }
-func (s *valInt) Type() reflect.Kind { return reflect.Int64 }
-func (s *valInt) ValSingle() bool    { return true }
+func (s *valInt) IsNil() bool                                         { return false }
+func (s *valInt) Type() reflect.Kind                                  { return reflect.Int64 }
+func (s *valInt) ValSingle() bool                                     { return true }
+func (s *valInt) Bool() bool                                          { return s.val != 0 }
+func (s *valInt) Int() int64                                          { return s.val }
+func (s *valInt) Float() float64                                      { return float64(s.val) }
 
 //////////////////////////////////////////////////////////
 
@@ -140,22 +135,20 @@ func (s *valFloat) String() string {
 	return "[float :: {" + strconv.FormatFloat(s.val, 'f', -1, 64) + "}]"
 }
 
-func (s *valFloat) IsExecutable() bool { return false }
-
 func (s *valFloat) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
 	return s, nil
-}
-
-func (s *valFloat) Val() (interface{}, error) {
-	return s.val, nil
 }
 
 func (s *valFloat) Vals() ([]interface{}, error) {
 	return []interface{}{s.val}, nil
 }
 
+func (s *valFloat) Val() (interface{}, error)                           { return s.val, nil }
+func (s *valFloat) IsExecutable() bool                                  { return false }
 func (s *valFloat) receiveEvent(name string, params []interface{}) bool { return false }
-
-func (s *valFloat) IsNil() bool        { return false }
-func (s *valFloat) Type() reflect.Kind { return reflect.Float64 }
-func (s *valFloat) ValSingle() bool    { return true }
+func (s *valFloat) IsNil() bool                                         { return false }
+func (s *valFloat) Type() reflect.Kind                                  { return reflect.Float64 }
+func (s *valFloat) ValSingle() bool                                     { return true }
+func (s *valFloat) Bool() bool                                          { return s.val != 0 }
+func (s *valFloat) Int() int64                                          { return int64(s.val) }
+func (s *valFloat) Float() float64                                      { return s.val }

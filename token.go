@@ -22,7 +22,10 @@ type tokenParent interface {
 // Интерфейс контейнера значения
 type value interface {
 	token
-	Val() (interface{}, error)
+	StaticVal() interface{}
+	Bool() bool
+	Float() float64
+	Int() int64
 }
 
 type execObject interface {

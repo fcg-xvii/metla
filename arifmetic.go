@@ -3,16 +3,51 @@ package metla
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"io"
+	"math"
+	"reflect"
+
+	"github.com/golang-collections/collections/stack"
 )
+
+type operator byte
+
+func (s operator) String() string {
+	switch s {
+	case 43:
+		return "+"
+	case 45:
+		return "-"
+	case 42:
+		return "*"
+	case 47:
+		return "/"
+	case 94:
+		return "^"
+	default:
+		return ""
+	}
+}
+
+func opPriority(op operator) byte {
+	switch op {
+	case '^':
+		return 3
+	case '+', '-':
+		return 1
+	case '*', '/':
+		return 2
+	default:
+		return 0
+	}
+}
 
 var (
 	lNumError = errors.New("left side is not number")
 	rNumError = errors.New("right side is not number")
 )
 
-func arifmeticResultInt(l, r interface{}, op byte) (res interface{}, err error) {
+func arifmeticResult(l, r interface{}, op operator) (res interface{}, err error) {
 	if check, _ := checkIfaceNumber(l); !check {
 		return nil, lNumError
 	}
@@ -30,6 +65,8 @@ func arifmeticResultInt(l, r interface{}, op byte) (res interface{}, err error) 
 			res = lVal.Int() * rVal.Int()
 		case '/':
 			res = lVal.Int() / rVal.Int()
+		case '^':
+			res = math.Pow(float64(lVal.Int()), float64(rVal.Int()))
 		}
 	} else {
 		if checkKindFloat(lVal.Kind()) {
@@ -46,143 +83,131 @@ func arifmeticResultInt(l, r interface{}, op byte) (res interface{}, err error) 
 			res = lVal.Float() * rVal.Float()
 		case '/':
 			res = lVal.Float() / rVal.Float()
+		case '^':
+			res = math.Pow(lVal.Float(), rVal.Float())
 		}
 	}
 	return
 }
 
-func initNestedArifmetic(p *parser) (res *arifmetic, err error) {
-	fmt.Println("NESTED_ARIFMETIC")
-	var (
-		operands         []token
-		operators        []byte
-		operand          token
-		operatorExpected bool
-	)
-	p.SetupMark()
-	for p.Char() != ')' {
+func isOperator(val operator) bool {
+	return val == '+' || val == '-' || val == '*' || val == '/' || val == '^'
+}
+
+func parseRPL(p *parser) (pn []interface{}, err error) {
+	sPn := stack.New()
+	if p.Char() != '(' {
+		if p.codeStack.Len() == 0 {
+			err = p.positionError("Arifmetic left side not found")
+			return
+		}
+		pn = append(pn, p.codeStack.Pop())
+	}
+	for !p.IsEndLine() && p.Char() != ',' {
 		p.PassSpaces()
-		if operatorExpected {
-			//fmt.Println("nested operator expected")
-			if !isOpArifmetic(p.Char()) {
-				err = p.positionError(fmt.Sprintf("Unexpected operator character '%c'", p.Char()))
-				return
-			}
-			operators = append(operators, p.Char())
-			operatorExpected = false
-			p.IncPos()
-		} else {
-			//fmt.Println("nested operand expected", p.MarkLine(), p.MarkLinePos())
-			if p.Char() == '(' {
+		switch p.Char() {
+		case '(':
+			{
+				sPn.Push(byte('('))
+				fmt.Println("OpenBracket", sPn.Peek())
 				p.IncPos()
-				if operand, err = initNestedArifmetic(p); err == nil {
-					operands = append(operands, operand)
-				} else {
-					return
-				}
-			} else {
-				if operand, err = initVal(p); err == nil {
-					operands = append(operands, operand)
-				} else {
-					return
-				}
 			}
-			operatorExpected = true
+		case ')':
+			{
+				accepted := false
+				for sPn.Len() > 0 {
+					if c, check := sPn.Peek().(byte); check && c == '(' {
+						sPn.Pop()
+						accepted = true
+						break
+					} else {
+						pn = append(pn, sPn.Pop())
+					}
+				}
+				if !accepted {
+					err = p.positionError("Not closed bracked in arifmetic expression.")
+					return
+				}
+				p.IncPos()
+			}
+		case '+', '-', '*', '/', '^':
+			{
+				for sPn.Len() > 0 {
+					fmt.Println(sPn.Peek())
+					if val, check := sPn.Peek().(operator); check && isOperator(val) && opPriority(val) >= opPriority(operator(p.Char())) {
+						pn = append(pn, sPn.Pop())
+					} else {
+						break
+					}
+				}
+				sPn.Push(operator(p.Char()))
+				p.IncPos()
+			}
+		default:
+			{
+				var val token
+				if val, err = initVal(p); err != nil {
+					return
+				}
+				pn = append(pn, val)
+			}
 		}
 	}
-	p.IncPos()
-	res = &arifmetic{
-		p.infoRecordFromMark(),
-		operands,
-		operators,
+	for sPn.Len() > 0 {
+		pn = append(pn, sPn.Pop())
 	}
-	fmt.Println(res)
+	return
+}
+
+func simpleRPL(pl []interface{}) (res []interface{}, err error) {
 	return
 }
 
 func initArifmetic(p *parser) (res *arifmetic, err error) {
-	p.SetupMark()
-	var (
-		bracketOpened, operatorExpected bool
-		operators                       []byte
-		operands                        []token
-		operand                         token
-	)
-	if bracketOpened = p.Char() == '('; bracketOpened {
-		p.IncPos()
-		if operand, err = initNestedArifmetic(p); err != nil {
-			return
-		} else {
-			operands = append(operands, operand)
-		}
-	} else {
-		if p.codeStack.Len() == 0 {
-			err = p.positionError("Arifmetic parse error, operator left side is empty")
-			return
-		}
-		operands = append(operands, p.codeStack.Pop().(token))
+	var pn []interface{}
+	if pn, err = parseRPL(p); err != nil {
+		return
 	}
-	operatorExpected = true
-	for !p.IsEndLine() && p.Char() != ',' {
-		fmt.Println(operatorExpected, p.MarkLine(), p.MarkLinePos())
-		p.PassSpaces()
-		if operatorExpected {
-			if !isOpArifmetic(p.Char()) {
-				err = fmt.Errorf("Unexpected character '%c', expected arifmetic operator", p.Char())
+	fmt.Println(pn)
+	/*sPn := stack.New()
+	for _, v := range pn {
+		if op, check := v.(operator); check {
+			r, _ := sPn.Pop().(value).Val()
+			l, _ := sPn.Pop().(value).Val()
+			if rr, rrr := arifmeticResult(l, r, op); rrr == nil {
+				switch rr.(type) {
+				case int64:
+					sPn.Push(&valInt{p.infoRecordFromMark(), rr.(int64)})
+				case float64:
+					sPn.Push(&valFloat{p.infoRecordFromMark(), rr.(float64)})
+				}
+			} else {
+				err = rrr
 				return
-			} else {
-				operators = append(operators, p.Char())
-				p.IncPos()
-				operatorExpected = false
 			}
+			//return
 		} else {
-			if p.Char() == '(' {
-				p.IncPos()
-				if operand, err = initNestedArifmetic(p); err != nil {
-					return
-				} else {
-					operands = append(operands, operand)
-				}
-			} else {
-				if operand, err = initVal(p); err != nil {
-					return
-				} else {
-					operands = append(operands, operand)
-					p.PassSpaces()
-					if bracketOpened {
-						if p.Char() == ')' {
-							p.IncPos()
-							break
-						}
-					} else if p.IsEndLine() || p.Char() == ',' {
-						break
-					}
-				}
-			}
-			operatorExpected = true
+			sPn.Push(v)
 		}
 	}
-	fmt.Println(operands)
-	fmt.Println(operators)
-	res = &arifmetic{
-		p.infoRecordFromMark(),
-		operands,
-		operators,
-	}
+	fmt.Println(sPn.Pop())
+	*/
+	err = fmt.Errorf("Test Error")
 	return
 }
 
 type arifmetic struct {
 	*rawInfoRecord
-	tokens    []token
-	operators []byte
+	pn []interface{}
+	//tokens    []token
+	//operators []byte
 }
 
 func (s *arifmetic) IsExecutable() bool { return false }
 func (s *arifmetic) String() string     { return "[arifmetic...]" }
 
 func (s *arifmetic) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
-	var (
+	/*var (
 		operands  []execObject
 		operators []byte
 	)
@@ -198,7 +223,8 @@ func (s *arifmetic) execObject(sto *storage, tpl *template, parent execObject) (
 			operands = append(operands, s.operands[i], s.operands[i+1])
 		}
 	}
-	return nil, nil
+	return nil, nil*/
+	return
 }
 
 type arifmeticExec struct {
@@ -209,23 +235,27 @@ type arifmeticExec struct {
 
 func (s *arifmeticExec) Data(w io.Writer) (err error) {
 	var res interface{}
-	res, err = s.Val(); err == nil {
-		err = w.Write([]byte(fmt.Sprint(res)))
+	if res, err = s.Val(); err == nil {
+		_, err = w.Write([]byte(fmt.Sprint(res)))
 	}
 	return
 }
 
 func (s *arifmeticExec) Val() (res interface{}, err error) {
+	/*result := 0
 	for i, v := range s.operands {
-		if 
-	}
+		if v == '*' || v == '/' {
+
+		}
+	}*/
+	return
 }
 
-func (s *arifmeticExec) Vals() (res []interface{}, err error) {
+/*func (s *arifmeticExec) Vals() (res []interface{}, err error) {
 	if val, err = s.Val(); err == nil {
 		res = []interface{val}
 	}
 	return
-}
+}*/
 
 func (s *arifmeticExec) ValSingle() bool { return true }

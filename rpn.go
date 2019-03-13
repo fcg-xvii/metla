@@ -7,12 +7,15 @@ import (
 )
 
 func isOperator(val []byte) bool {
-	if len(val) == 1 {
-		return val[0] == '+' || val[0] == '-' || val[0] == '*' || val[0] == '/' || val[0] == '^' || val[0] == '!' || val[0] == '>' || val[0] == '<'
-	} else {
-		switch string(val) {
-		case "==", ">=", "<=", "!=", "++", "--":
-			return true
+	switch len(val) {
+	case 0: return false
+	case 1: return val[0] == '+' || val[0] == '-' || val[0] == '*' || val[0] == '/' || val[0] == '^' || val[0] == '!' || val[0] == '>' || val[0] == '<'
+	default: 
+		{
+			switch string(val[:2]) {
+			case "==", ">=", "<=", "!=", "++", "--":
+				return true
+			}
 		}
 	}
 	return false

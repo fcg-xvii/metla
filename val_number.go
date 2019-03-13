@@ -107,8 +107,10 @@ func (s *valInt) ValSingle() bool                                     { return t
 func (s *valInt) Bool() bool                                          { return s.val != 0 }
 func (s *valInt) Int() int64                                          { return s.val }
 func (s *valInt) Float() float64                                      { return float64(s.val) }
+func (s *valInt) Add(val float64)                                     { s.val += int64(val) }
+func (s *valInt) IsInteger() bool                                     { return true }
 
-func (s *valInt) v() value { return s }
+func (s *valInt) v() valueNumber { return s }
 
 //////////////////////////////////////////////////////////
 
@@ -162,3 +164,5 @@ func (s *valFloat) ValSingle() bool                                     { return
 func (s *valFloat) Bool() bool                                          { return s.val != 0 }
 func (s *valFloat) Int() int64                                          { return int64(s.val) }
 func (s *valFloat) Float() float64                                      { return s.val }
+func (s *valFloat) Add(val float64)                                     { s.val += float64(val) }
+func (s *valFloat) IsInteger() bool                                     { return true }

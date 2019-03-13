@@ -105,6 +105,7 @@ type execObjectSet struct {
 }
 
 func (s *execObjectSet) Data(w io.Writer) (err error) {
+	fmt.Println("SET_DATA...", s.vars, s.values)
 	if len(s.values) == 1 {
 		_, err = s.setupVariable(0, 0)
 	} else {
@@ -121,6 +122,7 @@ func (s *execObjectSet) Data(w io.Writer) (err error) {
 }
 
 func (s *execObjectSet) setupVariable(varIndex, valIndex int) (count int, err error) {
+	fmt.Println("SETUP_INDEX", s.vars, s.values)
 	val := s.values[valIndex]
 	if val.ValSingle() {
 		count = 1

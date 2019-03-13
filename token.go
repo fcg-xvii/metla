@@ -31,10 +31,20 @@ type value interface {
 	IsStatic() bool
 	StaticVal() interface{}
 	IsNumber() bool
-	Bool() bool
+	IsNil() bool
+}
+
+type valueNumber interface {
+	value
+	IsInteger() bool
 	Float() float64
 	Int() int64
-	IsNil() bool
+	Add(float64)
+}
+
+type valueBoolean interface {
+	value
+	Bool() bool
 }
 
 type execObject interface {

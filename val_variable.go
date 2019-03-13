@@ -50,6 +50,11 @@ func (s *valVariable) Val() interface{} {
 func (s *valVariable) posInfo() *rawInfoRecord { return s.rawInfoRecord }
 func (s *valVariable) String() string          { return "[variable :: { " + s.name + " }]" }
 func (s *valVariable) IsExecutable() bool      { return false }
+func (s *valVariable) IsNil() bool             { return true }
+func (s *valVariable) IsNumber() bool          { return false }
+func (s *valVariable) IsStatic() bool          { return false }
+func (s *valVariable) StaticVal() interface{}  { return nil }
+func (s *valVariable) Type() reflect.Kind      { return reflect.Invalid }
 
 func (s *valVariable) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
 	if v, check := sto.findVariable(s.name); !check {
@@ -57,6 +62,10 @@ func (s *valVariable) execObject(sto *storage, tpl *template, parent execObject)
 	} else {
 		return &valVariableExec{s.rawInfoRecord, v}, nil
 	}
+}
+
+func (s *valVariable) v() value {
+	return s
 }
 
 ///////////////////////////////////////////////////////////////////

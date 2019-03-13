@@ -50,20 +50,12 @@ func (s *valBoolean) IsStatic() bool                                      { retu
 func (s *valBoolean) IsNumber() bool                                      { return false }
 func (s *valBoolean) StaticVal() interface{}                              { return s.val }
 func (s *valBoolean) Bool() bool                                          { return s.val }
-func (s *valBoolean) Float() float64                                      { return float64(s.Int()) }
 func (s *valBoolean) IsNil() bool                                         { return false }
 func (s *valBoolean) Val() (interface{}, error)                           { return s.val, nil }
 func (s *valBoolean) Vals() ([]interface{}, error)                        { return []interface{}{s.val}, nil }
 func (s *valBoolean) Data(w io.Writer) (err error)                        { _, err = w.Write([]byte(s.String())); return }
 func (s *valBoolean) ValSingle() bool                                     { return true }
 func (s *valBoolean) receiveEvent(name string, params []interface{}) bool { return false }
-
-func (s *valBoolean) Int() (res int64) {
-	if s.val {
-		res = 1
-	}
-	return
-}
 
 func (s *valBoolean) String() (res string) {
 	res = "false"

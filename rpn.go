@@ -2,7 +2,6 @@ package metla
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/golang-collections/collections/stack"
 )
@@ -69,8 +68,12 @@ func (s *operator) String() string {
 	return string(s.data)
 }
 
+func (s *operator) isUnary() bool {
+	return (len(s.data) == 1 && s.data[0] == '!') || (string(s.data) == "++" || string(s.data) == "--")
+}
+
 func (s *operator) exec(st *stack.Stack) error {
-	if (len(s.data) == 1 && s.data[0] == '!') || (string(s.data) == "++" || string(s.data) == "--") {
+	if s.isUnary() {
 		return s.execUnary(st)
 	} else {
 		return s.execBinary(st)
@@ -84,21 +87,22 @@ func (s *operator) execUnary(st *stack.Stack) error {
 	if val, check := st.Pop().(value); !check {
 		return s.fatalError("Expected value object")
 	} else if len(s.data) == 1 {
-		if val.Type() != reflect.Bool {
+		if bVal, check := val.(valueBoolean); !check {
 			return s.fatalError("Expected boolean value")
 		} else {
-			st.Push(&valBoolean{s.rawInfoRecord, !val.Bool()})
+			st.Push(&valBoolean{s.rawInfoRecord, !bVal.Bool()})
 		}
 	} else {
-		if !val.IsNumber() {
+		if numVal, check := val.(valueNumber); !val.IsNumber() || !check {
 			return s.fatalError("Expected number value")
 		} else {
 			switch string(s.data) {
 			case "++":
-				st.Push(s.numberResult(val.Float() + 1))
+				numVal.Add(1)
 			case "--":
-				st.Push(s.numberResult(val.Float() - 1))
+				numVal.Add(-1)
 			}
+			st.Push(numVal)
 		}
 	}
 	return nil
@@ -124,29 +128,30 @@ func (s *operator) execBinary(st *stack.Stack) error {
 	if rVal, check = r.(value); !check {
 		return s.fatalError("Expected value object right")
 	}
-	fmt.Println(lVal, rVal)
+	//fmt.Println(lVal, rVal)
 	if len(s.data) == 1 {
-		if !lVal.IsNumber() {
+		var lNum, rNum valueNumber
+		if lNum, check = lVal.(valueNumber); !lVal.IsNumber() || !check {
 			return s.fatalError("Left operand must be a number")
 		}
-		if !rVal.IsNumber() {
+		if rNum, check = rVal.(valueNumber); !lVal.IsNumber() || !check {
 			return s.fatalError("Right operand must be a number")
 		}
 		switch s.data[0] {
 		case '+':
-			st.Push(s.numberResult(lVal.Float() + rVal.Float()))
+			st.Push(s.numberResult(lNum.Float() + rNum.Float()))
 		case '-':
-			st.Push(s.numberResult(lVal.Float() - rVal.Float()))
+			st.Push(s.numberResult(lNum.Float() - rNum.Float()))
 		case '*':
-			st.Push(s.numberResult(lVal.Float() * rVal.Float()))
+			st.Push(s.numberResult(lNum.Float() * rNum.Float()))
 		case '/':
-			st.Push(s.numberResult(lVal.Float() / rVal.Float()))
+			st.Push(s.numberResult(lNum.Float() / rNum.Float()))
 		case '%':
-			st.Push(&valInt{s.rawInfoRecord, lVal.Int() % rVal.Int()})
+			st.Push(&valInt{s.rawInfoRecord, lNum.Int() % rNum.Int()})
 		case '>':
-			st.Push(&valBoolean{s.rawInfoRecord, lVal.Float() > rVal.Float()})
+			st.Push(&valBoolean{s.rawInfoRecord, lNum.Float() > rNum.Float()})
 		case '<':
-			st.Push(&valBoolean{s.rawInfoRecord, lVal.Float() < rVal.Float()})
+			st.Push(&valBoolean{s.rawInfoRecord, lNum.Float() < rNum.Float()})
 		default:
 			return s.fatalError(fmt.Sprintf("Illegal operator '%c'", s.data[0]))
 		}
@@ -162,17 +167,18 @@ func (s *operator) execBinary(st *stack.Stack) error {
 			st.Push(&valBoolean{s.rawInfoRecord, !(lVal.StaticVal() == rVal.StaticVal())})
 		case ">=", "<=":
 			{
-				if !lVal.IsNumber() {
+				var lNum, rNum valueNumber
+				if lNum, check = lVal.(valueNumber); !check || !lVal.IsNumber() {
 					return s.fatalError("Left operand must be a number")
 				}
-				if !rVal.IsNumber() {
+				if rNum, check = rVal.(valueNumber); !check || !rVal.IsNumber() {
 					return s.fatalError("Right operand must be a number")
 				}
 				switch s.data[0] {
 				case '>':
-					st.Push(&valBoolean{s.rawInfoRecord, lVal.Float() >= rVal.Float()})
+					st.Push(&valBoolean{s.rawInfoRecord, lNum.Float() >= rNum.Float()})
 				case '<':
-					st.Push(&valBoolean{s.rawInfoRecord, lVal.Float() <= rVal.Float()})
+					st.Push(&valBoolean{s.rawInfoRecord, lNum.Float() <= rNum.Float()})
 				}
 			}
 		default:
@@ -193,13 +199,11 @@ func (s *operator) checkNil(l, r value) (res *valBoolean) {
 
 func parseRPN(p *parser) (pn []interface{}, err error) {
 	fmt.Println("PARSE_RPN")
+	prevVal := false
 	sPn := stack.New()
-	if p.Char() != '(' && p.Char() != '!' {
-		if p.codeStack.Len() == 0 {
-			err = p.positionError("Arifmetic left side not found")
-			return
-		}
+	if p.codeStack.Len() > 0 {
 		pn = append(pn, p.codeStack.Pop())
+		prevVal = true
 	}
 	for !p.IsEndLine() && p.Char() != ',' {
 		p.PassSpaces()
@@ -234,12 +238,15 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 				if checkOp := []byte{p.Char(), p.NextChar()}; isOperator(checkOp) {
 					op.data = checkOp
 					p.IncPos()
+					if !prevVal {
+						op.postfix = false
+					}
+					fmt.Println("POSTFIX", op.postfix)
 				} else if !isOperator(op.data) {
 					err = p.positionError(fmt.Sprintf("Unexpected operator '%c'", p.Char()))
 					return
 				}
 				for sPn.Len() > 0 {
-					fmt.Println(sPn.Peek())
 					if val, check := sPn.Peek().(*operator); check && opPriority(val) >= opPriority(&op) {
 						pn = append(pn, sPn.Pop())
 					} else {
@@ -248,6 +255,7 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 				}
 				sPn.Push(&op)
 				p.IncPos()
+				prevVal = false
 			}
 		default:
 			{
@@ -255,7 +263,7 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 				if val, err = initVal(p); err != nil {
 					return
 				}
-				pn = append(pn, val)
+				pn, prevVal = append(pn, val), true
 			}
 		}
 	}
@@ -265,7 +273,44 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 	return
 }
 
+func checkSimple(op *operator, st *stack.Stack) error {
+	if st.Len() == 0 {
+		return op.fatalError("Empty args list")
+	}
+	if right, check := st.Peek().(value); check && right.IsStatic() {
+		if op.isUnary() {
+			return op.exec(st)
+		} else {
+			st.Pop()
+			if left, check := st.Peek().(value); !check || !left.IsStatic() {
+				st.Push(right)
+				st.Push(op)
+				return nil
+			} else {
+				st.Push(right)
+				return op.exec(st)
+			}
+		}
+	}
+	st.Push(op)
+	return nil
+}
+
 func simpleRPN(pl []interface{}) (res []interface{}, err error) {
+	st := stack.New()
+	for _, v := range pl {
+		if op, check := v.(*operator); check {
+			if err = checkSimple(op, st); err != nil {
+				return
+			}
+		} else {
+			st.Push(v)
+		}
+	}
+	res = make([]interface{}, st.Len())
+	for i := len(res) - 1; i >= 0; i-- {
+		res[i] = st.Pop()
+	}
 	return
 }
 

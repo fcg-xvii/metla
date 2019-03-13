@@ -152,6 +152,8 @@ func (s *valFloat) Vals() ([]interface{}, error) {
 func (s *valFloat) posInfo() *rawInfoRecord                             { return s.rawInfoRecord }
 func (s *valFloat) Val() (interface{}, error)                           { return s.val, nil }
 func (s *valFloat) IsExecutable() bool                                  { return false }
+func (s *valFloat) StaticVal() interface{}                              { return s.val }
+func (s *valFloat) IsStatic() bool                                      { return true }
 func (s *valFloat) IsNumber() bool                                      { return true }
 func (s *valFloat) receiveEvent(name string, params []interface{}) bool { return false }
 func (s *valFloat) IsNil() bool                                         { return false }

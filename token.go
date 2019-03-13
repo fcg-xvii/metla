@@ -100,6 +100,10 @@ func (s *rawInfoRecord) positionWarning(text string) error {
 	return fmt.Errorf("Warning [%v %v:%v]: %v", s.tplName, s.line, s.pos, text)
 }
 
+func (s *rawInfoRecord) posInfo() *rawInfoRecord {
+	return s
+}
+
 type eventExec struct {
 	parent execObject
 }

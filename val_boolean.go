@@ -11,6 +11,9 @@ func init() {
 	creators = append(creators, &valueCreator{
 		checker:     checkValBoolean,
 		constructor: newValBoolean,
+	}, &valueCreator{
+		checker:     checkValNil,
+		constructor: newValNil,
 	})
 }
 
@@ -73,6 +76,21 @@ func (s *valBoolean) String() (res string) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+func checkValNil(src []byte) bool {
+	return bytes.Index(src, []byte("nil")) == 0
+}
+
+func newValNil(p *parser) (res token, err error) {
+	if name, check := p.ReadName(); !check {
+		err = p.positionError("Nil value expected")
+	} else if string(name) == "nil" {
+		res = &valNil{p.infoRecordFromMark()}
+	} else {
+		err = p.positionError(fmt.Sprintf("Unexpected name '%v', 'nil' expected", string(name)))
+	}
+	return
+}
+
 type valNil struct {
 	*rawInfoRecord
 }
@@ -85,9 +103,18 @@ func (s *valNil) IsExecutable() bool                                  { return f
 func (s *valNil) Type() reflect.Kind                                  { return reflect.Invalid }
 func (s *valNil) StaticVal() interface{}                              { return nil }
 func (s *valNil) IsNil() bool                                         { return true }
+func (s *valNil) Bool() bool                                          { return false }
+func (s *valNil) Float() float64                                      { return 0 }
+func (s *valNil) Int() int64                                          { return 0 }
+func (s *valNil) IsNumber() bool                                      { return false }
+func (s *valNil) IsStatic() bool                                      { return true }
 func (s *valNil) Val() (interface{}, error)                           { return nil, nil }
 func (s *valNil) Vals() ([]interface{}, error)                        { return nil, nil }
 func (s *valNil) ValSingle() bool                                     { return true }
 func (s *valNil) Data(w io.Writer) (err error)                        { _, err = w.Write([]byte("nil")); return }
 func (s *valNil) String() string                                      { return "nil" }
 func (s *valNil) receiveEvent(name string, params []interface{}) bool { return false }
+
+func (s *valNil) v() value {
+	return s
+}

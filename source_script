@@ -1,4 +1,4 @@
 {%
-	i = true == true
+	i = 10++
 	print(i)
 %}

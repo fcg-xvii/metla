@@ -14,7 +14,7 @@ const (
 
 func checkOpType(lh, rh byte) operatorType {
 	switch lh {
-	case '+', '-', '*', '/', '(', '!':
+	case '+', '-', '*', '/', '(', '!', '>', '<':
 		return opArifmetic
 	case '=':
 		if rh != '=' {

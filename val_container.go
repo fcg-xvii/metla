@@ -61,7 +61,8 @@ func (s *valArray) String() string {
 	return fmt.Sprintf("[array :: { %v }]", s.vals)
 }
 
-func (s *valArray) IsExecutable() bool { return false }
+func (s *valArray) posInfo() *rawInfoRecord { return s.rawInfoRecord }
+func (s *valArray) IsExecutable() bool      { return false }
 
 func (s *valArray) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	vals := make([]execObject, len(s.vals))
@@ -151,9 +152,8 @@ type valObject struct {
 	vals map[string]token
 }
 
-func (s *valObject) Val() interface{} {
-	return s.vals
-}
+func (s *valObject) posInfo() *rawInfoRecord { return s.rawInfoRecord }
+func (s *valObject) Val() interface{}        { return s.vals }
 
 func (s *valObject) String() string {
 	return fmt.Sprintf("[object :: { %v }]", s.vals)

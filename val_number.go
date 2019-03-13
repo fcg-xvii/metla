@@ -92,10 +92,14 @@ func (s *valInt) execObject(sto *storage, tpl *template, parent execObject) (exe
 	return s, nil
 }
 
+func (s *valInt) posInfo() *rawInfoRecord                             { return s.rawInfoRecord }
 func (s *valInt) Vals() ([]interface{}, error)                        { return []interface{}{s.val}, nil }
 func (s *valInt) Val() (interface{}, error)                           { return s.val, nil }
 func (s *valInt) String() string                                      { return "[int :: {" + strconv.FormatInt(s.val, 10) + "}]" }
 func (s *valInt) IsExecutable() bool                                  { return false }
+func (s *valInt) IsNumber() bool                                      { return true }
+func (s *valInt) IsStatic() bool                                      { return true }
+func (s *valInt) StaticVal() interface{}                              { return s.val }
 func (s *valInt) receiveEvent(name string, params []interface{}) bool { return false }
 func (s *valInt) IsNil() bool                                         { return false }
 func (s *valInt) Type() reflect.Kind                                  { return reflect.Int64 }
@@ -103,6 +107,8 @@ func (s *valInt) ValSingle() bool                                     { return t
 func (s *valInt) Bool() bool                                          { return s.val != 0 }
 func (s *valInt) Int() int64                                          { return s.val }
 func (s *valInt) Float() float64                                      { return float64(s.val) }
+
+func (s *valInt) v() value { return s }
 
 //////////////////////////////////////////////////////////
 
@@ -143,8 +149,10 @@ func (s *valFloat) Vals() ([]interface{}, error) {
 	return []interface{}{s.val}, nil
 }
 
+func (s *valFloat) posInfo() *rawInfoRecord                             { return s.rawInfoRecord }
 func (s *valFloat) Val() (interface{}, error)                           { return s.val, nil }
 func (s *valFloat) IsExecutable() bool                                  { return false }
+func (s *valFloat) IsNumber() bool                                      { return true }
 func (s *valFloat) receiveEvent(name string, params []interface{}) bool { return false }
 func (s *valFloat) IsNil() bool                                         { return false }
 func (s *valFloat) Type() reflect.Kind                                  { return reflect.Float64 }

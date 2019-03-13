@@ -81,6 +81,8 @@ func (s *valFunction) String() string {
 	return res
 }
 
+func (s *valFunction) posInfo() *rawInfoRecord { return s.rawInfoRecord }
+
 func (s *valFunction) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	fObj := valFunctionExec{rawInfoRecord: s.rawInfoRecord}
 	if f, check := sto.findVariable(s.name); check {

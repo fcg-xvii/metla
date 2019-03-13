@@ -47,8 +47,9 @@ func (s *valVariable) Val() interface{} {
 	return s.name
 }
 
-func (s *valVariable) String() string     { return "[variable :: { " + s.name + " }]" }
-func (s *valVariable) IsExecutable() bool { return false }
+func (s *valVariable) posInfo() *rawInfoRecord { return s.rawInfoRecord }
+func (s *valVariable) String() string          { return "[variable :: { " + s.name + " }]" }
+func (s *valVariable) IsExecutable() bool      { return false }
 
 func (s *valVariable) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
 	if v, check := sto.findVariable(s.name); !check {

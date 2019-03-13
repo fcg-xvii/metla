@@ -40,9 +40,11 @@ func (s *valBoolean) execObject(*storage, *template, execObject) (execObject, er
 	return s, nil
 }
 
+func (s *valBoolean) posInfo() *rawInfoRecord                             { return s.rawInfoRecord }
 func (s *valBoolean) IsExecutable() bool                                  { return false }
 func (s *valBoolean) Type() reflect.Kind                                  { return reflect.Bool }
 func (s *valBoolean) IsStatic() bool                                      { return true }
+func (s *valBoolean) IsNumber() bool                                      { return false }
 func (s *valBoolean) StaticVal() interface{}                              { return s.val }
 func (s *valBoolean) Bool() bool                                          { return s.val }
 func (s *valBoolean) Float() float64                                      { return float64(s.Int()) }

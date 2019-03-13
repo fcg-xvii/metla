@@ -98,14 +98,23 @@ func (s *operator) execBinary(st *stack.Stack) error {
 		return s.fatalError("Expected value object right")
 	}
 	fmt.Println(lVal, rVal)
-	if lVal.IsNil() || rVal.IsNil() {
+	if len(s.data) == 1 {
+		switch s.data[0] {
 
+		}
+	}
+	if lVal.IsNil() || rVal.IsNil() {
+		st.Push(s.checkNil(lVal, rVal))
 	}
 	return fmt.Errorf("TEST...")
 }
 
-func (s *operator) checkNil(l, r value) (value, error) {
-
+func (s *operator) checkNil(l, r value) (res *valBoolean) {
+	res = &valBoolean{l.posInfo(), false}
+	if l.IsNil() == r.IsNil() {
+		res.val = true
+	}
+	return
 }
 
 func parseRPN(p *parser) (pn []interface{}, err error) {

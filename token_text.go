@@ -25,10 +25,10 @@ func (s *tokenText) String() string {
 }
 
 func (s *tokenText) receiveEvent(name string, params []interface{}) bool { return false }
-
-func (s *tokenText) IsExecutable() bool           { return false }
-func (s *tokenText) IsNil() bool                  { return false }
-func (s *tokenText) Type() reflect.Kind           { return reflect.Slice }
-func (s *tokenText) Val() (interface{}, error)    { return s.src, nil }
-func (s *tokenText) Vals() ([]interface{}, error) { return []interface{}{s.src}, nil }
-func (s *tokenText) ValSingle() bool              { return true }
+func (s *tokenText) posInfo() *rawInfoRecord                             { return s.rawInfoRecord }
+func (s *tokenText) IsExecutable() bool                                  { return false }
+func (s *tokenText) IsNil() bool                                         { return false }
+func (s *tokenText) Type() reflect.Kind                                  { return reflect.Slice }
+func (s *tokenText) Val() (interface{}, error)                           { return s.src, nil }
+func (s *tokenText) Vals() ([]interface{}, error)                        { return []interface{}{s.src}, nil }
+func (s *tokenText) ValSingle() bool                                     { return true }

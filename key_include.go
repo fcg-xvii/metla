@@ -41,6 +41,8 @@ type keyInclude struct {
 	params  token
 }
 
+func (s *keyInclude) posInfo() *rawInfoRecord { return s.rawInfoRecord }
+
 func (s *keyInclude) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	var tplPath execObject
 	if tplPath, err = s.tplPath.execObject(sto, tpl, parent); err == nil {

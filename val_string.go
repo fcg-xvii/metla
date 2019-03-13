@@ -49,8 +49,9 @@ func (s *valString) Data(w io.Writer) (err error) {
 	return
 }
 
-func (s *valString) String() string     { return "[string :: {" + s.val + "}]" }
-func (s *valString) IsExecutable() bool { return false }
+func (s *valString) posInfo() *rawInfoRecord { return s.rawInfoRecord }
+func (s *valString) String() string          { return "[string :: {" + s.val + "}]" }
+func (s *valString) IsExecutable() bool      { return false }
 
 func (s *valString) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
 	return s, nil

@@ -17,6 +17,8 @@ func (s *tokenPrint) execObject(sto *storage, tpl *template, parent execObject) 
 	return
 }
 
+func (s *tokenPrint) posInfo() *rawInfoRecord { return s.rawInfoRecord }
+
 func (s *tokenPrint) String() string {
 	return "[tokenPrint :: { " + s.String() + " }]"
 }
@@ -36,10 +38,9 @@ func (s *execObjectPrint) Data(w io.Writer) (err error) {
 }
 
 func (s *execObjectPrint) receiveEvent(name string, params []interface{}) bool { return false }
-
-func (s *execObjectPrint) IsNil() bool                  { return false }
-func (s *execObjectPrint) Type() reflect.Kind           { return s.val.Type() }
-func (s *execObjectPrint) Val() (interface{}, error)    { return s.val.Val() }
-func (s *execObjectPrint) Vals() ([]interface{}, error) { return s.val.Vals() }
-func (s *execObjectPrint) ValSingle() bool              { return s.val.ValSingle() }
-func (s *execObjectPrint) String() string               { return "[print { " + s.val.String() + " }" }
+func (s *execObjectPrint) IsNil() bool                                         { return false }
+func (s *execObjectPrint) Type() reflect.Kind                                  { return s.val.Type() }
+func (s *execObjectPrint) Val() (interface{}, error)                           { return s.val.Val() }
+func (s *execObjectPrint) Vals() ([]interface{}, error)                        { return s.val.Vals() }
+func (s *execObjectPrint) ValSingle() bool                                     { return s.val.ValSingle() }
+func (s *execObjectPrint) String() string                                      { return "[print { " + s.val.String() + " }" }

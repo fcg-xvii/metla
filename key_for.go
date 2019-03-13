@@ -35,6 +35,8 @@ type cycle struct {
 	childs []token
 }
 
+func (s *cycle) posInfo() *rawInfoRecord { return s.rawInfoRecord }
+
 func (s *cycle) IsExecutable() bool {
 	return true
 }

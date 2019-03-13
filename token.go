@@ -8,6 +8,7 @@ import (
 
 type positionInformer interface {
 	fatalError(string) error
+	posInfo() *rawInfoRecord
 }
 
 // Общий интерфейс объекта результирующих данных
@@ -29,6 +30,7 @@ type value interface {
 	Type() reflect.Kind
 	IsStatic() bool
 	StaticVal() interface{}
+	IsNumber() bool
 	Bool() bool
 	Float() float64
 	Int() int64

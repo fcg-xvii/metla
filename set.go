@@ -54,6 +54,8 @@ type set struct {
 	create bool
 }
 
+func (s *set) posInfo() *rawInfoRecord { return s.rawInfoRecord }
+
 func (s *set) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	vars, vals := make([]*variable, len(s.names)), make([]execObject, len(s.values))
 	if s.create {

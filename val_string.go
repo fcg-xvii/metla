@@ -10,12 +10,12 @@ import (
 )
 
 // Добавляем креатор строки в глобальный срез
-func init() {
+/*func init() {
 	creators = append(creators, &valueCreator{
 		checker:     checkValString,
 		constructor: newValString,
 	})
-}
+}*/
 
 // Поверка соответствия строки - если открыта двойная или одинарная кавычка, тип соответствует
 func checkValString(src []byte) bool {
@@ -23,17 +23,18 @@ func checkValString(src []byte) bool {
 }
 
 // Конструктор строки.
-func newValString(p *parser) (res token, err error) {
+func newValString(p *parser, parent tokenContainer) (err error) {
+	p.SetupMark()
 	charID := p.Char()     // Определяем, двойная или одинарная кавычка открыта
 	p.IncPos()             // Смещаемся на начало строки
 	if !p.ToChar(charID) { // Пытаемся найти закрывающую кавычку
 		err = p.positionError("Unclosed string")
 	} else {
 		// Закрывающая кавычка найдена. Инициализируем результирующее значение
-		res = &valString{
+		p.codeStack.Push(&valString{
 			rawInfoRecord: p.infoRecordFromMark(),
 			val:           p.MarkValString(0)[1:], // Обрезаем кавычки для результирующего значения
-		}
+		})
 		p.IncPos()
 	}
 	return
@@ -53,7 +54,7 @@ func (s *valString) posInfo() *rawInfoRecord { return s.rawInfoRecord }
 func (s *valString) String() string          { return "[string :: {" + s.val + "}]" }
 func (s *valString) IsExecutable() bool      { return false }
 
-func (s *valString) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
+func (s *valString) execObject(sto *storage, tpl *template, parent executor) (executor, error) {
 	return s, nil
 }
 

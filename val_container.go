@@ -1,12 +1,20 @@
 package metla
 
 import (
-	"fmt"
-	"io"
-	"reflect"
+	_ "fmt"
+	_ "io"
+	_ "reflect"
 )
 
-func init() {
+func newValArray(p *parser, parent tokenContainer) error {
+	return p.positionError("array_error")
+}
+
+func newValObject(p *parser, parent tokenContainer) error {
+	return p.positionError("object_error")
+}
+
+/*func init() {
 	creators = append(creators, &valueCreator{
 		checker:     checkValArray,
 		constructor: newValArray,
@@ -102,7 +110,7 @@ func (s *valArrayExec) receiveEvent(name string, params []interface{}) bool { re
 
 //////////////////////////////////////////////////////////////////
 
-func newValObject(p *parser) (res token, err error) {
+func newValObject(p *parser, parent tokenContainer) (err error) {
 	m := make(map[string]token)
 	var (
 		check bool
@@ -196,4 +204,4 @@ func (s *valObjectExec) Vals() ([]interface{}, error) { return []interface{}{s.v
 func (s *valObjectExec) ValSingle() bool              { return true }
 func (s *valObjectExec) Map() map[string]execObject   { return s.vals }
 
-func (s *valObjectExec) receiveEvent(name string, params []interface{}) bool { return false }
+func (s *valObjectExec) receiveEvent(name string, params []interface{}) bool { return false }*/

@@ -60,6 +60,11 @@ func (s *template) parse(src []byte) error {
 	return parser.parseDocument()
 }
 
+func (s *template) pushToken(t token) {
+	fmt.Println("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", t)
+	s.tokenList = append(s.tokenList, t)
+}
+
 func (s *template) result(sto *storage) (*templateResult, error) {
 	s.locker.RLock()
 	//fmt.Println("Result...", s.tokenList)
@@ -67,7 +72,7 @@ func (s *template) result(sto *storage) (*templateResult, error) {
 		s.locker.RUnlock()
 		return nil, s.err
 	}
-	res := &templateResult{make([]execObject, 0, len(s.tokenList))}
+	res := &templateResult{make([]executor, 0, len(s.tokenList))}
 	for _, v := range s.tokenList {
 		if eObj, err := v.execObject(sto, s, nil); err == nil {
 			res.list = append(res.list, eObj)
@@ -83,11 +88,12 @@ func (s *template) result(sto *storage) (*templateResult, error) {
 ////////////////////////////////////////////////////////////////////////
 
 type templateResult struct {
-	list []execObject
+	list []executor
 }
 
 func (s *templateResult) exec(w io.Writer) (err error) {
 	for _, v := range s.list {
+		fmt.Println("V", v)
 		if err = v.Data(w); err != nil {
 			return
 		}

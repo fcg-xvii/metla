@@ -8,13 +8,19 @@ import (
 	"github.com/golang-collections/collections/stack"
 )
 
+type tokenContainer interface {
+	pushToken(token)
+}
+
+type parseMethod func(p *parser, parent tokenContainer) error
+
 var (
 	parseErrEOF            = errors.New("EOF")
 	parseUnexpectedLiteral = errors.New("Parser :: Unexpected literal")
 )
 
 func newParser(src []byte, tpl *template, root *Metla) *parser {
-	return &parser{lineman.NewCodeLine(src), tpl, root, stack.New()}
+	return &parser{lineman.NewCodeLine(src), tpl, root, stack.New(), true}
 }
 
 type parser struct {
@@ -22,9 +28,55 @@ type parser struct {
 	tpl       *template
 	root      *Metla
 	codeStack *stack.Stack
+	textState bool
 }
 
-func (s *parser) IsEndCode() bool {
+func (s *parser) parseDocument() (err error) {
+	for !s.IsEndDocument() {
+		var method parseMethod
+		switch s.Char() {
+		case '{':
+			{
+				switch s.NextChar() {
+				case '{':
+					method = newValPrint
+				case '*':
+					method = newValComment
+				case '%':
+					method = newValCode
+				}
+			}
+		default:
+			method = newValText
+		}
+		if err = method(s, s.tpl); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (s *parser) markError(text string) error {
+	return fmt.Errorf("Error [%v %v:%v]: %v", s.tpl.objPath, s.Line(), s.LinePos(), text)
+}
+
+func (s *parser) positionError(text string) error {
+	return fmt.Errorf("Error [%v %v:%v]: %v", s.tpl.objPath, s.MarkLine(), s.MarkLinePos(), text)
+}
+
+func (s *parser) infoRecordFromMark() *rawInfoRecord {
+	return &rawInfoRecord{tplName: s.tpl.objPath, line: s.MarkLine(), pos: s.MarkLinePos()}
+}
+
+func (s *parser) flushToParent(parent tokenContainer, val token) {
+	if parent == nil {
+		s.codeStack.Push(parent)
+	} else {
+		parent.pushToken(val)
+	}
+}
+
+/*func (s *parser) IsEndCode() bool {
 	return s.Char() == '%' && s.NextChar() == '}'
 }
 
@@ -34,7 +86,7 @@ func (s *parser) flushTextToken() {
 	}
 }
 
-func (s *parser) parseDocument() (err error) {
+func (s *parser) parseText() (err error) {
 	passMark := false
 	for !s.IsEndDocument() && err == nil {
 		if !passMark {
@@ -244,11 +296,4 @@ func (s *parser) ParseArgs(stop byte) (err error) {
 	err = s.positionError(fmt.Sprintf("Unexpected symbol '%c', '%c' expected", s.Char(), stop))
 	return
 }
-
-func (s *parser) positionError(text string) error {
-	return fmt.Errorf("Error [%v %v:%v]: %v", s.tpl.objPath, s.MarkLine(), s.MarkLinePos(), text)
-}
-
-func (s *parser) infoRecordFromMark() *rawInfoRecord {
-	return &rawInfoRecord{tplName: s.tpl.objPath, line: s.MarkLine(), pos: s.MarkLinePos()}
-}
+*/

@@ -56,9 +56,9 @@ func (s *valVariable) IsStatic() bool          { return false }
 func (s *valVariable) StaticVal() interface{}  { return nil }
 func (s *valVariable) Type() reflect.Kind      { return reflect.Invalid }
 
-func (s *valVariable) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
+func (s *valVariable) execObject(sto *storage, tpl *template, parent executor) (executor, error) {
 	if v, check := sto.findVariable(s.name); !check {
-		return nil, fmt.Errorf("Variable not found [%v]", s.name)
+		return nil, s.positionWarning(fmt.Sprintf("Variable not found [%v]", s.name))
 	} else {
 		return &valVariableExec{s.rawInfoRecord, v}, nil
 	}

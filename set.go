@@ -2,12 +2,13 @@ package metla
 
 import (
 	_ "errors"
-	"fmt"
+	_ "fmt"
 	"io"
 	"reflect"
 )
 
 func initSet(p *parser) (res *set, err error) {
+	/*(
 	// Парсим наименования переменных
 	var (
 		vars []string
@@ -43,7 +44,7 @@ func initSet(p *parser) (res *set, err error) {
 		err = p.positionError(fmt.Sprintf("Unexpected symbol [%c]", p.Char()))
 	} else {
 		res = &set{p.infoRecordFromMark(), vars, values, false}
-	}
+	}*/
 	return
 }
 
@@ -56,7 +57,7 @@ type set struct {
 
 func (s *set) posInfo() *rawInfoRecord { return s.rawInfoRecord }
 
-func (s *set) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
+/*func (s *set) execObject(sto *storage, tpl *template, parent executor) (res executor, err error) {
 	vars, vals := make([]*variable, len(s.names)), make([]execObject, len(s.values))
 	if s.create {
 		for i, v := range s.names {
@@ -81,7 +82,7 @@ func (s *set) execObject(sto *storage, tpl *template, parent execObject) (res ex
 	}
 	res = &execObjectSet{s.rawInfoRecord, &eventExec{parent}, vars, vals}
 	return
-}
+}*/
 
 func (s *set) Data(w io.Writer) error {
 	return nil
@@ -101,10 +102,10 @@ type execObjectSet struct {
 	*rawInfoRecord
 	*eventExec
 	vars   []*variable
-	values []execObject
+	values []executor
 }
 
-func (s *execObjectSet) Data(w io.Writer) (err error) {
+/*func (s *execObjectSet) Data(w io.Writer) (err error) {
 	fmt.Println("SET_DATA...", s.vars, s.values)
 	if len(s.values) == 1 {
 		_, err = s.setupVariable(0, 0)
@@ -119,9 +120,9 @@ func (s *execObjectSet) Data(w io.Writer) (err error) {
 		}
 	}
 	return
-}
+}*/
 
-func (s *execObjectSet) setupVariable(varIndex, valIndex int) (count int, err error) {
+/*func (s *execObjectSet) setupVariable(varIndex, valIndex int) (count int, err error) {
 	fmt.Println("SETUP_INDEX", s.vars, s.values)
 	val := s.values[valIndex]
 	if val.ValSingle() {
@@ -147,7 +148,7 @@ func (s *execObjectSet) setupVariable(varIndex, valIndex int) (count int, err er
 		}
 	}
 	return
-}
+}*/
 
 func (s *execObjectSet) IsNil() bool {
 	return false

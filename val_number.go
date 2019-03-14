@@ -15,7 +15,7 @@ import (
 )
 
 // Вшиваем креаторы valInt и valFloat в глобальный срез
-func init() {
+/*func init() {
 	creators = append(creators, &valueCreator{
 		checker:     checkValInt,
 		constructor: newValInt,
@@ -64,6 +64,32 @@ func checkValFloat(src []byte) (pointArrived bool) {
 		}
 	}
 	return
+}*/
+
+func newValNumber(p *parser, parent tokenContainer) (err error) {
+	p.SetupMark()
+	intVal := true
+	for lineman.CheckNumber(p.Char()) || p.Char() == '.' {
+		if p.Char() == '.' {
+			if !intVal {
+				err = p.positionError("Unexpected float point")
+			} else {
+				intVal = false
+			}
+		}
+		p.IncPos()
+	}
+	if intVal {
+		res := &valInt{rawInfoRecord: p.infoRecordFromMark()}
+		res.val, _ = strconv.ParseInt(p.MarkValString(0), 10, 64)
+		p.codeStack.Push(res)
+	} else {
+		res := &valFloat{rawInfoRecord: p.infoRecordFromMark()}
+		res.val, _ = strconv.ParseFloat(p.MarkValString(0), 64)
+		fmt.Println(res.val)
+		p.codeStack.Push(res)
+	}
+	return
 }
 
 //////////////////////////////////////////////////////////
@@ -88,7 +114,7 @@ func (s *valInt) Data(w io.Writer) (err error) {
 	return
 }
 
-func (s *valInt) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
+func (s *valInt) execObject(sto *storage, tpl *template, parent executor) (executor, error) {
 	return s, nil
 }
 
@@ -109,8 +135,6 @@ func (s *valInt) Int() int64                                          { return s
 func (s *valInt) Float() float64                                      { return float64(s.val) }
 func (s *valInt) Add(val float64)                                     { s.val += int64(val) }
 func (s *valInt) IsInteger() bool                                     { return true }
-
-func (s *valInt) v() valueNumber { return s }
 
 //////////////////////////////////////////////////////////
 
@@ -139,12 +163,12 @@ func (s *valFloat) Data(w io.Writer) (err error) {
 	return
 }
 
-func (s *valFloat) String() string {
-	return "[float :: {" + strconv.FormatFloat(s.val, 'f', -1, 64) + "}]"
+func (s *valFloat) execObject(sto *storage, tpl *template, parent executor) (executor, error) {
+	return s, nil
 }
 
-func (s *valFloat) execObject(sto *storage, tpl *template, parent execObject) (execObject, error) {
-	return s, nil
+func (s *valFloat) String() string {
+	return strconv.FormatFloat(s.val, 'f', -1, 64)
 }
 
 func (s *valFloat) Vals() ([]interface{}, error) {

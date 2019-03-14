@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-func init() {
+/*func init() {
 	creators = append(creators, &valueCreator{
 		checker:     checkValBoolean,
 		constructor: newValBoolean,
@@ -15,7 +15,7 @@ func init() {
 		checker:     checkValNil,
 		constructor: newValNil,
 	})
-}
+}*/
 
 func checkValBoolean(src []byte) bool {
 	return bytes.Index(src, []byte("true")) == 0 || bytes.Index(src, []byte("false")) == 0
@@ -39,7 +39,7 @@ type valBoolean struct {
 	val bool
 }
 
-func (s *valBoolean) execObject(*storage, *template, execObject) (execObject, error) {
+func (s *valBoolean) execObject(*storage, *template, executor) (executor, error) {
 	return s, nil
 }
 
@@ -87,7 +87,7 @@ type valNil struct {
 	*rawInfoRecord
 }
 
-func (s *valNil) execObject(*storage, *template, execObject) (execObject, error) {
+func (s *valNil) execObject(*storage, *template, executor) (executor, error) {
 	return s, nil
 }
 

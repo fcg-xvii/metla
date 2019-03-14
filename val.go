@@ -2,7 +2,7 @@ package metla
 
 import (
 	"errors"
-	_ "fmt"
+	"fmt"
 )
 
 type valueCheckMethod func([]byte) bool
@@ -29,18 +29,58 @@ func getStartTypes(first []byte) (res []valueConstructor) {
 }
 
 func initVal(p *parser) (res token, err error) {
-	//fmt.Println("INIT_VALL", string(p.EndLineContent()))
-	// Если текущий символ соответствует завершению оператора или документа, это считается "пустым оператором". В даной ситуации ошибки не возникает
+	/*
+		//fmt.Println("INIT_VALL", string(p.EndLineContent()))
+		// Если текущий символ соответствует завершению оператора или документа, это считается "пустым оператором". В даной ситуации ошибки не возникает
+		p.PassSpaces()
+		if p.IsEndLine() || p.IsEndDocument() || p.IsEndCode() {
+			return
+		}
+		// Получаем данные от текущей позиции до конца строки и определяем возможные типы значений
+		p.SetupMark()
+		if types := getStartTypes(p.EndLineContent()); len(types) == 0 {
+			err = p.positionError(errValueUnexpectedType.Error())
+		} else {
+			res, err = types[0](p)
+		}*/
+	return
+}
+
+func initCodeVal(p *parser, parent tokenContainer) (err error) {
 	p.PassSpaces()
-	if p.IsEndLine() || p.IsEndDocument() || p.IsEndCode() {
-		return
-	}
-	// Получаем данные от текущей позиции до конца строки и определяем возможные типы значений
-	p.SetupMark()
-	if types := getStartTypes(p.EndLineContent()); len(types) == 0 {
-		err = p.positionError(errValueUnexpectedType.Error())
-	} else {
-		res, err = types[0](p)
+	switch p.Char() {
+	case '+', '-', '*', '/', '(', '!', '>', '<':
+		err = newValArifmetic(p, parent)
+	case '"', '\'':
+		err = newValString(p, parent)
+	case '=':
+		err = newValSet(p, parent)
+	case '{':
+		err = newValObject(p, parent)
+	case '[':
+		err = newValArray(p, parent)
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		err = newValNumber(p, parent)
+	default:
+		if name, check := p.ReadName(); !check {
+			err = p.positionError(fmt.Sprintf("Unexpected symbol '%c'", p.Char()))
+		} else {
+			//p.codeStack.Push(name)
+			if keyword, check := getKeywordConstructor(string(name)); check {
+				err = keyword(p)
+			} else {
+				switch p.Char() {
+				case '(':
+					err = newValFunction(p, parent)
+				case '[':
+					err = newValIndex(p, parent)
+				case '.':
+					err = newValField(p, parent)
+				default:
+					p.codeStack.Push(&valVariable{p.infoRecordFromMark(), string(name)})
+				}
+			}
+		}
 	}
 	return
 }

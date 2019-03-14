@@ -14,7 +14,7 @@ type positionInformer interface {
 // Общий интерфейс объекта результирующих данных
 type token interface {
 	positionInformer
-	execObject(sto *storage, tpl *template, parent execObject) (execObject, error)
+	execObject(sto *storage, tpl *template, parent executor) (executor, error)
 	IsExecutable() bool
 	String() string
 }
@@ -47,17 +47,25 @@ type valueBoolean interface {
 	Bool() bool
 }
 
-type execObject interface {
-	Data(io.Writer) error // Запись результирующих данных в выходной поток
-	Type() reflect.Kind
-	Val() (interface{}, error)
-	Vals() ([]interface{}, error)
-	ValSingle() bool
-	IsNil() bool
+type executor interface {
 	String() string
-	positionWarning(string) error
-	receiveEvent(name string, params []interface{}) bool
+	Data(io.Writer) error // Запись результирующих данных в выходной поток
+	//Data(io.Writer) error // Запись результирующих данных в выходной поток
+	//Type() reflect.Kind
+	//Val() (interface{}, error)
+	//Vals() ([]interface{}, error)
+	//ValSingle() bool
+	//IsNil() bool
+	//String() string
+	//positionWarning(string) error
+	//receiveEvent(name string, params []interface{}) bool
 }
+
+/*type valueExecutor interface {
+	executor
+	Type() reflect.Kind
+
+}*/
 
 func checkKindInt(t reflect.Kind) bool {
 	return t == reflect.Int64 || t == reflect.Int32 || t == reflect.Int16 || t == reflect.Int8 || t == reflect.Int
@@ -115,7 +123,7 @@ func (s *rawInfoRecord) posInfo() *rawInfoRecord {
 }
 
 type eventExec struct {
-	parent execObject
+	parent executor
 }
 
 func (s *eventExec) sendEvent(name string, params []interface{}) {
@@ -124,9 +132,9 @@ func (s *eventExec) sendEvent(name string, params []interface{}) {
 	}
 }
 
-func (s *eventExec) receiveEvent(name string, params []interface{}) bool {
+/*func (s *eventExec) receiveEvent(name string, params []interface{}) bool {
 	if s.parent != nil {
 		return s.parent.receiveEvent(name, params)
 	}
 	return false
-}
+}*/

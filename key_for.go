@@ -2,12 +2,12 @@ package metla
 
 import (
 	"fmt"
-	"io"
+	_ "io"
 	"reflect"
 )
 
 func init() {
-	keywords["for"] = newKeyFor
+	//keywords["for"] = newKeyFor
 }
 
 func newKeyFor(p *parser) (t token, err error) {
@@ -50,9 +50,9 @@ func (s *cycle) String() string {
 	return res
 }
 
-func (s *cycle) execObject(*storage, *template) (execObject, error) {
+/*func (s *cycle) execObject(*storage, *template) (execObject, error) {
 	return nil, fmt.Errorf("Cycle is abstract object")
-}
+}*/
 
 func (s *cycle) appendChild(t token) {
 	if t != nil {
@@ -64,13 +64,13 @@ type cycleExec struct {
 	*rawInfoRecord
 	*eventExec
 	index  *variable
-	childs []execObject
+	childs []executor
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func newCycleIn(index token, p *parser) (t token, err error) {
-	fmt.Println("CYCLE_IN" + string(p.EndLineContent()))
+	/*fmt.Println("CYCLE_IN" + string(p.EndLineContent()))
 	p.ForwardPos(2)
 	var (
 		left         token
@@ -99,7 +99,7 @@ func newCycleIn(index token, p *parser) (t token, err error) {
 	in := cycleIn{indexVarName, &cycle{p.infoRecordFromMark(), index, nil}, left, right}
 	if err = p.parseCodeToCloseTag("endfor", &in); err == nil {
 		t = &in
-	}
+	}*/
 	return
 }
 
@@ -111,7 +111,7 @@ type cycleIn struct {
 	left, right token
 }
 
-func (s *cycleIn) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
+/*func (s *cycleIn) execObject(sto *storage, tpl *template, parent executor) (res executor, err error) {
 	sto.newLayout()
 	defer sto.dropLayout()
 	sto.appendValue(s.indexVarName, nil)
@@ -146,17 +146,17 @@ func (s *cycleIn) execObject(sto *storage, tpl *template, parent execObject) (re
 		}
 	}
 	return
-}
+}*/
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
 type cycleInExec struct {
 	*rawInfoRecord
 	*cycleExec
-	left, right execObject
+	left, right executor
 }
 
-func (s *cycleInExec) Data(w io.Writer) (err error) {
+/*func (s *cycleInExec) Data(w io.Writer) (err error) {
 	var (
 		lVal, rVal interface{}
 		lNum, rNum int64
@@ -215,7 +215,7 @@ func (s *cycleInExec) Data(w io.Writer) (err error) {
 			lNum--
 		}
 	}
-}
+}*/
 
 func (s *cycleInExec) IsNil() bool {
 	return false

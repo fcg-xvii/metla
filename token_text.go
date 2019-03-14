@@ -11,7 +11,7 @@ type tokenText struct {
 	src []byte
 }
 
-func (s *tokenText) execObject(*storage, *template, execObject) (execObject, error) {
+func (s *tokenText) execObject(*storage, *template, executor) (executor, error) {
 	return s, nil
 }
 

@@ -2,18 +2,18 @@ package metla
 
 import (
 	"fmt"
-	"io"
+	_ "io"
 	"reflect"
 
 	"github.com/fcg-xvii/lineman"
 )
 
-func init() {
+/*func init() {
 	creators = append(creators, &valueCreator{
 		checker:     checkFunction,
 		constructor: newValFunction,
 	})
-}
+}*/
 
 func checkFunction(src []byte) bool {
 	if lineman.CheckFirsNameChar(src) == 0 {
@@ -28,39 +28,39 @@ func checkFunction(src []byte) bool {
 	return true
 }
 
-func newValFunction(p *parser) (res token, err error) {
-	name, _ := p.ReadName()
-	var args []token
-	p.PassSpaces()
-	p.IncPos()
-loop:
-	for {
+func newValFunction(p *parser, parent tokenContainer) (err error) {
+	/*name, _ := p.ReadName()
+		var args []token
 		p.PassSpaces()
-		switch {
-		case p.Char() == ')':
-			{
-				p.IncPos()
-				break loop
-			}
-		case p.Char() == ',':
-			{
-				p.IncPos()
-			}
-		default:
-			{
-				if res, err = initVal(p); err != nil {
-					return
-				} else {
-					args = append(args, res)
+		p.IncPos()
+	loop:
+		for {
+			p.PassSpaces()
+			switch {
+			case p.Char() == ')':
+				{
+					p.IncPos()
+					break loop
+				}
+			case p.Char() == ',':
+				{
+					p.IncPos()
+				}
+			default:
+				{
+					if res, err = initVal(p); err != nil {
+						return
+					} else {
+						args = append(args, res)
+					}
 				}
 			}
 		}
-	}
-	res = &valFunction{
-		rawInfoRecord: &rawInfoRecord{p.tpl.objPath, p.MarkLine(), p.MarkLinePos()},
-		name:          string(name),
-		args:          args,
-	}
+		res = &valFunction{
+			rawInfoRecord: &rawInfoRecord{p.tpl.objPath, p.MarkLine(), p.MarkLinePos()},
+			name:          string(name),
+			args:          args,
+		}*/
 	return
 }
 
@@ -83,7 +83,7 @@ func (s *valFunction) String() string {
 
 func (s *valFunction) posInfo() *rawInfoRecord { return s.rawInfoRecord }
 
-func (s *valFunction) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
+/*func (s *valFunction) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
 	fObj := valFunctionExec{rawInfoRecord: s.rawInfoRecord}
 	if f, check := sto.findVariable(s.name); check {
 		if f.Kind() != reflect.Func {
@@ -102,23 +102,23 @@ func (s *valFunction) execObject(sto *storage, tpl *template, parent execObject)
 		err = s.fatalError(fmt.Sprintf("Function [%s] not found", s.name))
 	}
 	return
-}
+}*/
 
 //////////////////////////////////////////////////////////
 
 type valFunctionExec struct {
 	*rawInfoRecord
 	f    *variable
-	args []execObject
+	args []executor
 }
 
-func (s *valFunctionExec) Data(w io.Writer) (err error) {
+/*func (s *valFunctionExec) Data(w io.Writer) (err error) {
 	if _, err = s.call(); err != nil {
 		content := s.positionWarning(err.Error())
 		_, err = w.Write([]byte(content.Error()))
 	}
 	return
-}
+}*/
 
 func (s *valFunctionExec) IsNil() bool {
 	return s.f.IsNil()
@@ -132,15 +132,15 @@ func (s *valFunctionExec) Type() reflect.Kind {
 	return reflect.Func
 }
 
-func (s *valFunctionExec) Val() (interface{}, error) {
+/*func (s *valFunctionExec) Val() (interface{}, error) {
 	if vals, err := s.Vals(); err == nil && len(vals) > 0 {
 		return vals[0], err
 	} else {
 		return nil, err
 	}
-}
+}*/
 
-func (s *valFunctionExec) Vals() (res []interface{}, err error) {
+/*func (s *valFunctionExec) Vals() (res []interface{}, err error) {
 	var rRes []reflect.Value
 	if rRes, err = s.call(); err == nil {
 		if len(rRes) > 0 {
@@ -151,13 +151,13 @@ func (s *valFunctionExec) Vals() (res []interface{}, err error) {
 		}
 	}
 	return
-}
+}*/
 
 func (s *valFunctionExec) ValSingle() bool {
 	return false
 }
 
-func (s *valFunctionExec) call() (res []reflect.Value, err error) {
+/*func (s *valFunctionExec) call() (res []reflect.Value, err error) {
 	fVal := reflect.ValueOf(s.f.value)
 	if fVal.Kind() != reflect.Func {
 		err = fmt.Errorf("Function exec error :: variable [%v] is not a function", s.f.key)
@@ -192,6 +192,6 @@ func (s *valFunctionExec) call() (res []reflect.Value, err error) {
 		res = fVal.Call(rArgs)
 	}
 	return
-}
+}*/
 
 func (s *valFunctionExec) receiveEvent(name string, params []interface{}) bool { return false }

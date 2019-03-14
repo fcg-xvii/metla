@@ -2,17 +2,17 @@ package metla
 
 import (
 	"errors"
-	"fmt"
+	_ "fmt"
 	"io"
 	"reflect"
 )
 
 func init() {
-	keywords["include"] = newKeyInclude
+	//keywords["include"] = newKeyInclude
 }
 
 func newKeyInclude(p *parser) (t token, err error) {
-	p.PassSpaces()
+	/*p.PassSpaces()
 	var pathToken, paramsToken token
 	if pathToken, err = initVal(p); err == nil {
 		p.PassSpaces()
@@ -31,7 +31,7 @@ func newKeyInclude(p *parser) (t token, err error) {
 				}
 			}
 		}
-	}
+	}*/
 	return
 }
 
@@ -43,8 +43,8 @@ type keyInclude struct {
 
 func (s *keyInclude) posInfo() *rawInfoRecord { return s.rawInfoRecord }
 
-func (s *keyInclude) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
-	var tplPath execObject
+func (s *keyInclude) execObject(sto *storage, tpl *template, parent executor) (res executor, err error) {
+	/*var tplPath execObject
 	if tplPath, err = s.tplPath.execObject(sto, tpl, parent); err == nil {
 		if tplPath.Type() != reflect.String {
 			err = fmt.Errorf("Include token exec error :: Unexpected include path token [%s], expected [string] type", tplPath.Type())
@@ -69,7 +69,7 @@ func (s *keyInclude) execObject(sto *storage, tpl *template, parent execObject) 
 		}
 		sto.dropLayout()
 		res = &execObjectInclude{s.rawInfoRecord, &eventExec{parent}, tplRes}
-	}
+	}*/
 	return
 }
 

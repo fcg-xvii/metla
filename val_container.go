@@ -6,11 +6,11 @@ import (
 	_ "reflect"
 )
 
-func newValArray(p *parser, parent tokenContainer) error {
+func newValArray(p *parser) error {
 	return p.positionError("array_error")
 }
 
-func newValObject(p *parser, parent tokenContainer) error {
+func newValObject(p *parser) error {
 	return p.positionError("object_error")
 }
 

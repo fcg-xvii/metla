@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"sync"
+
+	"github.com/golang-collections/collections/stack"
 )
 
 func newTemplate(root *Metla, objPath string) *template {
@@ -18,7 +20,7 @@ type template struct {
 	root       *Metla
 	objPath    string
 	locker     *sync.RWMutex
-	tokenList  []token
+	tokenList  []interface{}
 	updateMark interface{}
 	err        error
 	//lastRequest time.Time
@@ -47,12 +49,7 @@ func (s *template) execute(w io.Writer, vals map[string]interface{}) error {
 		return s.err
 	}
 	sto := newStorage(vals)
-	if result, err := s.result(sto); err != nil {
-		return err
-	} else {
-		result.exec(w)
-		return nil
-	}
+	return s.result(sto, w)
 }
 
 func (s *template) parse(src []byte) error {
@@ -60,43 +57,41 @@ func (s *template) parse(src []byte) error {
 	return parser.parseDocument()
 }
 
-func (s *template) pushToken(t token) {
-	fmt.Println("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", t)
+func (s *template) pushToken(t interface{}) {
 	s.tokenList = append(s.tokenList, t)
 }
 
-func (s *template) result(sto *storage) (*templateResult, error) {
+func (s *template) result(sto *storage, w io.Writer) (err error) {
 	s.locker.RLock()
 	//fmt.Println("Result...", s.tokenList)
 	if s.err != nil {
 		s.locker.RUnlock()
-		return nil, s.err
+		return s.err
 	}
-	res := &templateResult{make([]executor, 0, len(s.tokenList))}
+	/*res := &templateResult{make([]interface{}, 0, len(s.tokenList))}
 	for _, v := range s.tokenList {
-		if eObj, err := v.execObject(sto, s, nil); err == nil {
+		if eObj, err := v.execObject(sto); err == nil {
 			res.list = append(res.list, eObj)
 		} else {
 			s.locker.RUnlock()
 			return nil, err
 		}
-	}
+	}*/
+	list, st := s.tokenList, stack.New()
 	s.locker.RUnlock()
-	return res, nil
+	fmt.Println("LIST", list)
+	for len(list) > 0 {
+		//fmt.Println(len(list))
+		if obj, check := list[0].(*execCommand); check {
+			if list, err = obj.method(list, st, sto, w); err != nil {
+				return err
+			}
+		} else {
+			st.Push(list[0])
+			list = list[1:]
+		}
+	}
+	return nil
 }
 
 ////////////////////////////////////////////////////////////////////////
-
-type templateResult struct {
-	list []executor
-}
-
-func (s *templateResult) exec(w io.Writer) (err error) {
-	for _, v := range s.list {
-		fmt.Println("V", v)
-		if err = v.Data(w); err != nil {
-			return
-		}
-	}
-	return
-}

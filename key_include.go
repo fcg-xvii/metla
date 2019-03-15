@@ -84,11 +84,11 @@ func (s *keyInclude) IsExecutable() bool { return true }
 type execObjectInclude struct {
 	*rawInfoRecord
 	*eventExec
-	tpl *templateResult
+	//tpl *templateResult
 }
 
 func (s *execObjectInclude) Data(w io.Writer) (err error) {
-	s.tpl.exec(w)
+	//s.tpl.exec(w)
 	return
 }
 

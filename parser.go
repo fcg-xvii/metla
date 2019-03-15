@@ -5,14 +5,13 @@ import (
 	"fmt"
 
 	"github.com/fcg-xvii/lineman"
-	"github.com/golang-collections/collections/stack"
 )
 
 type tokenContainer interface {
 	pushToken(token)
 }
 
-type parseMethod func(p *parser, parent tokenContainer) error
+type parseMethod func(p *parser) error
 
 var (
 	parseErrEOF            = errors.New("EOF")
@@ -20,14 +19,14 @@ var (
 )
 
 func newParser(src []byte, tpl *template, root *Metla) *parser {
-	return &parser{lineman.NewCodeLine(src), tpl, root, stack.New(), true}
+	return &parser{lineman.NewCodeLine(src), tpl, root, newCodeStack(), true}
 }
 
 type parser struct {
 	*lineman.CodeLine
 	tpl       *template
 	root      *Metla
-	codeStack *stack.Stack
+	stack     *codeStack
 	textState bool
 }
 
@@ -49,7 +48,7 @@ func (s *parser) parseDocument() (err error) {
 		default:
 			method = newValText
 		}
-		if err = method(s, s.tpl); err != nil {
+		if err = method(s); err != nil {
 			return
 		}
 	}
@@ -68,12 +67,8 @@ func (s *parser) infoRecordFromMark() *rawInfoRecord {
 	return &rawInfoRecord{tplName: s.tpl.objPath, line: s.MarkLine(), pos: s.MarkLinePos()}
 }
 
-func (s *parser) flushToParent(parent tokenContainer, val token) {
-	if parent == nil {
-		s.codeStack.Push(parent)
-	} else {
-		parent.pushToken(val)
-	}
+func (s *parser) flushStack() {
+	s.tpl.tokenList = append(s.tpl.tokenList, s.stack.Flush()...)
 }
 
 /*func (s *parser) IsEndCode() bool {

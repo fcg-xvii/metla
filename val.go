@@ -46,21 +46,23 @@ func initVal(p *parser) (res token, err error) {
 	return
 }
 
-func initCodeVal(p *parser, parent tokenContainer) (err error) {
+func initCodeVal(p *parser) (err error) {
+	fmt.Println("INIT_VAL", p.stack, string(p.Char()), string(p.EndLineContent()))
 	p.PassSpaces()
 	switch p.Char() {
 	case '+', '-', '*', '/', '(', '!', '>', '<':
-		err = newValArifmetic(p, parent)
+		err = newValArifmetic(p)
 	case '"', '\'':
-		err = newValString(p, parent)
+		err = newValString(p)
 	case '=':
-		err = newValSet(p, parent)
+		err = newValSet(p)
 	case '{':
-		err = newValObject(p, parent)
+		err = newValObject(p)
 	case '[':
-		err = newValArray(p, parent)
+		err = newValArray(p)
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		err = newValNumber(p, parent)
+		err = newValNumber(p)
+		fmt.Println("NUM", p.stack.Peek())
 	default:
 		if name, check := p.ReadName(); !check {
 			err = p.positionError(fmt.Sprintf("Unexpected symbol '%c'", p.Char()))
@@ -71,13 +73,13 @@ func initCodeVal(p *parser, parent tokenContainer) (err error) {
 			} else {
 				switch p.Char() {
 				case '(':
-					err = newValFunction(p, parent)
+					err = newValFunction(p)
 				case '[':
-					err = newValIndex(p, parent)
+					err = newValIndex(p)
 				case '.':
-					err = newValField(p, parent)
+					err = newValField(p)
 				default:
-					p.codeStack.Push(&valVariable{p.infoRecordFromMark(), string(name)})
+					p.stack.Push(&valVariable{p.infoRecordFromMark(), string(name)})
 				}
 			}
 		}

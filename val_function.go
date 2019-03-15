@@ -5,7 +5,7 @@ import (
 	_ "io"
 	"reflect"
 
-	"github.com/fcg-xvii/lineman"
+	_ "github.com/fcg-xvii/lineman"
 )
 
 /*func init() {
@@ -15,7 +15,7 @@ import (
 	})
 }*/
 
-func checkFunction(src []byte) bool {
+/*func checkFunction(src []byte) bool {
 	if lineman.CheckFirsNameChar(src) == 0 {
 		return false
 	}
@@ -26,9 +26,9 @@ func checkFunction(src []byte) bool {
 		return false
 	}
 	return true
-}
+}*/
 
-func newValFunction(p *parser, parent tokenContainer) (err error) {
+func newValFunction(p *parser) (err error) {
 	/*name, _ := p.ReadName()
 		var args []token
 		p.PassSpaces()

@@ -4,7 +4,19 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+
+	"github.com/golang-collections/collections/stack"
 )
+
+type execData struct {
+	*rawInfoRecord
+	data interface{}
+}
+
+type execCommand struct {
+	*rawInfoRecord
+	method func([]interface{}, *stack.Stack, *storage, io.Writer) ([]interface{}, error)
+}
 
 type positionInformer interface {
 	fatalError(string) error
@@ -14,14 +26,9 @@ type positionInformer interface {
 // Общий интерфейс объекта результирующих данных
 type token interface {
 	positionInformer
-	execObject(sto *storage, tpl *template, parent executor) (executor, error)
+	execObject(sto *storage) (executor, error)
 	IsExecutable() bool
 	String() string
-}
-
-// Интерфейс токена, который может содержать блок дочерних токенов
-type tokenParent interface {
-	appendChild(token)
 }
 
 // Интерфейс контейнера значения

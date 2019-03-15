@@ -33,11 +33,11 @@ type arifmetic struct {
 func (s *arifmetic) IsExecutable() bool { return false }
 func (s *arifmetic) String() string     { return "[arifmetic...]" }
 
-func (s *arifmetic) execObject(sto *storage, tpl *template, parent executor) (res executor, err error) {
+func (s *arifmetic) execObject(sto *storage) (res executor, err error) {
 	pn := make([]interface{}, len(s.pn))
 	for i, v := range s.pn {
 		if t, check := v.(token); check {
-			if pn[i], err = t.execObject(sto, tpl, parent); err != nil {
+			if pn[i], err = t.execObject(sto); err != nil {
 				return
 			}
 		} else {

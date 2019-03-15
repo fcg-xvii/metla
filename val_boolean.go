@@ -39,7 +39,7 @@ type valBoolean struct {
 	val bool
 }
 
-func (s *valBoolean) execObject(*storage, *template, executor) (executor, error) {
+func (s *valBoolean) execObject(*storage) (executor, error) {
 	return s, nil
 }
 
@@ -87,7 +87,7 @@ type valNil struct {
 	*rawInfoRecord
 }
 
-func (s *valNil) execObject(*storage, *template, executor) (executor, error) {
+func (s *valNil) execObject(*storage) (executor, error) {
 	return s, nil
 }
 

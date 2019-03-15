@@ -1,9 +1,14 @@
 package metla
 
-import "io"
+import (
+	"io"
 
-func newValText(p *parser, parent tokenContainer) error {
+	"github.com/golang-collections/collections/stack"
+)
+
+func newValText(p *parser) error {
 	p.SetupMark()
+	info := p.infoRecordFromMark()
 	for !p.IsEndDocument() {
 		if cur, next := p.Char(), p.NextChar(); cur == '{' && (next == '{' || next == '*' || next == '%') {
 			break
@@ -12,30 +17,22 @@ func newValText(p *parser, parent tokenContainer) error {
 		}
 	}
 	if src := p.MarkVal(0); len(src) > 0 {
-		parent.pushToken(&valText{p.infoRecordFromMark(), src})
+		p.tpl.pushToken(src)
+		p.tpl.pushToken(&execCommand{info, execText})
 	}
 	return nil
 }
 
-type valText struct {
-	*rawInfoRecord
-	src []byte
-}
-
-func (s *valText) IsExecutable() bool { return true }
-func (s *valText) String() string     { return "[ text ]" }
-func (s *valText) execObject(sto *storage, tpl *template, parent executor) (res executor, err error) {
-	return s, nil
-}
-
-func (s *valText) Data(w io.Writer) (err error) {
-	_, err = w.Write(s.src)
+func execText(com []interface{}, st *stack.Stack, sto *storage, w io.Writer) (newCom []interface{}, err error) {
+	if _, err = w.Write(st.Pop().([]byte)); err == nil {
+		newCom = com[1:]
+	}
 	return
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func newValComment(p *parser, parent tokenContainer) error {
+func newValComment(p *parser) error {
 	p.SetupMark()
 	p.ForwardPos(2)
 	for !p.IsEndDocument() {

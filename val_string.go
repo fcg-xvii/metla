@@ -23,7 +23,7 @@ func checkValString(src []byte) bool {
 }
 
 // Конструктор строки.
-func newValString(p *parser, parent tokenContainer) (err error) {
+func newValString(p *parser) (err error) {
 	p.SetupMark()
 	charID := p.Char()     // Определяем, двойная или одинарная кавычка открыта
 	p.IncPos()             // Смещаемся на начало строки
@@ -31,7 +31,7 @@ func newValString(p *parser, parent tokenContainer) (err error) {
 		err = p.positionError("Unclosed string")
 	} else {
 		// Закрывающая кавычка найдена. Инициализируем результирующее значение
-		p.codeStack.Push(&valString{
+		p.stack.Push(&valString{
 			rawInfoRecord: p.infoRecordFromMark(),
 			val:           p.MarkValString(0)[1:], // Обрезаем кавычки для результирующего значения
 		})

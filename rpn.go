@@ -2,15 +2,23 @@ package metla
 
 import (
 	"fmt"
+	"reflect"
 
+	"github.com/fcg-xvii/lineman"
 	"github.com/golang-collections/collections/stack"
 )
 
+func isOperatorSymbol(c byte) bool {
+	return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == '!' || c == '=' || c == '>' || c == '<'
+}
+
 func isOperator(val []byte) bool {
 	switch len(val) {
-	case 0: return false
-	case 1: return val[0] == '+' || val[0] == '-' || val[0] == '*' || val[0] == '/' || val[0] == '^' || val[0] == '!' || val[0] == '>' || val[0] == '<'
-	default: 
+	case 0:
+		return false
+	case 1:
+		return val[0] == '+' || val[0] == '-' || val[0] == '*' || val[0] == '/' || val[0] == '^' || val[0] == '!' || val[0] == '>' || val[0] == '<'
+	default:
 		{
 			switch string(val[:2]) {
 			case "==", ">=", "<=", "!=", "++", "--":
@@ -111,15 +119,7 @@ func (s *operator) execUnary(st *stack.Stack) error {
 	return nil
 }
 
-func (s *operator) numberResult(val float64) value {
-	if canInt(val) {
-		return &valInt{s.rawInfoRecord, int64(val)}
-	} else {
-		return &valFloat{s.rawInfoRecord, val}
-	}
-}
-
-func (s *operator) execBinary(st *stack.Stack) error {
+/*func (s *operator) execBinary(st *stack.Stack) error {
 	if st.Len() < 2 {
 		return s.fatalError("Value list is too small")
 	}
@@ -190,6 +190,62 @@ func (s *operator) execBinary(st *stack.Stack) error {
 
 	}
 	return nil
+}*/
+
+func (s *operator) numberResult(val float64) interface{} {
+	if canInt(val) {
+		return int64(val)
+	} else {
+		return val
+	}
+}
+
+func (s *operator) execBinary(st *stack.Stack) error {
+	r, l := reflect.ValueOf(st.Pop()), reflect.ValueOf(st.Pop())
+	if len(s.data) == 1 {
+		switch s.data[0] {
+		case '+':
+			st.Push(s.numberResult(l.Float() + r.Float()))
+		case '-':
+			st.Push(s.numberResult(l.Float() - r.Float()))
+		case '*':
+			st.Push(s.numberResult(l.Float() * r.Float()))
+		case '/':
+			st.Push(s.numberResult(l.Float() / r.Float()))
+		case '%':
+			st.Push(int64(l.Int() % r.Int()))
+		case '>':
+			st.Push(l.Float() > r.Float())
+		case '<':
+			st.Push(l.Float() < r.Float())
+		default:
+			return s.fatalError(fmt.Sprintf("Illegal operator '%c'", s.data[0]))
+		}
+	} else {
+		switch string(s.data) {
+		case "==":
+			st.Push(l.Interface() == r.Interface())
+			/*if l.IsNil() || r.IsNil() {
+				st.Push(l.Interface() == r.Interface())
+			} else {
+				st.Push(l.Interface() == r.Interface())
+			}*/
+		case "!=":
+			st.Push(!(l.Interface() == r.Interface()))
+		case ">=", "<=":
+			{
+				switch s.data[0] {
+				case '>':
+					st.Push(l.Float() >= r.Float())
+				case '<':
+					st.Push(l.Float() <= r.Float())
+				}
+			}
+		default:
+			return s.fatalError(fmt.Sprintf("Illegal operator '%c'", s.data[0]))
+		}
+	}
+	return nil
 }
 
 func (s *operator) checkNil(l, r value) (res *valBoolean) {
@@ -204,12 +260,12 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 	fmt.Println("PARSE_RPN")
 	prevVal := false
 	sPn := stack.New()
-	if p.codeStack.Len() > 0 {
-		pn = append(pn, p.codeStack.Pop())
+	if p.stack.Len() > 0 {
+		pn = append(pn, p.stack.Pop())
 		prevVal = true
 	}
-	for !p.IsEndLine() && p.Char() != ',' {
-		p.PassSpaces()
+	p.PassSpaces()
+	for !p.IsEndLine() && (isOperatorSymbol(p.Char()) || lineman.CheckLetter(p.Char()) || lineman.CheckNumber(p.Char())) {
 		switch p.Char() {
 		case '(':
 			{
@@ -262,17 +318,19 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 			}
 		default:
 			{
-				var val token
-				if val, err = initVal(p); err != nil {
+				if err = initCodeVal(p); err != nil {
 					return
+				} else {
+					pn, prevVal = append(pn, p.stack.Pop()), true
 				}
-				pn, prevVal = append(pn, val), true
 			}
 		}
+		p.PassSpaces()
 	}
 	for sPn.Len() > 0 {
 		pn = append(pn, sPn.Pop())
 	}
+	fmt.Println(pn, len(pn), cap(pn))
 	return
 }
 

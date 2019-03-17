@@ -20,7 +20,7 @@ func newValArifmetic(p *parser) (res interface{}, err error) {
 				for _, v := range pn {
 					p.stack.Push(v)
 				}
-				p.stack.Push(&execCommand{info, execArifmetic})
+				p.stack.Push(&execCommand{info, execArifmetic, len(pn) + 1})
 			}
 			//p.codeStack.Push(&arifmetic{info, pn})
 		}
@@ -33,9 +33,10 @@ func execArifmetic(com []interface{}, st *stack.Stack, sto *storage, w io.Writer
 	fmt.Println("EXEC_ARIFMETIC")
 	pn := make([]interface{}, 0, st.Len())
 	for st.Len() > 0 {
-		pn = append(pn, st.Pop())
+		pn = append([]interface{}{st.Pop()}, pn...)
 	}
 	fmt.Println("PN", pn)
+	fmt.Println(execRPN(pn))
 	return
 	/*if _, err = w.Write(st.Pop().([]byte)); err == nil {
 		newCom = com[1:]

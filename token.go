@@ -15,7 +15,8 @@ type execData struct {
 
 type execCommand struct {
 	*rawInfoRecord
-	method func([]interface{}, *stack.Stack, *storage, io.Writer) ([]interface{}, error)
+	method     func([]interface{}, *stack.Stack, *storage, io.Writer) ([]interface{}, error)
+	itemsCount int
 }
 
 type positionInformer interface {

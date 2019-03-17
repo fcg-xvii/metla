@@ -10,24 +10,30 @@ import (
 func newValPrint(p *parser) (err error) {
 	p.SetupMark()
 	info := p.infoRecordFromMark()
+	stackOffset := p.stack.Len()
+	fmt.Println("STACK_OFFSET", stackOffset)
 	p.ForwardPos(2)
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		if p.PosMatchSlice([]byte("}}")) {
 			p.ForwardPos(2)
-			if p.stack.Len() > 0 {
+			if p.stack.Len() == 0 {
 				err = p.positionError("Empty print tag")
+				return
+			} else if exec, check := p.stack.Peek().(*execCommand); check {
+				if exec.itemsCount < p.stack.Len()-stackOffset {
+					err = p.stack.Peek().(token).fatalError("More one value")
+					return
+				}
 			} else if p.stack.Len() > 1 {
 				err = p.stack.Peek().(token).fatalError("More one value")
-			} else {
-				fmt.Println(p.stack.Peek())
-				//p.tpl.pushToken(p.codeStack.Pop())
-				p.tpl.pushToken(&execCommand{info, execPrint})
+				return
 			}
+			p.stack.Push(&execCommand{info, execPrint, p.stack.Len() + 1})
 			return
-		} else if res, err = initCodeVal(p); err != nil {
+		} else if _, err = initCodeVal(p); err != nil {
 			return
-		} else if _, check := 
+		}
 	}
 	err = p.positionError("Unclosed print tag")
 	return

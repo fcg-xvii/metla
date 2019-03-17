@@ -17,8 +17,10 @@ func newValText(p *parser) error {
 		}
 	}
 	if src := p.MarkVal(0); len(src) > 0 {
-		p.tpl.pushToken(src)
-		p.tpl.pushToken(&execCommand{info, execText})
+		//p.tpl.pushToken(src)
+		//p.tpl.pushToken(&execCommand{info, execText})
+		p.stack.Push(src)
+		p.stack.Push(&execCommand{info, execText, 2})
 	}
 	return nil
 }

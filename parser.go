@@ -52,6 +52,7 @@ func (s *parser) parseDocument() (err error) {
 			return
 		}
 	}
+	s.flushStack()
 	return
 }
 

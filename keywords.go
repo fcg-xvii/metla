@@ -1,6 +1,6 @@
 package metla
 
-type keywordConstructor func(*parser) error
+type keywordConstructor func(*parser) (interface{}, error)
 
 var (
 	keywords = make(map[string]keywordConstructor)

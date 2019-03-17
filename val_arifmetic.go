@@ -7,7 +7,7 @@ import (
 	"github.com/golang-collections/collections/stack"
 )
 
-func newValArifmetic(p *parser) (err error) {
+func newValArifmetic(p *parser) (res interface{}, err error) {
 	var pn []interface{}
 	p.SetupMark()
 	info := p.infoRecordFromMark()

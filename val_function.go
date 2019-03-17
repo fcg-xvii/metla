@@ -28,7 +28,7 @@ import (
 	return true
 }*/
 
-func newValFunction(p *parser) (err error) {
+func newValFunction(p *parser) (res interface{}, err error) {
 	/*name, _ := p.ReadName()
 		var args []token
 		p.PassSpaces()

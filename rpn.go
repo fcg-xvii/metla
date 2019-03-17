@@ -318,7 +318,8 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 			}
 		default:
 			{
-				if err = initCodeVal(p); err != nil {
+
+				if _, err = initCodeVal(p); err != nil {
 					return
 				} else {
 					pn, prevVal = append(pn, p.stack.Pop()), true

@@ -26,9 +26,9 @@ func (s *codeStack) Pop() interface{} {
 }
 
 func (s *codeStack) Flush() []interface{} {
-	res := make([]interface{}, 0, s.Len())
-	for s.Len() > 0 {
-		res = append(res, s.Pop())
+	res := make([]interface{}, s.Len())
+	for i := s.Len() - 1; i >= 0; i-- {
+		res[i] = s.Pop()
 	}
 	s.commandCount = 0
 	return res

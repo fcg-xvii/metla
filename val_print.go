@@ -25,9 +25,9 @@ func newValPrint(p *parser) (err error) {
 				p.tpl.pushToken(&execCommand{info, execPrint})
 			}
 			return
-		} else if err = initCodeVal(p); err != nil {
+		} else if res, err = initCodeVal(p); err != nil {
 			return
-		}
+		} else if _, check := 
 	}
 	err = p.positionError("Unclosed print tag")
 	return

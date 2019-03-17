@@ -23,7 +23,7 @@ func checkValString(src []byte) bool {
 }
 
 // Конструктор строки.
-func newValString(p *parser) (err error) {
+func newValString(p *parser) (res interface{}, err error) {
 	p.SetupMark()
 	charID := p.Char()     // Определяем, двойная или одинарная кавычка открыта
 	p.IncPos()             // Смещаемся на начало строки

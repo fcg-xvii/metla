@@ -11,7 +11,7 @@ import (
 	"github.com/fcg-xvii/lineman"
 )
 
-func newValNumber(p *parser) (err error) {
+func newValNumber(p *parser) (res interface{}, err error) {
 	p.SetupMark()
 	intVal := true
 	for lineman.CheckNumber(p.Char()) || p.Char() == '.' {
@@ -25,10 +25,10 @@ func newValNumber(p *parser) (err error) {
 		p.IncPos()
 	}
 	if intVal {
-		res, _ := strconv.ParseInt(p.MarkValString(0), 10, 64)
+		res, _ = strconv.ParseInt(p.MarkValString(0), 10, 64)
 		p.stack.Push(res)
 	} else {
-		res, _ := strconv.ParseFloat(p.MarkValString(0), 64)
+		res, _ = strconv.ParseFloat(p.MarkValString(0), 64)
 		p.stack.Push(res)
 	}
 	return

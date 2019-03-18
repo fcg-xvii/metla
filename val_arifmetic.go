@@ -29,7 +29,7 @@ func newValArifmetic(p *parser) (res interface{}, err error) {
 	return
 }
 
-func execArifmetic(exec *tplExec) (err error) {
+func execArifmetic(exec *tplExec, info *rawInfoRecord) (err error) {
 	//fmt.Println("EXEC_ARIFMETIC", st.Len())
 	pn := make([]interface{}, 0, exec.st.Len())
 	for exec.st.Len() > 0 {

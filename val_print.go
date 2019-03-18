@@ -38,14 +38,27 @@ func newValPrint(p *parser) (err error) {
 	return
 }
 
-func execPrint(exec *tplExec) (err error) {
-	fmt.Println("EXEC_PRINT")
-	fmt.Printf("%T\n", exec.st.Peek())
-	if command, check := exec.st.Peek().(*execCommand); check {
-		exec.st.Pop()
-		return command.method(exec)
+func execPrint(exec *tplExec, info *rawInfoRecord) (err error) {
+	//fmt.Println("EXEC_PRINT")
+	//fmt.Printf("%T, %v\n", exec.st.Peek(), exec.st.Len())
+	if exec.st.Len() == 1 {
+		_, err = exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
+	} else if exec.st.Len() > 1 {
+		for exec.st.Len() > 0 {
+			if _, err = exec.w.Write([]byte(fmt.Sprint(exec.st.Pop()))); err != nil {
+				return
+			} else if exec.st.Len() > 0 {
+				if _, err = exec.w.Write([]byte{',', ' '}); err != nil {
+					return
+				}
+			}
+		}
 	}
-	_, err = exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
+	/*if command, check := exec.st.Peek().(*execCommand); check {
+		exec.st.Pop()
+		return command.method(exec, command.rawInfoRecord)
+	}
+	_, err = exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))*/
 	return
 }
 

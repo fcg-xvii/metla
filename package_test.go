@@ -22,6 +22,10 @@ func inc(v int64) int64 {
 	return v + 1
 }
 
+func incTwo(l int64, r int64) (int64, int64) {
+	return l + 1, r + 1
+}
+
 func check(path string, marker interface{}) (res UpdateState) {
 	if info, err := os.Stat(path); err == nil {
 		if marker != nil {
@@ -76,6 +80,7 @@ func TestParser(t *testing.T) {
 		"print":   printMethod,
 		"twink":   printTwink,
 		"inc":     inc,
+		"incTwo":  incTwo,
 	}
 
 	if err := root.Content("source_script", &buf, data); err != nil {

@@ -22,7 +22,7 @@ type execData struct {
 
 type execCommand struct {
 	*rawInfoRecord
-	method     func(*tplExec) error
+	method     func(*tplExec, *rawInfoRecord) error
 	itemsCount int
 }
 

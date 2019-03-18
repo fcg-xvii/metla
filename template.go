@@ -87,7 +87,8 @@ func (s *tplExec) exec() (err error) {
 	for s.index < len(s.list) {
 		switch s.list[s.index].(type) {
 		case *execCommand:
-			if err = s.list[s.index].(*execCommand).method(s); err != nil {
+			exec := s.list[s.index].(*execCommand)
+			if err = exec.method(s, exec.rawInfoRecord); err != nil {
 				return
 			}
 		case *valVariable:

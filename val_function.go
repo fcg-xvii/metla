@@ -2,32 +2,8 @@ package metla
 
 import (
 	"fmt"
-	_ "io"
 	"reflect"
-
-	_ "github.com/fcg-xvii/lineman"
-	_ "github.com/golang-collections/collections/stack"
 )
-
-/*func init() {
-	creators = append(creators, &valueCreator{
-		checker:     checkFunction,
-		constructor: newValFunction,
-	})
-}*/
-
-/*func checkFunction(src []byte) bool {
-	if lineman.CheckFirsNameChar(src) == 0 {
-		return false
-	}
-	code := lineman.NewCodeLine(src)
-	if _, check := code.ReadName(); check {
-		return code.Char() == '('
-	} else {
-		return false
-	}
-	return true
-}*/
 
 func newValFunction(name string, p *parser) (res interface{}, err error) {
 	fmt.Println("FUNCTION_PARSE")
@@ -37,7 +13,7 @@ func newValFunction(name string, p *parser) (res interface{}, err error) {
 	stackOffset, info := p.stack.Len(), p.infoRecordFromMark()
 	for !p.IsEndDocument() {
 		p.PassSpaces()
-		fmt.Println(string(p.Char()))
+		//fmt.Println(string(p.Char()))
 		switch p.Char() {
 		case ',':
 			p.IncPos()
@@ -57,25 +33,44 @@ func newValFunction(name string, p *parser) (res interface{}, err error) {
 	return
 }
 
-func execFunction(exec *tplExec) (err error) {
+func execFunction(exec *tplExec, info *rawInfoRecord) (err error) {
 	fmt.Println("FUNCTION_EXEC", exec.st.Len())
 	f := reflect.ValueOf(exec.st.Pop().(*variable).value)
+	fType := f.Type()
 	fmt.Println("FFFFF", f, exec.st.Len())
-	args := make([]interface{}, 0, exec.st.Len())
+	args := make([]reflect.Value, 0, exec.st.Len())
 	for exec.st.Len() > 0 {
+		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 		val := exec.st.Pop()
 		fmt.Println("VAL", val)
 		if command, check := val.(*execCommand); check {
-			if err = command.method(exec); err != nil {
+			if err = command.method(exec, command.rawInfoRecord); err != nil {
 				return
 			}
 		} else {
-			args = append([]interface{}{val}, args...)
+			if len(args) >= fType.NumIn() {
+				err = info.positionWarning(fmt.Sprintf("Too many function arguments. Expected [%v]", fType.NumIn()))
+			}
+			args = append([]reflect.Value{reflect.ValueOf(val).Convert(fType.In(len(args)))}, args...)
 		}
 
 	}
-	fmt.Println("ARGS", args)
-	err = fmt.Errorf("IIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
+	if len(args) != fType.NumIn() {
+		err = info.positionWarning(fmt.Sprintf("Function agrs count isn't match - %v given, %v expected", len(args), fType.NumIn()))
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("Function call fatal error (panic) :: %v", r)
+		}
+	}()
+	if res := f.Call(args); len(res) > 0 {
+		for _, val := range res {
+			fmt.Println("VAL =======================", val)
+			exec.st.Push(val.Interface())
+		}
+	}
+	//err = fmt.Errorf("IIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
 	return
 }
 

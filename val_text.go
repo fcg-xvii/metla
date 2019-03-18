@@ -23,7 +23,7 @@ func newValText(p *parser) error {
 	return nil
 }
 
-func execText(exec *tplExec) (err error) {
+func execText(exec *tplExec, info *rawInfoRecord) (err error) {
 	fmt.Println("EXEC_TEXT", exec.st.Len())
 	_, err = exec.w.Write(exec.st.Pop().([]byte))
 	fmt.Println("ERRRRR", err, exec.st.Len())

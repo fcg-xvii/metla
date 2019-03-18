@@ -1,14 +1,24 @@
 package metla
 
 import (
-	"fmt"
-	"io"
-	"reflect"
+	_ "fmt"
+	_ "io"
+	_ "reflect"
 
-	"github.com/fcg-xvii/lineman"
+	_ "github.com/fcg-xvii/lineman"
 )
 
-func init() {
+type valVariable struct {
+	*rawInfoRecord
+	name string
+	v    *variable
+}
+
+func (s *valVariable) Val(sto *storage) interface{} {
+
+}
+
+/*func init() {
 	creators = append(creators, &valueCreator{
 		checker:     checkValVariable,
 		constructor: newValVariable,
@@ -94,4 +104,4 @@ func (s *valVariableExec) Vals() ([]interface{}, error) {
 
 func (s *valVariableExec) receiveEvent(name string, params []interface{}) bool {
 	return false
-}
+}*/

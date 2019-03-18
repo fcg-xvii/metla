@@ -8,8 +8,38 @@ import (
 	"github.com/golang-collections/collections/stack"
 )
 
+type reflectNum struct {
+	reflect.Value
+}
+
+func (s reflectNum) Int() (res int64) {
+	switch s.Kind() {
+	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
+		return s.Value.Int()
+	case reflect.Float64, reflect.Float32:
+		return int64(s.Value.Float())
+	default:
+		return 0
+	}
+}
+
+func (s reflectNum) Float() (res float64) {
+	switch s.Kind() {
+	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
+		return float64(s.Value.Int())
+	case reflect.Float64, reflect.Float32:
+		return s.Value.Float()
+	default:
+		return 0
+	}
+}
+
+func isArifmeticSymbol(ch byte) bool {
+	return isOperatorSymbol(ch) || lineman.CheckLetter(ch) || lineman.CheckNumber(ch) || ch == '(' || ch == ')'
+}
+
 func isOperatorSymbol(c byte) bool {
-	return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == '!' || c == '=' || c == '>' || c == '<'
+	return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == '!' || c == '=' || c == '>' || c == '<' || c == '%'
 }
 
 func isOperator(val []byte) bool {
@@ -17,7 +47,7 @@ func isOperator(val []byte) bool {
 	case 0:
 		return false
 	case 1:
-		return val[0] == '+' || val[0] == '-' || val[0] == '*' || val[0] == '/' || val[0] == '^' || val[0] == '!' || val[0] == '>' || val[0] == '<'
+		return val[0] == '+' || val[0] == '-' || val[0] == '*' || val[0] == '/' || val[0] == '^' || val[0] == '!' || val[0] == '>' || val[0] == '<' || val[0] == '%'
 	default:
 		{
 			switch string(val[:2]) {
@@ -119,79 +149,6 @@ func (s *operator) execUnary(st *stack.Stack) error {
 	return nil
 }
 
-/*func (s *operator) execBinary(st *stack.Stack) error {
-	if st.Len() < 2 {
-		return s.fatalError("Value list is too small")
-	}
-	r, l, check := st.Pop(), st.Pop(), false
-	var lVal, rVal value
-	if lVal, check = l.(value); !check {
-		return s.fatalError("Expected value object left")
-	}
-	if rVal, check = r.(value); !check {
-		return s.fatalError("Expected value object right")
-	}
-	//fmt.Println(lVal, rVal)
-	if len(s.data) == 1 {
-		var lNum, rNum valueNumber
-		if lNum, check = lVal.(valueNumber); !lVal.IsNumber() || !check {
-			return s.fatalError("Left operand must be a number")
-		}
-		if rNum, check = rVal.(valueNumber); !lVal.IsNumber() || !check {
-			return s.fatalError("Right operand must be a number")
-		}
-		switch s.data[0] {
-		case '+':
-			st.Push(s.numberResult(lNum.Float() + rNum.Float()))
-		case '-':
-			st.Push(s.numberResult(lNum.Float() - rNum.Float()))
-		case '*':
-			st.Push(s.numberResult(lNum.Float() * rNum.Float()))
-		case '/':
-			st.Push(s.numberResult(lNum.Float() / rNum.Float()))
-		case '%':
-			st.Push(&valInt{s.rawInfoRecord, lNum.Int() % rNum.Int()})
-		case '>':
-			st.Push(&valBoolean{s.rawInfoRecord, lNum.Float() > rNum.Float()})
-		case '<':
-			st.Push(&valBoolean{s.rawInfoRecord, lNum.Float() < rNum.Float()})
-		default:
-			return s.fatalError(fmt.Sprintf("Illegal operator '%c'", s.data[0]))
-		}
-	} else {
-		switch string(s.data) {
-		case "==":
-			if lVal.IsNil() || rVal.IsNil() {
-				st.Push(s.checkNil(lVal, rVal))
-			} else {
-				st.Push(&valBoolean{s.rawInfoRecord, lVal.StaticVal() == rVal.StaticVal()})
-			}
-		case "!=":
-			st.Push(&valBoolean{s.rawInfoRecord, !(lVal.StaticVal() == rVal.StaticVal())})
-		case ">=", "<=":
-			{
-				var lNum, rNum valueNumber
-				if lNum, check = lVal.(valueNumber); !check || !lVal.IsNumber() {
-					return s.fatalError("Left operand must be a number")
-				}
-				if rNum, check = rVal.(valueNumber); !check || !rVal.IsNumber() {
-					return s.fatalError("Right operand must be a number")
-				}
-				switch s.data[0] {
-				case '>':
-					st.Push(&valBoolean{s.rawInfoRecord, lNum.Float() >= rNum.Float()})
-				case '<':
-					st.Push(&valBoolean{s.rawInfoRecord, lNum.Float() <= rNum.Float()})
-				}
-			}
-		default:
-			return s.fatalError(fmt.Sprintf("Illegal operator '%c'", s.data[0]))
-		}
-
-	}
-	return nil
-}*/
-
 func (s *operator) numberResult(val float64) interface{} {
 	if canInt(val) {
 		return int64(val)
@@ -201,7 +158,8 @@ func (s *operator) numberResult(val float64) interface{} {
 }
 
 func (s *operator) execBinary(st *stack.Stack) error {
-	r, l := reflect.ValueOf(st.Pop()), reflect.ValueOf(st.Pop())
+	r, l := reflectNum{reflect.ValueOf(st.Pop())}, reflectNum{reflect.ValueOf(st.Pop())}
+	fmt.Println(r, l)
 	if len(s.data) == 1 {
 		switch s.data[0] {
 		case '+':
@@ -265,7 +223,7 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 		prevVal = true
 	}
 	p.PassSpaces()
-	for !p.IsEndLine() && (isOperatorSymbol(p.Char()) || lineman.CheckLetter(p.Char()) || lineman.CheckNumber(p.Char())) {
+	for !p.IsEndLine() && isArifmeticSymbol(p.Char()) {
 		switch p.Char() {
 		case '(':
 			{
@@ -290,7 +248,7 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 				}
 				p.IncPos()
 			}
-		case '+', '-', '*', '/', '^', '!', '=', '>', '<':
+		case '+', '-', '*', '/', '^', '!', '=', '>', '<', '%':
 			{
 				p.SetupMark()
 				op := operator{p.infoRecordFromMark(), []byte{p.Char()}, true}
@@ -339,17 +297,18 @@ func checkSimple(op *operator, st *stack.Stack) error {
 	if st.Len() == 0 {
 		return op.fatalError("Empty args list")
 	}
-	if right, check := st.Peek().(value); check && right.IsStatic() {
+	if _, rCheck := st.Peek().(*valVariable); !rCheck {
 		if op.isUnary() {
 			return op.exec(st)
 		} else {
-			st.Pop()
-			if left, check := st.Peek().(value); !check || !left.IsStatic() {
-				st.Push(right)
+			r := st.Pop()
+			if _, lCheck := st.Peek().(*valVariable); lCheck || rCheck {
+				fmt.Println(lCheck, rCheck)
+				st.Push(r)
 				st.Push(op)
 				return nil
 			} else {
-				st.Push(right)
+				st.Push(r)
 				return op.exec(st)
 			}
 		}

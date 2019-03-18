@@ -50,7 +50,7 @@ func initCodeVal(p *parser) (val interface{}, err error) {
 	fmt.Println("INIT_VAL", p.stack, string(p.Char()), string(p.EndLineContent()))
 	p.PassSpaces()
 	switch p.Char() {
-	case '+', '-', '*', '/', '(', '!', '>', '<':
+	case '+', '-', '*', '/', '(', '!', '>', '<', '%':
 		val, err = newValArifmetic(p)
 	case '"', '\'':
 		val, err = newValString(p)
@@ -78,6 +78,7 @@ func initCodeVal(p *parser) (val interface{}, err error) {
 				case '.':
 					val, err = newValField(p)
 				default:
+					fmt.Println("VAL_VARIABLE")
 					val = &valVariable{p.infoRecordFromMark(), string(name)}
 				}
 			}

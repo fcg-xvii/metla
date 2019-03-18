@@ -11,7 +11,6 @@ func newValPrint(p *parser) (err error) {
 	p.SetupMark()
 	info := p.infoRecordFromMark()
 	stackOffset := p.stack.Len()
-	fmt.Println("STACK_OFFSET", stackOffset)
 	p.ForwardPos(2)
 	for !p.IsEndDocument() {
 		p.PassSpaces()
@@ -25,8 +24,8 @@ func newValPrint(p *parser) (err error) {
 					err = p.stack.Peek().(token).fatalError("More one value")
 					return
 				}
-			} else if p.stack.Len() > 1 {
-				err = p.stack.Peek().(token).fatalError("More one value")
+			} else if p.stack.Len()-stackOffset > 1 {
+				err = info.fatalError("More one value")
 				return
 			}
 			p.stack.Push(&execCommand{info, execPrint, p.stack.Len() + 1})

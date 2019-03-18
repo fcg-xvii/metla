@@ -13,7 +13,7 @@ func newValArifmetic(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromMark()
 	if pn, err = parseRPN(p); err == nil {
 		if pn, err = simpleRPN(pn); err == nil {
-			fmt.Println("EEEEEEEEE", pn)
+			//fmt.Println("EEEEEEEEE", pn)
 			if len(pn) == 1 {
 				p.stack.Push(pn[0])
 			} else {

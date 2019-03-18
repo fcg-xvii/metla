@@ -1,7 +1,7 @@
 package metla
 
 import (
-	"fmt"
+	_ "fmt"
 	_ "io"
 	"reflect"
 )
@@ -10,7 +10,7 @@ func init() {
 	//keywords["for"] = newKeyFor
 }
 
-func newKeyFor(p *parser) (t token, err error) {
+/*func newKeyFor(p *parser) (t token, err error) {
 	var index token
 	p.PassSpaces()
 	if index, err = newValVariable(p); err != nil {
@@ -25,7 +25,7 @@ func newKeyFor(p *parser) (t token, err error) {
 		return
 	}
 	return
-}
+}*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 

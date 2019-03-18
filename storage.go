@@ -97,3 +97,5 @@ func (s *variable) Kind() reflect.Kind {
 func (s *variable) IsNil() bool {
 	return reflect.ValueOf(s.value).IsNil()
 }
+
+func (s *variable) String() string { return fmt.Sprint(s.value) }

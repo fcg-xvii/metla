@@ -5,8 +5,15 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/golang-collections/collections/stack"
+	_ "github.com/golang-collections/collections/stack"
 )
+
+func rawItemsCount(val interface{}) int {
+	if exec, check := val.(*execCommand); check {
+		return exec.itemsCount
+	}
+	return 1
+}
 
 type execData struct {
 	*rawInfoRecord
@@ -15,7 +22,7 @@ type execData struct {
 
 type execCommand struct {
 	*rawInfoRecord
-	method     func([]interface{}, *stack.Stack, *storage, io.Writer) ([]interface{}, error)
+	method     func(*tplExec) error
 	itemsCount int
 }
 

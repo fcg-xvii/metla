@@ -2,9 +2,9 @@ package metla
 
 import (
 	"fmt"
-	"io"
+	_ "io"
 
-	"github.com/golang-collections/collections/stack"
+	_ "github.com/golang-collections/collections/stack"
 )
 
 func newValPrint(p *parser) (err error) {
@@ -38,10 +38,14 @@ func newValPrint(p *parser) (err error) {
 	return
 }
 
-func execPrint(com []interface{}, st *stack.Stack, sto *storage, w io.Writer) (newCom []interface{}, err error) {
-	if _, err = w.Write([]byte(fmt.Sprint(st.Pop()))); err == nil {
-		newCom = com[1:]
+func execPrint(exec *tplExec) (err error) {
+	fmt.Println("EXEC_PRINT")
+	fmt.Printf("%T\n", exec.st.Peek())
+	if command, check := exec.st.Peek().(*execCommand); check {
+		exec.st.Pop()
+		return command.method(exec)
 	}
+	_, err = exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
 	return
 }
 

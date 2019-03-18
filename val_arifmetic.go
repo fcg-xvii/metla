@@ -1,10 +1,10 @@
 package metla
 
 import (
-	"fmt"
-	"io"
+	_ "fmt"
+	_ "io"
 
-	"github.com/golang-collections/collections/stack"
+	_ "github.com/golang-collections/collections/stack"
 )
 
 func newValArifmetic(p *parser) (res interface{}, err error) {
@@ -29,17 +29,21 @@ func newValArifmetic(p *parser) (res interface{}, err error) {
 	return
 }
 
-func execArifmetic(com []interface{}, st *stack.Stack, sto *storage, w io.Writer) (newCom []interface{}, err error) {
-	fmt.Println("EXEC_ARIFMETIC")
-	pn := make([]interface{}, 0, st.Len())
-	for st.Len() > 0 {
-		pn = append([]interface{}{st.Pop()}, pn...)
+func execArifmetic(exec *tplExec) (err error) {
+	//fmt.Println("EXEC_ARIFMETIC", st.Len())
+	pn := make([]interface{}, 0, exec.st.Len())
+	for exec.st.Len() > 0 {
+		//pn = append([]interface{}{st.Pop()}, pn...)
+		v := exec.st.Pop()
+		if k, check := v.(*variable); check {
+			pn = append([]interface{}{k.value}, pn...)
+		} else {
+			pn = append([]interface{}{v}, pn...)
+		}
 	}
-	fmt.Println("PN", pn)
-	fmt.Println(execRPN(pn))
+	//fmt.Println("PN", pn)
+	if res, err := execRPN(pn); err == nil {
+		exec.st.Push(res)
+	}
 	return
-	/*if _, err = w.Write(st.Pop().([]byte)); err == nil {
-		newCom = com[1:]
-	}
-	return*/
 }

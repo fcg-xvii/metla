@@ -63,35 +63,43 @@ func (s *template) pushToken(t interface{}) {
 
 func (s *template) result(sto *storage, w io.Writer) (err error) {
 	s.locker.RLock()
-	//fmt.Println("Result...", s.tokenList)
 	if s.err != nil {
 		s.locker.RUnlock()
 		return s.err
 	}
-	/*res := &templateResult{make([]interface{}, 0, len(s.tokenList))}
-	for _, v := range s.tokenList {
-		if eObj, err := v.execObject(sto); err == nil {
-			res.list = append(res.list, eObj)
-		} else {
-			s.locker.RUnlock()
-			return nil, err
-		}
-	}*/
-	list, st := s.tokenList, stack.New()
+	list := s.tokenList
 	s.locker.RUnlock()
 	fmt.Println("LIST", list)
-	for len(list) > 0 {
-		//fmt.Println(len(list))
-		if obj, check := list[0].(*execCommand); check {
-			if list, err = obj.method(list, st, sto, w); err != nil {
-				return err
+	tplExec := &tplExec{list, stack.New(), sto, 0, w}
+	return tplExec.exec()
+}
+
+type tplExec struct {
+	list  []interface{}
+	st    *stack.Stack
+	sto   *storage
+	index int
+	w     io.Writer
+}
+
+func (s *tplExec) exec() (err error) {
+	fmt.Println("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+	for s.index < len(s.list) {
+		switch s.list[s.index].(type) {
+		case *execCommand:
+			if err = s.list[s.index].(*execCommand).method(s); err != nil {
+				return
 			}
-		} else {
-			st.Push(list[0])
-			list = list[1:]
+		case *valVariable:
+			if err = s.list[s.index].(*valVariable).StorageVal(s); err != nil {
+				return
+			}
+		default:
+			s.st.Push(s.list[s.index])
 		}
+		s.index++
 	}
-	return nil
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////

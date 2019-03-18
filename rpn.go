@@ -157,9 +157,22 @@ func (s *operator) numberResult(val float64) interface{} {
 	}
 }
 
+func (s *operator) valsFromStack(st *stack.Stack) (l, r reflectNum, err error) {
+	if st.Len() < 2 {
+		err = fmt.Errorf("Operands less then 2")
+	} else {
+		r = reflectNum{reflect.ValueOf(st.Pop())}
+		l = reflectNum{reflect.ValueOf(st.Pop())}
+	}
+	return
+}
+
 func (s *operator) execBinary(st *stack.Stack) error {
-	r, l := reflectNum{reflect.ValueOf(st.Pop())}, reflectNum{reflect.ValueOf(st.Pop())}
-	fmt.Println(r, l)
+	l, r, err := s.valsFromStack(st)
+	if err != nil {
+		return err
+	}
+	fmt.Println(r, l, st.Len())
 	if len(s.data) == 1 {
 		switch s.data[0] {
 		case '+':
@@ -294,6 +307,7 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 }
 
 func checkSimple(op *operator, st *stack.Stack) error {
+	fmt.Println("SIMPLE_RPN")
 	if st.Len() == 0 {
 		return op.fatalError("Empty args list")
 	}
@@ -301,9 +315,10 @@ func checkSimple(op *operator, st *stack.Stack) error {
 		if op.isUnary() {
 			return op.exec(st)
 		} else {
+			fmt.Println("PPPPP")
 			r := st.Pop()
-			if _, lCheck := st.Peek().(*valVariable); lCheck || rCheck {
-				fmt.Println(lCheck, rCheck)
+			if _, lCheck := st.Peek().(*valVariable); !lCheck || !rCheck {
+				fmt.Println("LCH", lCheck, rCheck)
 				st.Push(r)
 				st.Push(op)
 				return nil
@@ -335,9 +350,13 @@ func simpleRPN(pl []interface{}) (res []interface{}, err error) {
 	return
 }
 
-func execRPN(pl []interface{}) (res interface{}, err error) {
+func execRPN(pn []interface{}) (res interface{}, err error) {
+	fmt.Println("PNNNNN", pn)
+	for _, v := range pn {
+		fmt.Printf("%T ::\n", v)
+	}
 	st := stack.New()
-	for _, v := range pl {
+	for _, v := range pn {
 		if op, check := v.(*operator); check {
 			if err = op.exec(st); err != nil {
 				return

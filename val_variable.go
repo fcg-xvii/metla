@@ -1,8 +1,7 @@
 package metla
 
 import (
-	_ "fmt"
-	_ "io"
+	"fmt"
 	_ "reflect"
 
 	_ "github.com/fcg-xvii/lineman"
@@ -11,12 +10,25 @@ import (
 type valVariable struct {
 	*rawInfoRecord
 	name string
-	v    *variable
 }
 
-func (s *valVariable) Val(sto *storage) interface{} {
-
+func (s *valVariable) StorageVal(exec *tplExec) error {
+	fmt.Println("STORAGE_VAL")
+	if val, check := exec.sto.findVariable(s.name); check {
+		exec.st.Push(val)
+		return nil
+	} else if _, err := exec.w.Write([]byte(s.positionWarning(fmt.Sprintf("variable not found in heap { %v }", s.name)).Error())); err != nil {
+		fmt.Println("UNCKECK")
+		return err
+	}
+	return nil
 }
+
+/*func (s *valVariable) Val(sto *storage) (res interface{}, err error) {
+	if s.v == nil {
+		 = sto.findVariable(s.name)
+	}
+}*/
 
 /*func init() {
 	creators = append(creators, &valueCreator{

@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	_ "github.com/fcg-xvii/lineman"
+	_ "github.com/golang-collections/collections/stack"
 )
 
 /*func init() {
@@ -28,41 +29,57 @@ import (
 	return true
 }*/
 
-func newValFunction(p *parser) (res interface{}, err error) {
-	/*name, _ := p.ReadName()
-		var args []token
+func newValFunction(name string, p *parser) (res interface{}, err error) {
+	fmt.Println("FUNCTION_PARSE")
+	p.IncPos()
+	//fmt.Println("NEW_FUNCTION", string(p.EndLineContent()))
+	p.SetupMark()
+	stackOffset, info := p.stack.Len(), p.infoRecordFromMark()
+	for !p.IsEndDocument() {
 		p.PassSpaces()
-		p.IncPos()
-	loop:
-		for {
-			p.PassSpaces()
-			switch {
-			case p.Char() == ')':
-				{
-					p.IncPos()
-					break loop
-				}
-			case p.Char() == ',':
-				{
-					p.IncPos()
-				}
-			default:
-				{
-					if res, err = initVal(p); err != nil {
-						return
-					} else {
-						args = append(args, res)
-					}
-				}
+		fmt.Println(string(p.Char()))
+		switch p.Char() {
+		case ',':
+			p.IncPos()
+		case ')':
+			p.stack.Push(&valVariable{info, name})
+			p.stack.Push(&execCommand{info, execFunction, p.stack.Len() - stackOffset + 2})
+			p.IncPos()
+			fmt.Println("PARSE_COMPLETED")
+			return
+		default:
+			if _, err = initCodeVal(p); err != nil {
+				return
 			}
 		}
-		res = &valFunction{
-			rawInfoRecord: &rawInfoRecord{p.tpl.objPath, p.MarkLine(), p.MarkLinePos()},
-			name:          string(name),
-			args:          args,
-		}*/
+	}
+	err = info.fatalError("Unexpected end of function exec")
 	return
 }
+
+func execFunction(exec *tplExec) (err error) {
+	fmt.Println("FUNCTION_EXEC", exec.st.Len())
+	f := reflect.ValueOf(exec.st.Pop().(*variable).value)
+	fmt.Println("FFFFF", f, exec.st.Len())
+	args := make([]interface{}, 0, exec.st.Len())
+	for exec.st.Len() > 0 {
+		val := exec.st.Pop()
+		fmt.Println("VAL", val)
+		if command, check := val.(*execCommand); check {
+			if err = command.method(exec); err != nil {
+				return
+			}
+		} else {
+			args = append([]interface{}{val}, args...)
+		}
+
+	}
+	fmt.Println("ARGS", args)
+	err = fmt.Errorf("IIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
+	return
+}
+
+//////////////////////////////////////////////////////
 
 type valFunction struct {
 	*rawInfoRecord

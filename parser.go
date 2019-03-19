@@ -57,15 +57,19 @@ func (s *parser) parseDocument() (err error) {
 }
 
 func (s *parser) markError(text string) error {
-	return fmt.Errorf("Error [%v %v:%v]: %v", s.tpl.objPath, s.Line(), s.LinePos(), text)
+	return fmt.Errorf("Error [%v %v:%v]: %v", s.tpl.objPath, s.MarkLine(), s.MarkLinePos(), text)
 }
 
 func (s *parser) positionError(text string) error {
-	return fmt.Errorf("Error [%v %v:%v]: %v", s.tpl.objPath, s.MarkLine(), s.MarkLinePos(), text)
+	return fmt.Errorf("Error [%v %v:%v]: %v", s.tpl.objPath, s.Line(), s.LinePos(), text)
 }
 
 func (s *parser) infoRecordFromMark() *rawInfoRecord {
 	return &rawInfoRecord{tplName: s.tpl.objPath, line: s.MarkLine(), pos: s.MarkLinePos()}
+}
+
+func (s *parser) infoRecordFromPos() *rawInfoRecord {
+	return &rawInfoRecord{tplName: s.tpl.objPath, line: s.Line(), pos: s.LinePos()}
 }
 
 func (s *parser) flushStack() {

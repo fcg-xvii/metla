@@ -10,7 +10,6 @@ import (
 func newValPrint(p *parser) (err error) {
 	p.SetupMark()
 	info := p.infoRecordFromMark()
-	stackOffset := p.stack.Len()
 	p.ForwardPos(2)
 	for !p.IsEndDocument() {
 		p.PassSpaces()
@@ -18,14 +17,6 @@ func newValPrint(p *parser) (err error) {
 			p.ForwardPos(2)
 			if p.stack.Len() == 0 {
 				err = p.positionError("Empty print tag")
-				return
-			} else if exec, check := p.stack.Peek().(*execCommand); check {
-				if exec.itemsCount < p.stack.Len()-stackOffset {
-					err = p.stack.Peek().(token).fatalError("More one value")
-					return
-				}
-			} else if p.stack.Len()-stackOffset > 1 {
-				err = info.fatalError("More one value")
 				return
 			}
 			p.stack.Push(&execCommand{info, execPrint, p.stack.Len() + 1})

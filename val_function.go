@@ -5,12 +5,8 @@ import (
 	"reflect"
 )
 
-func newValFunction(name string, p *parser) (res interface{}, err error) {
-	fmt.Println("FUNCTION_PARSE")
-	p.IncPos()
-	//fmt.Println("NEW_FUNCTION", string(p.EndLineContent()))
-	p.SetupMark()
-	stackOffset, info := p.stack.Len(), p.infoRecordFromMark()
+func parseFuncArgs(p *parser) (err error) {
+	info := p.infoRecordFromMark()
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		//fmt.Println(string(p.Char()))
@@ -18,10 +14,7 @@ func newValFunction(name string, p *parser) (res interface{}, err error) {
 		case ',':
 			p.IncPos()
 		case ')':
-			p.stack.Push(&valVariable{info, name})
-			p.stack.Push(&execCommand{info, execFunction, p.stack.Len() - stackOffset + 2})
 			p.IncPos()
-			fmt.Println("PARSE_COMPLETED")
 			return
 		default:
 			if _, err = initCodeVal(p); err != nil {
@@ -29,20 +22,25 @@ func newValFunction(name string, p *parser) (res interface{}, err error) {
 			}
 		}
 	}
-	err = info.fatalError("Unexpected end of function exec")
-	return
+	return info.fatalError("Unexpected end of function exec")
 }
 
-func execFunction(exec *tplExec, info *rawInfoRecord) (err error) {
-	fmt.Println("FUNCTION_EXEC", exec.st.Len())
-	f := reflect.ValueOf(exec.st.Pop().(*variable).value)
-	fType := f.Type()
-	fmt.Println("FFFFF", f, exec.st.Len())
-	args := make([]reflect.Value, 0, exec.st.Len())
+/*func popExecFunctionArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args []reflect.Value, err error) {
+	args = make([]reflect.Value, 0, exec.st.Len())
+loop:
 	for exec.st.Len() > 0 {
-		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 		val := exec.st.Pop()
-		fmt.Println("VAL", val)
+		switch val.(type) {
+		case *execCommand:
+			command := val.(*execCommand)
+			if err = command.method(exec, command.rawInfoRecord); err != nil {
+				return
+			}
+		case *execMarker:
+			break loop
+
+		}
+
 		if command, check := val.(*execCommand); check {
 			if err = command.method(exec, command.rawInfoRecord); err != nil {
 				return
@@ -55,155 +53,119 @@ func execFunction(exec *tplExec, info *rawInfoRecord) (err error) {
 		}
 
 	}
+	fmt.Println("====================================", len(args), fType.NumIn(), fType)
 	if len(args) != fType.NumIn() {
 		err = info.positionWarning(fmt.Sprintf("Function agrs count isn't match - %v given, %v expected", len(args), fType.NumIn()))
+	}
+	return
+}*/
+
+func popVariadicArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args []reflect.Value, err error) {
+	var tmp []interface{}
+	for exec.st.Len() > 0 {
+		val := exec.st.Pop()
+		if _, check := val.(*execMarker); check {
+			break
+		} else if vVal, check := val.(*variable); check {
+			val = vVal.value
+		}
+		tmp = append([]interface{}{val}, tmp...)
+	}
+	for i, v := range tmp {
+		var t reflect.Type
+		if i < fType.NumIn()-1 {
+			t = fType.In(i)
+		} else {
+			t = fType.In(fType.NumIn() - 1).Elem()
+		}
+		if t != reflect.TypeOf(v) && !reflect.TypeOf(v).ConvertibleTo(t) {
+			err = info.fatalError(fmt.Sprintf("Coudn't convert function arg [%v], [%T] to [%v]", i, v, t))
+			return
+		}
+		args = append(args, reflect.ValueOf(v).Convert(t))
+	}
+	return
+}
+
+func popStaticArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args []reflect.Value, err error) {
+	for exec.st.Len() > 0 {
+		val := exec.st.Pop()
+		if _, check := val.(*execMarker); check {
+			break
+		} else if vVal, check := val.(*variable); check {
+			val = vVal.value
+		}
+		t := fType.In(len(args))
+		if !reflect.TypeOf(val).ConvertibleTo(t) {
+			err = info.fatalError(fmt.Sprintf("Coudn't convert function arg [%v], [%T] to [%v]", len(args), val, t))
+			return
+		}
+		args = append([]reflect.Value{reflect.ValueOf(val).Convert(t)}, args...)
+	}
+	return
+}
+
+func popExecFunctionArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) ([]reflect.Value, error) {
+	if fType.IsVariadic() {
+		return popVariadicArgs(exec, fType, info)
+	} else {
+		return popStaticArgs(exec, fType, info)
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+func newValFunction(name string, p *parser) (res interface{}, err error) {
+	info := p.infoRecordFromPos()
+	p.IncPos()
+	p.stack.Push(&execMarker{name})
+	if err = parseFuncArgs(p); err == nil {
+		p.stack.Push(&valVariable{info, name})
+		p.stack.Push(&execCommand{info, execFunction, 0})
+	}
+	return
+}
+
+func execFunction(exec *tplExec, info *rawInfoRecord) (err error) {
+	var f reflect.Value
+	fVal := exec.st.Pop()
+	if fRes, check := fVal.(*variable); check {
+		if fRes.value == nil {
+			err = info.fatalError(fmt.Sprintf("Function [%v] not found", fRes.key))
+			return
+		}
+		f = reflect.ValueOf(fRes.value)
+	} else {
+		f = reflect.ValueOf(fVal)
+	}
+
+	fType := f.Type()
+	var args []reflect.Value
+	if args, err = popExecFunctionArgs(exec, fType, info); err != nil {
 		return
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("Function call fatal error (panic) :: %v", r)
+			err = info.fatalError(fmt.Sprintf("Function call fatal error (panic) :: %v", r))
 		}
 	}()
 	if res := f.Call(args); len(res) > 0 {
 		for _, val := range res {
-			fmt.Println("VAL =======================", val)
 			exec.st.Push(val.Interface())
 		}
 	}
-	//err = fmt.Errorf("IIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
 	return
 }
 
-//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 
-type valFunction struct {
-	*rawInfoRecord
-	name string
-	args []token
-}
-
-func (s *valFunction) Val() interface{} {
-	return s.name
-}
-
-func (s *valFunction) IsExecutable() bool { return true }
-
-func (s *valFunction) String() string {
-	res := fmt.Sprintf("[function :: { %v }, args : { %v }]", string(s.name), s.args)
-	return res
-}
-
-func (s *valFunction) posInfo() *rawInfoRecord { return s.rawInfoRecord }
-
-/*func (s *valFunction) execObject(sto *storage, tpl *template, parent execObject) (res execObject, err error) {
-	fObj := valFunctionExec{rawInfoRecord: s.rawInfoRecord}
-	if f, check := sto.findVariable(s.name); check {
-		if f.Kind() != reflect.Func {
-			err = s.fatalError(fmt.Sprintf("Unexpected variable type [%v], [Func] expected", f.Kind()))
-		} else {
-			args := make([]execObject, len(s.args))
-			for i, v := range s.args {
-				if args[i], err = v.execObject(sto, tpl, &fObj); err != nil {
-					return
-				}
-			}
-			fObj.f, fObj.args, res = f, args, &fObj
-			//res = &valFunctionExec{s.rawInfoRecord, f, args}
-		}
-	} else {
-		err = s.fatalError(fmt.Sprintf("Function [%s] not found", s.name))
+func newStaticFunction(fIface interface{}, p *parser) (res interface{}, err error) {
+	info := p.infoRecordFromPos()
+	p.IncPos()
+	p.stack.Push(&execMarker{""})
+	if err = parseFuncArgs(p); err == nil {
+		p.stack.Push(fIface)
+		p.stack.Push(&execCommand{info, execFunction, 0})
 	}
 	return
-}*/
-
-//////////////////////////////////////////////////////////
-
-type valFunctionExec struct {
-	*rawInfoRecord
-	f    *variable
-	args []executor
 }
-
-/*func (s *valFunctionExec) Data(w io.Writer) (err error) {
-	if _, err = s.call(); err != nil {
-		content := s.positionWarning(err.Error())
-		_, err = w.Write([]byte(content.Error()))
-	}
-	return
-}*/
-
-func (s *valFunctionExec) IsNil() bool {
-	return s.f.IsNil()
-}
-
-func (s *valFunctionExec) String() string {
-	return "[function { " + s.f.key + " }]"
-}
-
-func (s *valFunctionExec) Type() reflect.Kind {
-	return reflect.Func
-}
-
-/*func (s *valFunctionExec) Val() (interface{}, error) {
-	if vals, err := s.Vals(); err == nil && len(vals) > 0 {
-		return vals[0], err
-	} else {
-		return nil, err
-	}
-}*/
-
-/*func (s *valFunctionExec) Vals() (res []interface{}, err error) {
-	var rRes []reflect.Value
-	if rRes, err = s.call(); err == nil {
-		if len(rRes) > 0 {
-			res = make([]interface{}, len(rRes))
-			for i, v := range rRes {
-				res[i] = v.Interface()
-			}
-		}
-	}
-	return
-}*/
-
-func (s *valFunctionExec) ValSingle() bool {
-	return false
-}
-
-/*func (s *valFunctionExec) call() (res []reflect.Value, err error) {
-	fVal := reflect.ValueOf(s.f.value)
-	if fVal.Kind() != reflect.Func {
-		err = fmt.Errorf("Function exec error :: variable [%v] is not a function", s.f.key)
-	} else {
-		defer func() {
-			if r := recover(); r != nil {
-				err = fmt.Errorf("Function call fatal error (panic) :: %v", r)
-			}
-		}()
-		rVal := reflect.ValueOf(s.f.value)
-		rType := rVal.Type()
-		rArgs := make([]reflect.Value, 0, rVal.Type().NumIn())
-		for _, v := range s.args {
-			if v.ValSingle() {
-				var val interface{}
-				if val, err = v.Val(); err != nil {
-					return
-				} else {
-					rArgs = append(rArgs, reflect.ValueOf(val).Convert(rType.In(len(rArgs))))
-				}
-			} else {
-				var vals []interface{}
-				if vals, err = v.Vals(); err != nil {
-					return
-				} else {
-					for _, val := range vals {
-						rArgs = append(rArgs, reflect.ValueOf(val).Convert(rType.In(len(rArgs))))
-					}
-				}
-			}
-		}
-		res = fVal.Call(rArgs)
-	}
-	return
-}*/
-
-func (s *valFunctionExec) receiveEvent(name string, params []interface{}) bool { return false }

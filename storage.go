@@ -11,7 +11,7 @@ func layoutFromMap(src map[string]interface{}) *storageLayout {
 	}
 	count := 0
 	for key, val := range src {
-		res.list = append(res.list, &variable{key, val})
+		res.list = append(res.list, &variable{key, val, true})
 		count++
 	}
 	return res
@@ -21,14 +21,15 @@ type storageLayout struct {
 	list []*variable
 }
 
-func (s *storageLayout) appendVariable(key string, val interface{}) (res *variable, err error) {
-	if _, check := s.findVariable(key); check {
+func (s *storageLayout) appendVariable(v *variable) {
+	s.list = append(s.list, v)
+	/*if _, check := s.findVariable(key); check {
 		err = fmt.Errorf("Set variable error :: variable [%v] exists on current layout", key)
 	} else {
 		res = &variable{key, val}
 		s.list = append(s.list, res)
 	}
-	return
+	return*/
 }
 
 func (s *storageLayout) findVariable(key string) (res *variable, check bool) {
@@ -81,13 +82,26 @@ func (s *storage) findVariable(key string) (res *variable, check bool) {
 	return
 }
 
-func (s *storage) appendValue(key string, value interface{}) (res *variable, err error) {
-	return s.layout.appendVariable(key, value)
+func (s *storage) appendVariable(v *variable) {
+	s.layout.appendVariable(v)
+}
+
+func (s *storage) updateVariable(v *variable) (res *variable) {
+
+	var check bool
+	if res, check = s.findVariable(v.key); check {
+		res.value = v.value
+	} else {
+		res = v
+		s.layout.appendVariable(v)
+	}
+	return
 }
 
 type variable struct {
-	key   string
-	value interface{}
+	key    string
+	value  interface{}
+	stored bool
 }
 
 func (s *variable) Kind() reflect.Kind {

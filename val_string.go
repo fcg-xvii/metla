@@ -31,10 +31,7 @@ func newValString(p *parser) (res interface{}, err error) {
 		err = p.positionError("Unclosed string")
 	} else {
 		// Закрывающая кавычка найдена. Инициализируем результирующее значение
-		p.stack.Push(&valString{
-			rawInfoRecord: p.infoRecordFromMark(),
-			val:           p.MarkValString(0)[1:], // Обрезаем кавычки для результирующего значения
-		})
+		p.stack.Push(p.MarkValString(0)[1:]) // Обрезаем кавычки для результирующего значения
 		p.IncPos()
 	}
 	return

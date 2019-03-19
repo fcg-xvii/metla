@@ -81,6 +81,7 @@ func TestParser(t *testing.T) {
 		"twink":   printTwink,
 		"inc":     inc,
 		"incTwo":  incTwo,
+		"sli":     []byte{1, 2, 3, 4},
 	}
 
 	if err := root.Content("source_script", &buf, data); err != nil {

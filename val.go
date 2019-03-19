@@ -72,14 +72,18 @@ func initCodeVal(p *parser) (val interface{}, err error) {
 		if name, check := p.ReadName(); !check {
 			err = p.positionError(fmt.Sprintf("Unexpected symbol '%c'", p.Char()))
 		} else {
-			fmt.Println("NAME ACCEPTED")
+			//fmt.Println("NAME ACCEPTED")
 			//p.codeStack.Push(name)
 			if keyword, check := getKeywordConstructor(string(name)); check {
 				val, err = keyword(p)
 			} else {
 				switch p.Char() {
 				case '(':
-					val, err = newValFunction(string(name), p)
+					if fStatic, check := functions[string(name)]; check {
+						val, err = newStaticFunction(fStatic, p)
+					} else {
+						val, err = newValFunction(string(name), p)
+					}
 				case '[':
 					val, err = newValIndex(p)
 				case '.':

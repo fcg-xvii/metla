@@ -15,9 +15,8 @@ func rawItemsCount(val interface{}) int {
 	return 1
 }
 
-type execData struct {
-	*rawInfoRecord
-	data interface{}
+type execMarker struct {
+	name string
 }
 
 type execCommand struct {

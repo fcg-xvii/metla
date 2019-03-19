@@ -1,3 +1,5 @@
 vfdvndfkjvbdfhvhbjd
-{{ incTwo(incTwo(incTwo(100, 200))) }}
+{%
+	x, y = 100, 200
+%}
 vbdfhvbdhfbvhjdfbhjvdfbh

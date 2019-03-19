@@ -54,6 +54,8 @@ func initCodeVal(p *parser) (val interface{}, err error) {
 		val, err = newValArifmetic(p)
 	case '"', '\'':
 		val, err = newValString(p)
+	case ',':
+		val, err = newValSet(p)
 	case '=':
 		if p.NextChar() != '=' {
 			val, err = newValSet(p)

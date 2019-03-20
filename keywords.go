@@ -2,6 +2,7 @@ package metla
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 )
 
@@ -20,9 +21,23 @@ func getKeywordConstructor(name string) (result keywordConstructor, check bool) 
 	return
 }
 
+// keywords ////////////////////////////////////////////////////////////////////
+
+func keywordEcho(p *parser) (interface{}, error) {
+	info := p.infoRecordFromPos()
+	for !p.IsEndDocument() {
+		p.PassSpaces()
+		
+		switch p.Char() {
+			case 
+		}
+	}
+	return nil, info.fatalError("Unexpected end of document")
+}
+
 // core functions ///////////////////////////////////////////////////////////////
 
-func coreLen(val interface{}) int {
+func coreLen(w io.Writer, val interface{}) int {
 	if sVar, check := val.(*variable); check {
 		val = sVar.value
 	}
@@ -33,12 +48,5 @@ func coreLen(val interface{}) int {
 		return v.Len()
 	default:
 		return 0
-	}
-}
-
-func coreEcho(l string, vals ...interface{}) {
-	fmt.Println("ECHO......", l, vals)
-	for i, v := range vals {
-		fmt.Println(i, v)
 	}
 }

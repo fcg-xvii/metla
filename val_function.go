@@ -25,41 +25,6 @@ func parseFuncArgs(p *parser) (err error) {
 	return info.fatalError("Unexpected end of function exec")
 }
 
-/*func popExecFunctionArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args []reflect.Value, err error) {
-	args = make([]reflect.Value, 0, exec.st.Len())
-loop:
-	for exec.st.Len() > 0 {
-		val := exec.st.Pop()
-		switch val.(type) {
-		case *execCommand:
-			command := val.(*execCommand)
-			if err = command.method(exec, command.rawInfoRecord); err != nil {
-				return
-			}
-		case *execMarker:
-			break loop
-
-		}
-
-		if command, check := val.(*execCommand); check {
-			if err = command.method(exec, command.rawInfoRecord); err != nil {
-				return
-			}
-		} else {
-			if len(args) >= fType.NumIn() {
-				err = info.positionWarning(fmt.Sprintf("Too many function arguments. Expected [%v]", fType.NumIn()))
-			}
-			args = append([]reflect.Value{reflect.ValueOf(val).Convert(fType.In(len(args)))}, args...)
-		}
-
-	}
-	fmt.Println("====================================", len(args), fType.NumIn(), fType)
-	if len(args) != fType.NumIn() {
-		err = info.positionWarning(fmt.Sprintf("Function agrs count isn't match - %v given, %v expected", len(args), fType.NumIn()))
-	}
-	return
-}*/
-
 func popVariadicArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args []reflect.Value, err error) {
 	var tmp []interface{}
 	for exec.st.Len() > 0 {

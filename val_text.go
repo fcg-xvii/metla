@@ -1,9 +1,5 @@
 package metla
 
-import (
-	"fmt"
-)
-
 func newValText(p *parser) error {
 	p.SetupMark()
 	info := p.infoRecordFromMark()
@@ -15,18 +11,14 @@ func newValText(p *parser) error {
 		}
 	}
 	if src := p.MarkVal(0); len(src) > 0 {
-		//p.tpl.pushToken(src)
-		//p.tpl.pushToken(&execCommand{info, execText})
-		p.stack.Push(src)
 		p.stack.Push(&execCommand{info, execText, 2})
+		p.stack.Push(src)
 	}
 	return nil
 }
 
 func execText(exec *tplExec, info *rawInfoRecord) (err error) {
-	fmt.Println("EXEC_TEXT", exec.st.Len())
 	_, err = exec.w.Write(exec.st.Pop().([]byte))
-	fmt.Println("ERRRRR", err, exec.st.Len())
 	return
 }
 

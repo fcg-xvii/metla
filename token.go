@@ -15,6 +15,28 @@ func rawItemsCount(val interface{}) int {
 	return 1
 }
 
+type splitter byte
+
+func initSplitter() splitter {
+	return splitter(0)
+}
+
+func isDataObject(obj interface{}) bool {
+	switch obj.(type) {
+	case splitter, *execCommand, *execMarker:
+		return false
+	}
+	return true
+}
+
+func isStaticDataObject(obj interface{}) bool {
+	switch obj.(type) {
+	case splitter, *execCommand, *execMarker, *valVariable:
+		return false
+	}
+	return true
+}
+
 type execMarker struct {
 	name string
 }

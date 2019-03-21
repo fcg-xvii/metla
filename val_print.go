@@ -8,8 +8,7 @@ import (
 )
 
 func newValPrint(p *parser) (err error) {
-	p.SetupMark()
-	info := p.infoRecordFromMark()
+	p.stack.Push(&execCommand{p.infoRecordFromMark(), execPrint, p.stack.Len() + 1})
 	p.ForwardPos(2)
 	for !p.IsEndDocument() {
 		p.PassSpaces()
@@ -19,7 +18,6 @@ func newValPrint(p *parser) (err error) {
 				err = p.positionError("Empty print tag")
 				return
 			}
-			p.stack.Push(&execCommand{info, execPrint, p.stack.Len() + 1})
 			return
 		} else if _, err = initCodeVal(p); err != nil {
 			return

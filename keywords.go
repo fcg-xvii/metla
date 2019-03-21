@@ -13,7 +13,18 @@ func init() {
 }
 
 var (
-	keywords  = make(map[string]keywordConstructor)
+	keywords = map[string]keywordConstructor{
+		"nil": func(p *parser) (interface{}, error) {
+			p.stack.Push(nil)
+			return nil, nil
+		}, "true": func(p *parser) (interface{}, error) {
+			p.stack.Push(true)
+			return true, nil
+		}, "false": func(p *parser) (interface{}, error) {
+			p.stack.Push(false)
+			return false, nil
+		},
+	}
 	functions = map[string]interface{}{
 		"len": coreLen,
 	}
@@ -28,20 +39,19 @@ func getKeywordConstructor(name string) (result keywordConstructor, check bool) 
 
 func keywordEcho(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	argsCount := 0
+	res = &execCommand{info, execEcho, 0}
+	p.stack.Push(res)
+	p.pushSplitter()
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		if _, err = initCodeVal(p); err != nil {
 			return
 		}
-		argsCount++
 		switch p.Char() {
 		case '\n', ';':
-			res = &execCommand{info, execEcho, 0}
-			p.stack.Push(argsCount)
-			p.stack.Push(res)
 			return
 		case ',':
+			p.pushSplitter()
 			p.IncPos()
 		default:
 			p.positionError(fmt.Sprintf("Unexpected symbol '%c'", p.Char()))
@@ -51,8 +61,14 @@ func keywordEcho(p *parser) (res interface{}, err error) {
 }
 
 func execEcho(exec *tplExec, info *rawInfoRecord) (err error) {
-	//err = fmt.Errorf("OKKK")
-	vfvdfvdfs
+	for exec.st.Len() > 0 {
+		fmt.Println(exec.st.Peek())
+		exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
+		if exec.st.Len() >= 1 {
+			exec.w.Write([]byte{',', ' '})
+		}
+
+	}
 	return
 }
 
@@ -63,7 +79,6 @@ func coreLen(w io.Writer, val interface{}) int {
 		val = sVar.value
 	}
 	v := reflect.ValueOf(val)
-	//fmt.Println("VALLLLL", val, v.Kind())
 	switch v.Kind() {
 	case reflect.Array, reflect.Slice, reflect.Map, reflect.String:
 		return v.Len()

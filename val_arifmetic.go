@@ -1,39 +1,29 @@
 package metla
 
-import (
-	_ "fmt"
-	_ "io"
-
-	_ "github.com/golang-collections/collections/stack"
-)
+import "fmt"
 
 func newValArifmetic(p *parser) (res interface{}, err error) {
 	var pn []interface{}
-	p.SetupMark()
-	info := p.infoRecordFromMark()
 	if pn, err = parseRPN(p); err == nil {
 		if pn, err = simpleRPN(pn); err == nil {
-			//fmt.Println("EEEEEEEEE", pn)
 			if len(pn) == 1 {
 				p.stack.Push(pn[0])
 			} else {
-				for _, v := range pn {
-					p.stack.Push(v)
+				p.stack.Push(&execCommand{p.infoRecordFromPos(), execArifmetic, 0})
+				for i := len(pn) - 1; i >= 0; i-- {
+					p.stack.Push(pn[i])
 				}
-				p.stack.Push(&execCommand{info, execArifmetic, len(pn) + 1})
 			}
-			//p.codeStack.Push(&arifmetic{info, pn})
 		}
 	}
-	//fmt.Println(execRPN(pn))
+	//fmt.Println("PNNNNNNN!!!!!!!!!!!", pn)
 	return
 }
 
 func execArifmetic(exec *tplExec, info *rawInfoRecord) (err error) {
-	//fmt.Println("EXEC_ARIFMETIC", st.Len())
 	pn := make([]interface{}, 0, exec.st.Len())
+	fmt.Println("EXXX")
 	for exec.st.Len() > 0 {
-		//pn = append([]interface{}{st.Pop()}, pn...)
 		v := exec.st.Pop()
 		if k, check := v.(*variable); check {
 			pn = append([]interface{}{k.value}, pn...)
@@ -41,9 +31,12 @@ func execArifmetic(exec *tplExec, info *rawInfoRecord) (err error) {
 			pn = append([]interface{}{v}, pn...)
 		}
 	}
-	//fmt.Println("PN", pn)
-	if res, err := execRPN(pn); err == nil {
+	var res interface{}
+	if res, err = execRPN(pn); err == nil {
 		exec.st.Push(res)
+		//mt.Println("RESSSSS", res)
+	} else {
+		err = info.positionWarning(err.Error())
 	}
 	return
 }

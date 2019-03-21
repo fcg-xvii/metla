@@ -83,7 +83,7 @@ type tplExec struct {
 }
 
 func (s *tplExec) exec() (err error) {
-	fmt.Println("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+	//fmt.Println("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
 	for s.index < len(s.list) {
 		switch s.list[s.index].(type) {
 		case *execCommand:

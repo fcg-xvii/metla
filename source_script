@@ -1,6 +1,0 @@
-vfdvndfkjvbdfhvhbjd
-{%
-	x, y, z = inc(100), 200, inc(300)
-	echo x, y, inc(z)
-%}
-vbdfhvbdhfbvhjdfbhjvdfbh

@@ -26,6 +26,10 @@ func incTwo(l int64, r int64) (int64, int64) {
 	return l + 1, r + 1
 }
 
+func cooler(one, two, three int) {
+	log.Println(one, two, three)
+}
+
 func check(path string, marker interface{}) (res UpdateState) {
 	if info, err := os.Stat(path); err == nil {
 		if marker != nil {
@@ -76,15 +80,18 @@ func TestParser(t *testing.T) {
 
 	data := map[string]interface{}{
 		"one":     1,
+		"three":   3,
 		"colonel": "Hello, WORLD!",
 		"print":   printMethod,
 		"twink":   printTwink,
 		"inc":     inc,
 		"incTwo":  incTwo,
 		"sli":     []byte{1, 2, 3, 4},
+		"cooler":  cooler,
+		"tr":      true,
 	}
 
-	if err := root.Content("source_script", &buf, data); err != nil {
+	if err := root.Content("z_script", &buf, data); err != nil {
 		log.Println("ERR", err)
 	} else {
 		log.Println("OK")

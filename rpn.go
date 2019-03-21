@@ -12,6 +12,25 @@ type reflectNum struct {
 	reflect.Value
 }
 
+func (s reflectNum) IsNumber() bool {
+	switch s.Kind() {
+	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int, reflect.Float64, reflect.Float32:
+		return true
+	}
+	return false
+}
+
+func (s reflectNum) Add(val int64) interface{} {
+	switch s.Kind() {
+	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
+		return s.Value.Int() + val
+	case reflect.Float64, reflect.Float32:
+		return s.Value.Float() + float64(val)
+	default:
+		return 0
+	}
+}
+
 func (s reflectNum) Int() (res int64) {
 	switch s.Kind() {
 	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
@@ -34,12 +53,24 @@ func (s reflectNum) Float() (res float64) {
 	}
 }
 
+func (s reflectNum) IsNil() bool {
+	// func, interface, map, pointer, or slice
+	switch s.Kind() {
+	case reflect.Invalid:
+		return true
+	case reflect.Func, reflect.Interface, reflect.Map, reflect.UnsafePointer, reflect.Slice:
+		return s.IsNil()
+	default:
+		return false
+	}
+}
+
 func isArifmeticSymbol(ch byte) bool {
 	return isOperatorSymbol(ch) || lineman.CheckLetter(ch) || lineman.CheckNumber(ch) || ch == '(' || ch == ')'
 }
 
 func isOperatorSymbol(c byte) bool {
-	return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == '!' || c == '=' || c == '>' || c == '<' || c == '%'
+	return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == '!' || c == '=' || c == '>' || c == '<' || c == '%' || c == '&' || c == '|'
 }
 
 func isOperator(val []byte) bool {
@@ -51,7 +82,7 @@ func isOperator(val []byte) bool {
 	default:
 		{
 			switch string(val[:2]) {
-			case "==", ">=", "<=", "!=", "++", "--":
+			case "==", ">=", "<=", "!=", "++", "--", "&&", "||":
 				return true
 			}
 		}
@@ -122,28 +153,25 @@ func (s *operator) exec(st *stack.Stack) error {
 }
 
 func (s *operator) execUnary(st *stack.Stack) error {
+	fmt.Println("EXEC_UNARYYYYY")
 	if st.Len() == 0 {
 		return s.fatalError("Value list is empty")
 	}
-	if val, check := st.Pop().(value); !check {
-		return s.fatalError("Expected value object")
-	} else if len(s.data) == 1 {
-		if bVal, check := val.(valueBoolean); !check {
-			return s.fatalError("Expected boolean value")
-		} else {
-			st.Push(&valBoolean{s.rawInfoRecord, !bVal.Bool()})
+	val := reflectNum{reflect.ValueOf(st.Pop())}
+	if len(s.data) == 1 {
+		if val.Kind() != reflect.Bool {
+			return fmt.Errorf("Boolean value expected, [%v] given", val.Kind())
 		}
+		st.Push(!val.Bool())
 	} else {
-		if numVal, check := val.(valueNumber); !val.IsNumber() || !check {
-			return s.fatalError("Expected number value")
-		} else {
-			switch string(s.data) {
-			case "++":
-				numVal.Add(1)
-			case "--":
-				numVal.Add(-1)
-			}
-			st.Push(numVal)
+		if !val.IsNumber() {
+			return fmt.Errorf("Number value expected, [%v] given", val.Kind())
+		}
+		switch string(s.data) {
+		case "++":
+			st.Push(val.Add(1))
+		case "--":
+			st.Push(val.Add(-1))
 		}
 	}
 	return nil
@@ -163,6 +191,14 @@ func (s *operator) valsFromStack(st *stack.Stack) (l, r reflectNum, err error) {
 	} else {
 		r = reflectNum{reflect.ValueOf(st.Pop())}
 		l = reflectNum{reflect.ValueOf(st.Pop())}
+		if !l.IsNil() && !r.IsNil() && (l.Kind() != r.Kind()) {
+			lt := l.Type()
+			if !r.Type().ConvertibleTo(lt) {
+				err = fmt.Errorf("Coudn't convert type [%v] to [%v]", lt, r.Type())
+				return
+			}
+			r = reflectNum{r.Convert(lt)}
+		}
 	}
 	return
 }
@@ -172,7 +208,6 @@ func (s *operator) execBinary(st *stack.Stack) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(r, l, st.Len())
 	if len(s.data) == 1 {
 		switch s.data[0] {
 		case '+':
@@ -182,6 +217,9 @@ func (s *operator) execBinary(st *stack.Stack) error {
 		case '*':
 			st.Push(s.numberResult(l.Float() * r.Float()))
 		case '/':
+			if r.Float() == 0 {
+				return fmt.Errorf("Division by zero")
+			}
 			st.Push(s.numberResult(l.Float() / r.Float()))
 		case '%':
 			st.Push(int64(l.Int() % r.Int()))
@@ -195,14 +233,26 @@ func (s *operator) execBinary(st *stack.Stack) error {
 	} else {
 		switch string(s.data) {
 		case "==":
-			st.Push(l.Interface() == r.Interface())
-			/*if l.IsNil() || r.IsNil() {
-				st.Push(l.Interface() == r.Interface())
+			if l.IsNil() || r.IsNil() {
+				st.Push(l.IsNil() && r.IsNil())
 			} else {
 				st.Push(l.Interface() == r.Interface())
-			}*/
+			}
 		case "!=":
-			st.Push(!(l.Interface() == r.Interface()))
+			if l.IsNil() || r.IsNil() {
+				st.Push(!(l.IsNil() && r.IsNil()))
+			} else {
+				st.Push(!(l.Interface() == r.Interface()))
+			}
+		case "&&", "||":
+			if l.Kind() != reflect.Bool || r.Kind() != reflect.Bool {
+				return fmt.Errorf("Expected boolean values")
+			}
+			if string(s.data) == "&&" {
+				st.Push(l.Bool() && r.Bool())
+			} else {
+				st.Push(l.Bool() || r.Bool())
+			}
 		case ">=", "<=":
 			{
 				switch s.data[0] {
@@ -228,23 +278,36 @@ func (s *operator) checkNil(l, r value) (res *valBoolean) {
 }
 
 func parseRPN(p *parser) (pn []interface{}, err error) {
-	fmt.Println("PARSE_RPN")
+	fmt.Println("PARSE_RPN", p.stack.Peek())
 	prevVal := false
 	sPn := stack.New()
 	if p.stack.Len() > 0 {
-		pn = append(pn, p.stack.Pop())
-		prevVal = true
+		for p.stack.Len() > 0 {
+			if _, check := p.stack.Peek().(splitter); !check {
+				pn = append(pn, p.stack.Pop())
+				prevVal = true
+			} else {
+				break
+			}
+		}
 	}
+	bracketOpened := 0
 	p.PassSpaces()
+loop:
 	for !p.IsEndLine() && isArifmeticSymbol(p.Char()) {
 		switch p.Char() {
 		case '(':
 			{
+				bracketOpened++
 				sPn.Push(byte('('))
 				p.IncPos()
 			}
 		case ')':
 			{
+				if bracketOpened == 0 {
+					break loop
+				}
+				bracketOpened--
 				accepted := false
 				for sPn.Len() > 0 {
 					if c, check := sPn.Peek().(byte); check && c == '(' {
@@ -261,7 +324,7 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 				}
 				p.IncPos()
 			}
-		case '+', '-', '*', '/', '^', '!', '=', '>', '<', '%':
+		case '+', '-', '*', '/', '^', '!', '=', '>', '<', '%', '&', '|':
 			{
 				p.SetupMark()
 				op := operator{p.infoRecordFromMark(), []byte{p.Char()}, true}
@@ -271,7 +334,7 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 					if !prevVal {
 						op.postfix = false
 					}
-					fmt.Println("POSTFIX", op.postfix)
+					//fmt.Println("POSTFIX", op.postfix)
 				} else if !isOperator(op.data) {
 					err = p.positionError(fmt.Sprintf("Unexpected operator '%c'", p.Char()))
 					return
@@ -307,18 +370,15 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 }
 
 func checkSimple(op *operator, st *stack.Stack) error {
-	fmt.Println("SIMPLE_RPN")
 	if st.Len() == 0 {
 		return op.fatalError("Empty args list")
 	}
-	if _, rCheck := st.Peek().(*valVariable); !rCheck {
+	if isStaticDataObject(st.Peek()) {
 		if op.isUnary() {
 			return op.exec(st)
 		} else {
-			fmt.Println("PPPPP")
 			r := st.Pop()
-			if _, lCheck := st.Peek().(*valVariable); !lCheck || !rCheck {
-				fmt.Println("LCH", lCheck, rCheck)
+			if !isStaticDataObject(st.Peek()) {
 				st.Push(r)
 				st.Push(op)
 				return nil
@@ -333,6 +393,7 @@ func checkSimple(op *operator, st *stack.Stack) error {
 }
 
 func simpleRPN(pl []interface{}) (res []interface{}, err error) {
+	fmt.Println("SIMPLE_RPN")
 	st := stack.New()
 	for _, v := range pl {
 		if op, check := v.(*operator); check {
@@ -347,14 +408,11 @@ func simpleRPN(pl []interface{}) (res []interface{}, err error) {
 	for i := len(res) - 1; i >= 0; i-- {
 		res[i] = st.Pop()
 	}
+	fmt.Println("SIMPLE", res)
 	return
 }
 
 func execRPN(pn []interface{}) (res interface{}, err error) {
-	fmt.Println("PNNNNN", pn)
-	for _, v := range pn {
-		fmt.Printf("%T ::\n", v)
-	}
 	st := stack.New()
 	for _, v := range pn {
 		if op, check := v.(*operator); check {

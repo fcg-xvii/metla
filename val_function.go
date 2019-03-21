@@ -6,12 +6,13 @@ import (
 )
 
 func parseFuncArgs(p *parser) (err error) {
+	p.pushSplitter()
 	info := p.infoRecordFromMark()
 	for !p.IsEndDocument() {
 		p.PassSpaces()
-		//fmt.Println(string(p.Char()))
 		switch p.Char() {
 		case ',':
+			p.pushSplitter()
 			p.IncPos()
 		case ')':
 			p.IncPos()
@@ -34,7 +35,8 @@ func popVariadicArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (ar
 		} else if vVal, check := val.(*variable); check {
 			val = vVal.value
 		}
-		tmp = append([]interface{}{val}, tmp...)
+		//tmp = append([]interface{}{val}, tmp...)
+		tmp = append(tmp, val)
 	}
 	for i, v := range tmp {
 		var t reflect.Type
@@ -65,7 +67,8 @@ func popStaticArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args
 			err = info.fatalError(fmt.Sprintf("Coudn't convert function arg [%v], [%T] to [%v]", len(args), val, t))
 			return
 		}
-		args = append([]reflect.Value{reflect.ValueOf(val).Convert(t)}, args...)
+		//args = append([]reflect.Value{}, args...)
+		args = append(args, reflect.ValueOf(val).Convert(t))
 	}
 	return
 }
@@ -82,11 +85,11 @@ func popExecFunctionArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord)
 
 func newValFunction(name string, p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
+	p.stack.Push(&execCommand{info, execFunction, 0})
+	p.stack.Push(&valVariable{info, name})
 	p.IncPos()
-	p.stack.Push(&execMarker{name})
 	if err = parseFuncArgs(p); err == nil {
-		p.stack.Push(&valVariable{info, name})
-		p.stack.Push(&execCommand{info, execFunction, 0})
+		p.stack.Push(&execMarker{name})
 	}
 	return
 }

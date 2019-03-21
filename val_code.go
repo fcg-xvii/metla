@@ -88,7 +88,7 @@ func newValSet(p *parser) (res interface{}, err error) {
 		if p.IsEndLine() {
 			p.stack.Push(varsCount)
 			p.stack.Push(storeUpdate)
-			res = &execCommand{info, execSet, p.stack.Len() + 1}
+			res = &execCommand{info, execSet, 0}
 			p.stack.Push(res)
 			return
 		}

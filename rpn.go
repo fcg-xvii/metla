@@ -185,10 +185,20 @@ func (s *operator) numberResult(val float64) interface{} {
 	}
 }
 
+func (s *operator) valueFromStack(st *stack.Stack, exec *tplExec) (res reflectNum, err error) {
+	val := st.Pop()
+	if ex, check := val.(*execCommand); check {
+		ex.method()
+	} else {
+		return reflectNum{reflect.ValueOf(val)}
+	}
+}
+
 func (s *operator) valsFromStack(st *stack.Stack) (l, r reflectNum, err error) {
 	if st.Len() < 2 {
 		err = fmt.Errorf("Operands less then 2")
 	} else {
+
 		r = reflectNum{reflect.ValueOf(st.Pop())}
 		l = reflectNum{reflect.ValueOf(st.Pop())}
 		if !l.IsNil() && !r.IsNil() && (l.Kind() != r.Kind()) {
@@ -393,7 +403,7 @@ func checkSimple(op *operator, st *stack.Stack) error {
 }
 
 func simpleRPN(pl []interface{}) (res []interface{}, err error) {
-	fmt.Println("SIMPLE_RPN")
+	/*fmt.Println("SIMPLE_RPN")
 	st := stack.New()
 	for _, v := range pl {
 		if op, check := v.(*operator); check {
@@ -408,11 +418,11 @@ func simpleRPN(pl []interface{}) (res []interface{}, err error) {
 	for i := len(res) - 1; i >= 0; i-- {
 		res[i] = st.Pop()
 	}
-	fmt.Println("SIMPLE", res)
-	return
+	fmt.Println("SIMPLE", res)*/
+	return pl, nil
 }
 
-func execRPN(pn []interface{}) (res interface{}, err error) {
+func execRPN(pn []interface{}, exec *tplExec) (res interface{}, err error) {
 	st := stack.New()
 	for _, v := range pn {
 		if op, check := v.(*operator); check {

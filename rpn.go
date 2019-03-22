@@ -54,12 +54,11 @@ func (s reflectNum) Float() (res float64) {
 }
 
 func (s reflectNum) IsNil() bool {
-	// func, interface, map, pointer, or slice
 	switch s.Kind() {
 	case reflect.Invalid:
 		return true
 	case reflect.Func, reflect.Interface, reflect.Map, reflect.UnsafePointer, reflect.Slice:
-		return s.IsNil()
+		return s.Value.IsNil()
 	default:
 		return false
 	}
@@ -153,7 +152,6 @@ func (s *operator) exec(st *stack.Stack) error {
 }
 
 func (s *operator) execUnary(st *stack.Stack) error {
-	fmt.Println("EXEC_UNARYYYYY")
 	if st.Len() == 0 {
 		return s.fatalError("Value list is empty")
 	}
@@ -185,13 +183,12 @@ func (s *operator) numberResult(val float64) interface{} {
 	}
 }
 
-func (s *operator) valueFromStack(st *stack.Stack, exec *tplExec) (res reflectNum, err error) {
+func (s *operator) valFromStack(st *stack.Stack) reflectNum {
 	val := st.Pop()
-	if ex, check := val.(*execCommand); check {
-		ex.method()
-	} else {
-		return reflectNum{reflect.ValueOf(val)}
+	if vVal, check := val.(*variable); check {
+		return reflectNum{reflect.ValueOf(vVal.value)}
 	}
+	return reflectNum{reflect.ValueOf(val)}
 }
 
 func (s *operator) valsFromStack(st *stack.Stack) (l, r reflectNum, err error) {
@@ -199,8 +196,8 @@ func (s *operator) valsFromStack(st *stack.Stack) (l, r reflectNum, err error) {
 		err = fmt.Errorf("Operands less then 2")
 	} else {
 
-		r = reflectNum{reflect.ValueOf(st.Pop())}
-		l = reflectNum{reflect.ValueOf(st.Pop())}
+		r = s.valFromStack(st)
+		l = s.valFromStack(st)
 		if !l.IsNil() && !r.IsNil() && (l.Kind() != r.Kind()) {
 			lt := l.Type()
 			if !r.Type().ConvertibleTo(lt) {
@@ -288,10 +285,10 @@ func (s *operator) checkNil(l, r value) (res *valBoolean) {
 }
 
 func parseRPN(p *parser) (pn []interface{}, err error) {
-	fmt.Println("PARSE_RPN", p.stack.Peek())
+	//fmt.Println("PARSE_RPN", p.stack.Len(), p.stack.Peek())
 	prevVal := false
 	sPn := stack.New()
-	if p.stack.Len() > 0 {
+	/*if p.stack.Len() > 0 {
 		for p.stack.Len() > 0 {
 			if _, check := p.stack.Peek().(splitter); !check {
 				pn = append(pn, p.stack.Pop())
@@ -300,7 +297,12 @@ func parseRPN(p *parser) (pn []interface{}, err error) {
 				break
 			}
 		}
+	}*/
+	if p.Char() != '(' && p.Char() != '!' {
+		//fmt.Println("RRRRRRRR", p.readStackVal())
+		pn = append(pn, p.readStackVal()...)
 	}
+
 	bracketOpened := 0
 	p.PassSpaces()
 loop:
@@ -344,7 +346,6 @@ loop:
 					if !prevVal {
 						op.postfix = false
 					}
-					//fmt.Println("POSTFIX", op.postfix)
 				} else if !isOperator(op.data) {
 					err = p.positionError(fmt.Sprintf("Unexpected operator '%c'", p.Char()))
 					return
@@ -362,11 +363,20 @@ loop:
 			}
 		default:
 			{
-
+				/*sLen := p.stack.Len()
 				if _, err = initCodeVal(p); err != nil {
 					return
 				} else {
-					pn, prevVal = append(pn, p.stack.Pop()), true
+					t := make([]interface{}, p.stack.Len()-sLen)
+					for i, _ := range t {
+						t[i] = p.stack.Pop()
+					}
+					pn, prevVal = append(pn, t...), true
+				}*/
+				if _, err = initCodeVal(p); err != nil {
+					return
+				} else {
+					pn, prevVal = append(pn, p.readStackVal()...), true
 				}
 			}
 		}
@@ -375,7 +385,7 @@ loop:
 	for sPn.Len() > 0 {
 		pn = append(pn, sPn.Pop())
 	}
-	fmt.Println(pn, len(pn), cap(pn))
+	//fmt.Println(pn, len(pn), cap(pn))
 	return
 }
 
@@ -420,19 +430,4 @@ func simpleRPN(pl []interface{}) (res []interface{}, err error) {
 	}
 	fmt.Println("SIMPLE", res)*/
 	return pl, nil
-}
-
-func execRPN(pn []interface{}, exec *tplExec) (res interface{}, err error) {
-	st := stack.New()
-	for _, v := range pn {
-		if op, check := v.(*operator); check {
-			if err = op.exec(st); err != nil {
-				return
-			}
-		} else {
-			st.Push(v)
-		}
-	}
-	res = st.Pop()
-	return
 }

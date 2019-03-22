@@ -27,6 +27,7 @@ func newValSet(p *parser) (res interface{}, err error) {
 	res = &execCommand{info, execSet, 0}
 	p.stack.Push(res)
 	p.stack.Push(tmp)
+	p.pushSplitter()
 
 	if p.Char() != '=' {
 		p.PassSpaces()
@@ -45,6 +46,7 @@ func newValSet(p *parser) (res interface{}, err error) {
 				return
 			}
 			p.IncPos()
+			p.pushSplitter()
 			if _, err = initCodeVal(p); err != nil {
 				return
 			} else if err = peekVar(); err != nil {
@@ -58,23 +60,21 @@ func newValSet(p *parser) (res interface{}, err error) {
 	p.IncPos()
 	p.stack.Push(&execMarker{"endvars"})
 	p.stack.Push(storeUpdate)
+	p.pushSplitter()
 	//p.PassSpaces()
 	for !p.IsEndDocument() {
-		if _, err = initCodeVal(p); err != nil {
-			return
-		}
 		p.PassSpaces()
-		//fmt.Println("SetVal", p.EndLineContent(), p.Char(), p.IsEndLine())
 		if p.IsEndLine() {
 			p.stack.Push(&execMarker{"endset"})
 			return
+		} else if p.Char() == ',' {
+			p.pushSplitter()
+			p.IncPos()
+		} else {
+			if _, err = initCodeVal(p); err != nil {
+				return
+			}
 		}
-		if p.Char() != ',' {
-			err = p.positionError("Expected ',' or endline character")
-			return
-		}
-		p.pushSplitter()
-		p.IncPos()
 	}
 	err = p.positionError("Unexpected end of document")
 	return
@@ -82,7 +82,7 @@ func newValSet(p *parser) (res interface{}, err error) {
 
 func execSet(exec *tplExec, info *rawInfoRecord) (err error) {
 	endVarsAccepted, storeUpdate, varsCount := false, false, 0
-	fmt.Println("STORE_UPADTE", storeUpdate)
+	//fmt.Println("STORE_UPADTE", storeUpdate)
 	var args []interface{}
 loop:
 	for exec.st.Len() > 0 {

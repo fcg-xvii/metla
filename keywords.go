@@ -10,6 +10,9 @@ type keywordConstructor func(*parser) (interface{}, error)
 
 func init() {
 	keywords["echo"] = keywordEcho
+	keywords["echoln"] = keywordEcholn
+	keywords["print"] = keywordPrint
+	keywords["println"] = keywordPrintln
 }
 
 var (
@@ -37,11 +40,7 @@ func getKeywordConstructor(name string) (result keywordConstructor, check bool) 
 
 // keywords ////////////////////////////////////////////////////////////////////
 
-func keywordEcho(p *parser) (res interface{}, err error) {
-	info := p.infoRecordFromPos()
-	res = &execCommand{info, execEcho, 0}
-	p.stack.Push(res)
-	p.pushSplitter()
+func parseKeywordArgs(p *parser, info *rawInfoRecord) (err error) {
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		if _, err = initCodeVal(p); err != nil {
@@ -51,24 +50,82 @@ func keywordEcho(p *parser) (res interface{}, err error) {
 		case '\n', ';':
 			return
 		case ',':
-			p.pushSplitter()
+			//p.pushSplitter()
 			p.IncPos()
 		default:
 			p.positionError(fmt.Sprintf("Unexpected symbol '%c'", p.Char()))
 		}
 	}
-	return nil, info.fatalError("Unexpected end of document")
+	return info.fatalError("Unexpected end of document")
+}
+
+func keywordPrint(p *parser) (res interface{}, err error) {
+	info := p.infoRecordFromPos()
+	res = &execCommand{info, execKeywordPrint, 0}
+	p.stack.Push(res)
+	p.pushSplitter()
+	return res, parseKeywordArgs(p, info)
+}
+
+func keywordPrintln(p *parser) (res interface{}, err error) {
+	info := p.infoRecordFromPos()
+	res = &execCommand{info, execKeywordPrint, 0}
+	p.stack.Push(res)
+	p.pushSplitter()
+	return res, parseKeywordArgs(p, info)
+}
+
+func keywordEcho(p *parser) (res interface{}, err error) {
+	info := p.infoRecordFromPos()
+	res = &execCommand{info, execEcho, 0}
+	p.stack.Push(res)
+	p.pushSplitter()
+	return res, parseKeywordArgs(p, info)
+}
+
+func keywordEcholn(p *parser) (res interface{}, err error) {
+	info := p.infoRecordFromPos()
+	res = &execCommand{info, execEcholn, 0}
+	p.stack.Push(res)
+	p.pushSplitter()
+	return res, parseKeywordArgs(p, info)
 }
 
 func execEcho(exec *tplExec, info *rawInfoRecord) (err error) {
 	for exec.st.Len() > 0 {
-		fmt.Println(exec.st.Peek())
+		//fmt.Println(exec.st.Peek())
 		exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
 		if exec.st.Len() >= 1 {
 			exec.w.Write([]byte{',', ' '})
 		}
-
 	}
+	return
+}
+
+func execEcholn(exec *tplExec, info *rawInfoRecord) (err error) {
+	for exec.st.Len() > 0 {
+		//fmt.Println(exec.st.Peek())
+		exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
+		if exec.st.Len() >= 1 {
+			exec.w.Write([]byte{',', ' '})
+		}
+	}
+	exec.w.Write([]byte{'\n'})
+	return
+}
+
+func execKeywordPrint(exec *tplExec, info *rawInfoRecord) (err error) {
+	for exec.st.Len() > 0 {
+		exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
+	}
+	return
+}
+
+func execKeywordPrintln(exec *tplExec, info *rawInfoRecord) (err error) {
+	for exec.st.Len() > 0 {
+		exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
+	}
+	exec.w.Write([]byte{'\n'})
 	return
 }
 

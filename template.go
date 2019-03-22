@@ -84,21 +84,37 @@ type tplExec struct {
 
 func (s *tplExec) exec() (err error) {
 	//fmt.Println("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+	s.index = -1
 	for s.index < len(s.list) {
-		switch s.list[s.index].(type) {
-		case *execCommand:
-			exec := s.list[s.index].(*execCommand)
-			if err = exec.method(s, exec.rawInfoRecord); err != nil {
-				return
-			}
-		case *valVariable:
-			if err = s.list[s.index].(*valVariable).StorageVal(s); err != nil {
-				return
-			}
-		default:
-			s.st.Push(s.list[s.index])
+		if err = s.execNext(); err != nil {
+			return
 		}
-		s.index++
+	}
+	return
+}
+
+func (s *tplExec) execNext() (err error) {
+	s.index++
+	if s.index >= len(s.list) {
+		return
+	}
+	switch s.list[s.index].(type) {
+	case *execCommand:
+		//fmt.Println("EXEC_COMMAND")
+		exec := s.list[s.index].(*execCommand)
+		if err = exec.method(s, exec.rawInfoRecord); err != nil {
+			return
+		}
+	case *valVariable:
+		//fmt.Println("VAL_VARIABLE")
+		s.list[s.index] = s.list[s.index].(*valVariable).StorageVal(s)
+	case *operator:
+		//fmt.Println("OPERATOR")
+		if err = s.list[s.index].(*operator).exec(s.st); err != nil {
+			return
+		}
+	default:
+		s.st.Push(s.list[s.index])
 	}
 	return
 }

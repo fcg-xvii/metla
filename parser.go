@@ -79,3 +79,29 @@ func (s *parser) pushSplitter() {
 func (s *parser) flushStack() {
 	s.tpl.tokenList = append(s.tpl.tokenList, s.stack.Flush()...)
 }
+
+func (s *parser) readStackVal() []interface{} {
+	if _, check := s.stack.Peek().(*execMarker); check {
+		childsCounter := 0
+		var res []interface{}
+		for s.stack.Len() > 0 {
+			val := s.stack.Pop()
+			switch val.(type) {
+			case *execMarker:
+				res = append(res, val)
+				childsCounter++
+			case *execCommand:
+				res = append(res, val)
+				childsCounter--
+				if childsCounter == 0 {
+					return res
+				}
+			default:
+				res = append(res, val)
+			}
+		}
+		return res
+	} else {
+		return []interface{}{s.stack.Pop()}
+	}
+}

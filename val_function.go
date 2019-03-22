@@ -56,7 +56,6 @@ func popVariadicArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (ar
 
 func popStaticArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args []reflect.Value, err error) {
 	for exec.st.Len() > 0 {
-		fmt.Println(".....")
 		val := exec.st.Pop()
 		if _, check := val.(*execMarker); check {
 			break
@@ -65,23 +64,20 @@ func popStaticArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args
 		}
 		t := fType.In(len(args))
 		if val != nil {
-			fmt.Println("NNNNNNNNN")
 			if !reflect.TypeOf(val).ConvertibleTo(t) {
 				err = info.fatalError(fmt.Sprintf("Coudn't convert function arg [%v], [%T] to [%v]", len(args), val, t))
 				return
 			}
 			args = append(args, reflect.ValueOf(val).Convert(t))
 		} else {
-			fmt.Println("NILLL")
 			args = append(args, reflect.New(t))
-			fmt.Println("ARGS", args)
 		}
 	}
-	fmt.Println(args)
 	return
 }
 
 func popExecFunctionArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) ([]reflect.Value, error) {
+	fmt.Println("fType", fType)
 	if fType.IsVariadic() {
 		return popVariadicArgs(exec, fType, info)
 	} else {

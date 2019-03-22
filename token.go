@@ -41,11 +41,24 @@ type execMarker struct {
 	name string
 }
 
+func (s *execMarker) String() string {
+	return "{ execMarker :: " + s.name + " }"
+}
+
 type execCommand struct {
 	*rawInfoRecord
 	method     func(*tplExec, *rawInfoRecord) error
 	itemsCount int
 }
+
+/*func (s *execCommand) String() string {
+	switch s.method {
+	case execSet:
+		return "execSet"
+	default:
+		return "execNoname"
+	}
+}*/
 
 type positionInformer interface {
 	fatalError(string) error

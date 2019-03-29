@@ -3,6 +3,7 @@ package metla
 import _ "fmt"
 
 func newValCode(p *parser) error {
+	p.flushStack()
 	p.ForwardPos(2)
 	for !p.IsEndDocument() {
 		p.PassSpaces()
@@ -14,6 +15,9 @@ func newValCode(p *parser) error {
 			if p.NextChar() == '}' {
 				p.flushStack()
 				p.ForwardPos(2)
+				if p.Char() == '\n' {
+					p.IncPos()
+				}
 				return nil
 			}
 		default:

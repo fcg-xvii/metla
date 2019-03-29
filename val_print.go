@@ -18,6 +18,7 @@ func newValPrint(p *parser) (err error) {
 				err = p.positionError("Empty print tag")
 				return
 			}
+			p.flushStack()
 			return
 		} else if _, err = initCodeVal(p); err != nil {
 			return

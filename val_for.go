@@ -33,7 +33,7 @@ func keywordFor(p *parser) (res interface{}, err error) {
 			p.PassSpaces()
 			if res, err = initCodeVal(p); err == nil {
 				p.PassSpaces()
-				if p.Char() != ';' && p.Char() != '\n' {
+				if p.Char() != ';' && p.Char() != '\n' && !p.PosMatchSlice([]byte("%}")) {
 					err = fmt.Errorf("Endline expected")
 				}
 			}

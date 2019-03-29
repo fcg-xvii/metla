@@ -13,6 +13,7 @@ func newValText(p *parser) error {
 	if src := p.MarkVal(0); len(src) > 0 {
 		p.stack.Push(&execCommand{info, execText, 2})
 		p.stack.Push(src)
+		p.flushStack()
 	}
 	return nil
 }

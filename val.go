@@ -3,7 +3,22 @@ package metla
 import (
 	"errors"
 	"fmt"
+	"reflect"
 )
+
+func convert(val, defaultVal interface{}) (res interface{}, check bool) {
+	res = val
+	lVal, rVal := reflect.ValueOf(val), reflect.ValueOf(defaultVal)
+	check = lVal.Kind() == rVal.Kind()
+	if rVal.Kind() != reflect.Invalid && lVal.Kind() != rVal.Kind() {
+		if lVal.Type().ConvertibleTo(rVal.Type()) {
+			res, check = lVal.Convert(rVal.Type()).Interface(), true
+		} else {
+			res = defaultVal
+		}
+	}
+	return
+}
 
 type valueCheckMethod func([]byte) bool
 type valueConstructor func(p *parser) (res token, err error)
@@ -54,6 +69,8 @@ func initCodeVal(p *parser) (val interface{}, err error) {
 						val, err = newValFunction(string(name), p)
 					}
 				case '[':
+					val = &valVariable{p.infoRecordFromMark(), string(name)}
+					p.stack.Push(val)
 					val, err = newValIndex(p)
 				case '.':
 					val, err = newValField(p)

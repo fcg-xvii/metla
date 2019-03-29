@@ -89,6 +89,7 @@ func TestParser(t *testing.T) {
 		"sli":     []byte{1, 2, 3, 4},
 		"cooler":  cooler,
 		"tr":      true,
+		"cli":     map[string]string{"one": "over one"},
 	}
 
 	if err := root.Content("z_script", &buf, data); err != nil {

@@ -10,6 +10,7 @@ func init() {
 func keywordFor(p *parser) (res interface{}, err error) {
 	p.PassSpaces()
 	p.stack.Push(&execCommand{p.infoRecordFromPos(), execFor, 0})
+	p.openStack.Push(openFlag{p.infoRecordFromPos(), "for"})
 	// Получаем переменную индекса
 	if res, err = initCodeVal(p); err == nil {
 		if _, check := res.(*valVariable); !check {
@@ -44,20 +45,38 @@ func keywordFor(p *parser) (res interface{}, err error) {
 }
 
 func keywordEndfor(p *parser) (res interface{}, err error) {
+	if p.openStack.Len() == 0 {
+		err = p.positionError("endfor without opened cycle")
+		return
+	} else {
+		if openInfo := p.openStack.Pop().(openFlag); openInfo.tagName != "for" {
+			err = openInfo.info.fatalError(fmt.Sprintf("for close with unclosed %v tag", openInfo.tagName))
+			return
+		}
+	}
 	p.stack.Push(&execMarker{"endfor"})
 	return
 }
 
 func execFor(exec *tplExec, info *rawInfoRecord) (err error) {
-	indexVar, minVal, maxVal := exec.st.Pop().(*variable), exec.st.Pop().(int64), exec.st.Pop().(int64)
+	indexVar := exec.st.Pop().(*variable)
+	iMinVal, check := convert(exec.st.Pop(), int64(0))
+	if !check {
+		return fmt.Errorf("Loop min value must be integer")
+	}
+	iMaxVal, check := convert(exec.st.Pop(), int64(0))
+	if !check {
+		return fmt.Errorf("Loop max value must be integer")
+	}
+	minVal, maxVal := iMinVal.(int64), iMaxVal.(int64)
 	codePos := exec.index
 	indexVar.value = minVal
 	exec.sto.newLayout()
 	exec.sto.appendVariable(indexVar)
 	for indexVar.value.(int64) < maxVal {
-		//fmt.Println("!!!")
 		exec.index = codePos
 		for {
+			//fmt.Println(exec.index, len(exec.list))
 			if err = exec.execNext(); err != nil {
 				return
 			} else if _, check := exec.st.Peek().(*execMarker); check {

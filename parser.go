@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fcg-xvii/lineman"
+	"github.com/golang-collections/collections/stack"
 )
 
 type tokenContainer interface {
@@ -19,7 +20,7 @@ var (
 )
 
 func newParser(src []byte, tpl *template, root *Metla) *parser {
-	return &parser{lineman.NewCodeLine(src), tpl, root, newCodeStack(), true}
+	return &parser{lineman.NewCodeLine(src), tpl, root, newCodeStack(), stack.New(), true}
 }
 
 type parser struct {
@@ -27,6 +28,7 @@ type parser struct {
 	tpl       *template
 	root      *Metla
 	stack     *codeStack
+	openStack *stack.Stack
 	textState bool
 }
 
@@ -53,6 +55,10 @@ func (s *parser) parseDocument() (err error) {
 		}
 	}
 	s.flushStack()
+	if s.openStack.Len() > 0 {
+		openInfo := s.openStack.Pop().(openFlag)
+		err = openInfo.info.fatalError(fmt.Sprintf("Unclosed tag %v", openInfo.tagName))
+	}
 	return
 }
 

@@ -155,7 +155,11 @@ func (s *operator) execUnary(st *stack.Stack) error {
 	if st.Len() == 0 {
 		return s.fatalError("Value list is empty")
 	}
-	val := reflectNum{reflect.ValueOf(st.Pop())}
+	iface := st.Pop()
+	if vlr, check := iface.(valuer); check {
+		iface = vlr.Value()
+	}
+	val := reflectNum{reflect.ValueOf(iface)}
 	if len(s.data) == 1 {
 		if val.Kind() != reflect.Bool {
 			return fmt.Errorf("Boolean value expected, [%v] given", val.Kind())
@@ -363,17 +367,8 @@ loop:
 			}
 		default:
 			{
-				/*sLen := p.stack.Len()
-				if _, err = initCodeVal(p); err != nil {
-					return
-				} else {
-					t := make([]interface{}, p.stack.Len()-sLen)
-					for i, _ := range t {
-						t[i] = p.stack.Pop()
-					}
-					pn, prevVal = append(pn, t...), true
-				}*/
-				if _, err = initCodeVal(p); err != nil {
+				fmt.Println("VAL.....")
+				if _, errCV := initCodeVal(p); errCV != nil {
 					return
 				} else {
 					pn, prevVal = append(pn, p.readStackVal()...), true

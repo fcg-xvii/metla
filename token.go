@@ -51,14 +51,10 @@ type execCommand struct {
 	itemsCount int
 }
 
-/*func (s *execCommand) String() string {
-	switch s.method {
-	case execSet:
-		return "execSet"
-	default:
-		return "execNoname"
-	}
-}*/
+type openFlag struct {
+	info    *rawInfoRecord
+	tagName string
+}
 
 type positionInformer interface {
 	fatalError(string) error

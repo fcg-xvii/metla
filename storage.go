@@ -45,9 +45,7 @@ func (s *storageLayout) findVariable(key string) (res *variable, check bool) {
 //////////////////////////////////////////////////////////////////////
 
 func newStorage(src map[string]interface{}) *storage {
-	//fmt.Println("MAP.........", src)
 	layout := layoutFromMap(src)
-	//fmt.Println("LAY.........", layout)
 	return &storage{
 		layouts: []*storageLayout{layout},
 		layout:  layout,
@@ -98,10 +96,18 @@ func (s *storage) updateVariable(v *variable) (res *variable) {
 	return
 }
 
+type valuer interface {
+	Value() interface{}
+}
+
 type variable struct {
 	key    string
 	value  interface{}
 	stored bool
+}
+
+func (s *variable) Value() interface{} {
+	return s.value
 }
 
 func (s *variable) Kind() reflect.Kind {
@@ -113,3 +119,49 @@ func (s *variable) IsNil() bool {
 }
 
 func (s *variable) String() string { return fmt.Sprint(s.value) }
+
+func (s *variable) IndexVal(index interface{}) interface{} {
+	val, indexVal := reflect.ValueOf(s.value), reflect.ValueOf(index)
+	switch indexVal.Kind() {
+	case reflect.Int64, reflect.Int, reflect.Int32, reflect.Int16, reflect.Int8:
+		{
+			switch val.Kind() {
+			case reflect.Slice, reflect.Array, reflect.String:
+			default:
+				return nil
+			}
+			i := int(indexVal.Int())
+			if i < 0 || i >= val.Len() {
+				return nil
+			}
+			return val.Index(i).Interface()
+		}
+	default:
+		{
+			if val.Kind() != reflect.Map {
+				return nil
+			}
+			res := val.MapIndex(reflect.ValueOf(index))
+			if res.Kind() == reflect.Invalid {
+				return nil
+			} else {
+				return res.Interface()
+			}
+		}
+
+	}
+	return nil
+}
+
+type indexVariable struct {
+	v     *variable
+	index interface{}
+}
+
+func (s indexVariable) String() string {
+	return fmt.Sprint(s.v.IndexVal(s.index))
+}
+
+func (s indexVariable) Value() interface{} {
+	return s.v.IndexVal(s.index)
+}

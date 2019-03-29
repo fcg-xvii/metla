@@ -29,9 +29,9 @@ func newValCode(p *parser) error {
 	return p.positionError("CODE_ERR")
 }
 
-func newValIndex(p *parser) (interface{}, error) {
+/*func newValIndex(p *parser) (interface{}, error) {
 	return nil, p.positionError("index_error")
-}
+}*/
 
 func newValField(p *parser) (interface{}, error) {
 	return nil, p.positionError("field_error")

@@ -1,3 +1,6 @@
-{% for i in 0 : 2000 %}
-	<li>{{ i + 1 }}</li>
-{% endfor %}
+{%
+	if tr
+		echoln "YES"
+	endif
+	echoln "OKOKOKOKO"
+%}

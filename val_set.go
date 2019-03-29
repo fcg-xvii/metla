@@ -3,7 +3,6 @@ package metla
 import "fmt"
 
 func newValSet(p *parser) (res interface{}, err error) {
-	fmt.Println("INIT_SET")
 	info := p.infoRecordFromPos()
 	if p.stack.Len() == 0 {
 		err = p.positionError("left side of set is empty")
@@ -60,8 +59,7 @@ func newValSet(p *parser) (res interface{}, err error) {
 	p.IncPos()
 	p.stack.Push(&execMarker{"endvars"})
 	p.stack.Push(storeUpdate)
-	p.pushSplitter()
-	//p.PassSpaces()
+	//p.pushSplitter()
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		if p.IsEndLine() {

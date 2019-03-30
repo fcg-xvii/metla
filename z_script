@@ -1,6 +1,8 @@
 {%
 	if tr
 		echoln "YES"
+	else 
+		echoln "NO"
 	endif
 	echoln "OKOKOKOKO"
 %}

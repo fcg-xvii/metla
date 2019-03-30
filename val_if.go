@@ -6,6 +6,7 @@ import (
 
 func init() {
 	keywords["if"] = keywordIf
+	keywords["else"] = keywordElse
 	keywords["endif"] = keywordEndif
 }
 
@@ -18,6 +19,20 @@ func keywordIf(p *parser) (res interface{}, err error) {
 			return
 		}
 	}
+	return
+}
+
+func keywordElse(p *parser) (res interface{}, err error) {
+	if p.openStack.Len() == 0 {
+		err = p.positionError("else without opened condition")
+		return
+	} else {
+		if openInfo := p.openStack.Peek().(openFlag); openInfo.tagName != "if" {
+			err = openInfo.info.fatalError(fmt.Sprintf("condition close with unclosed %v tag", openInfo.tagName))
+			return
+		}
+	}
+	p.stack.Push(&execMarker{"else"})
 	return
 }
 
@@ -35,7 +50,7 @@ func keywordEndif(p *parser) (res interface{}, err error) {
 	return
 }
 
-func execIf(exec *tplExec, info *rawInfoRecord) (err error) {
+func convertCondition(exec *tplExec, info *rawInfoRecord) (err error) {
 	condIface := exec.st.Pop()
 	if vlr, check := condIface.(valuer); check {
 		condIface = vlr.Value()
@@ -44,20 +59,43 @@ func execIf(exec *tplExec, info *rawInfoRecord) (err error) {
 		err = info.fatalError("Expected boolean value")
 		return
 	}
-	if condIface.(bool) {
-		for {
-			//fmt.Println(exec.index, len(exec.list))
+	exec.st.Push(condIface)
+	return
+}
 
+func execCondition(exec *tplExec) (err error) {
+	fmt.Println("EXEC_CONDITION....................", exec.st.Peek().(bool), exec.index)
+	condition := exec.st.Pop().(bool)
+	if condition {
+		for {
 			if err = exec.execNext(); err != nil {
 				return
-			} else if m, check := exec.st.Peek().(*execMarker); check && m.name == "endif" {
-				exec.st.Pop()
-				return
+			} else if m, check := exec.st.Peek().(*execMarker); check {
+				fmt.Println("NAME.....", m.name)
+				switch m.name {
+				case "else":
+					exec.st.Pop()
+					exec.st.Push(!condition)
+					execCondition(exec)
+					return
+				case "endif":
+					exec.st.Pop()
+					return
+
+				}
 			}
 		}
 	} else {
 		for _, v := range exec.list[exec.index:] {
 			if marker, check := v.(*execMarker); check {
+				switch marker.name {
+				case "else":
+					//exec.st.Push(!condition)
+					execCondition(exec)
+					return
+				case "endif":
+					return
+				}
 				if marker.name == "endif" {
 					return
 				}
@@ -65,6 +103,12 @@ func execIf(exec *tplExec, info *rawInfoRecord) (err error) {
 			exec.index++
 		}
 	}
-	err = info.fatalError("IF_ERR")
+	return
+}
+
+func execIf(exec *tplExec, info *rawInfoRecord) (err error) {
+	if err = convertCondition(exec, info); err == nil {
+		err = execCondition(exec)
+	}
 	return
 }

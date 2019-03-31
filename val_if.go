@@ -64,18 +64,19 @@ func convertCondition(exec *tplExec, info *rawInfoRecord) (err error) {
 }
 
 func execCondition(exec *tplExec) (err error) {
-	fmt.Println("EXEC_CONDITION....................", exec.st.Peek().(bool), exec.index)
+	//fmt.Println("EXEC_CONDITION....................", exec.st.Peek().(bool), exec.index)
 	condition := exec.st.Pop().(bool)
 	if condition {
 		for {
 			if err = exec.execNext(); err != nil {
 				return
 			} else if m, check := exec.st.Peek().(*execMarker); check {
-				fmt.Println("NAME.....", m.name)
+				//fmt.Println("NAME.....", m.name)
 				switch m.name {
 				case "else":
 					exec.st.Pop()
 					exec.st.Push(!condition)
+					exec.index++
 					execCondition(exec)
 					return
 				case "endif":
@@ -90,7 +91,7 @@ func execCondition(exec *tplExec) (err error) {
 			if marker, check := v.(*execMarker); check {
 				switch marker.name {
 				case "else":
-					//exec.st.Push(!condition)
+					exec.st.Push(!condition)
 					execCondition(exec)
 					return
 				case "endif":

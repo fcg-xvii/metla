@@ -1,14 +1,3 @@
 {%
-	for i in 0:10
-		echoln "......", i
-		if i <= 5
-			echoln "YES"
-			echoln "PLEASE"
-		else 
-			echoln "NO"
-			echoln "PL"
-		endif
-		echoln "======================================="
-	endfor
-	echoln "OKOKOKOKO"
+	echoln tst.one
 %}

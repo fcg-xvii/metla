@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+type Test struct {
+	one string
+}
+
 func printMethod(s interface{}) {
 	log.Println(s)
 }
@@ -90,6 +94,7 @@ func TestParser(t *testing.T) {
 		"cooler":  cooler,
 		"tr":      true,
 		"cli":     map[string]string{"one": "over one"},
+		"tst":     &Test{one: "adiiiin"},
 	}
 
 	if err := root.Content("z_script", &buf, data); err != nil {

@@ -3,6 +3,7 @@ package metla
 import (
 	"fmt"
 	"io"
+	_ "reflect"
 	"sync"
 
 	"github.com/golang-collections/collections/stack"
@@ -70,16 +71,17 @@ func (s *template) result(sto *storage, w io.Writer) (err error) {
 	list := s.tokenList
 	s.locker.RUnlock()
 	fmt.Println("LIST", list)
-	tplExec := &tplExec{list, stack.New(), sto, 0, w}
+	tplExec := &tplExec{list, stack.New(), sto, 0, w, false}
 	return tplExec.exec()
 }
 
 type tplExec struct {
-	list  []interface{}
-	st    *stack.Stack
-	sto   *storage
-	index int
-	w     io.Writer
+	list      []interface{}
+	st        *stack.Stack
+	sto       *storage
+	index     int
+	w         io.Writer
+	fieldFlag bool
 }
 
 func (s *tplExec) exec() (err error) {
@@ -108,6 +110,7 @@ func (s *tplExec) execNext() (err error) {
 	case *valVariable:
 		//fmt.Println("VAL_VARIABLE")
 		s.list[s.index] = s.list[s.index].(*valVariable).StorageVal(s)
+
 	case *operator:
 		//fmt.Println("OPERATOR")
 		if err = s.list[s.index].(*operator).exec(s.st); err != nil {

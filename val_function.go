@@ -89,7 +89,11 @@ func popExecFunctionArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord)
 
 func newValFunction(name string, p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	p.stack.Push(&execCommand{info, execFunction, 0})
+	if !p.fieldFlag {
+		p.stack.Push(&execCommand{info, execFunction, 0})
+	} else {
+		p.stack.Push(&execCommand{info, execMethod, 0})
+	}
 	p.stack.Push(&valVariable{info, name})
 	p.IncPos()
 	if err = parseFuncArgs(p); err == nil {
@@ -126,6 +130,11 @@ func execFunction(exec *tplExec, info *rawInfoRecord) (err error) {
 			exec.st.Push(val.Interface())
 		}
 	}
+	return
+}
+
+func execMethod(exec *tplExec, info *rawInfoRecord) (err error) {
+	err = info.fatalError("exec method error......")
 	return
 }
 

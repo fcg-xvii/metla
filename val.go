@@ -73,6 +73,8 @@ func initCodeVal(p *parser) (val interface{}, err error) {
 					p.stack.Push(val)
 					val, err = newValIndex(p)
 				case '.':
+					val = &valVariable{p.infoRecordFromMark(), string(name)}
+					p.stack.Push(val)
 					val, err = newValField(p)
 				default:
 					val = &valVariable{p.infoRecordFromMark(), string(name)}

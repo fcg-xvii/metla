@@ -20,7 +20,7 @@ var (
 )
 
 func newParser(src []byte, tpl *template, root *Metla) *parser {
-	return &parser{lineman.NewCodeLine(src), tpl, root, newCodeStack(), stack.New(), true}
+	return &parser{lineman.NewCodeLine(src), tpl, root, newCodeStack(), stack.New(), true, false}
 }
 
 type parser struct {
@@ -30,6 +30,7 @@ type parser struct {
 	stack     *codeStack
 	openStack *stack.Stack
 	textState bool
+	fieldFlag bool
 }
 
 func (s *parser) parseDocument() (err error) {

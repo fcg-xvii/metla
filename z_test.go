@@ -11,7 +11,7 @@ import (
 )
 
 type Test struct {
-	one string
+	One string
 }
 
 func printMethod(s interface{}) {
@@ -94,7 +94,7 @@ func TestParser(t *testing.T) {
 		"cooler":  cooler,
 		"tr":      true,
 		"cli":     map[string]string{"one": "over one"},
-		"tst":     &Test{one: "adiiiin"},
+		"tst":     &Test{One: "adiiiin"},
 	}
 
 	if err := root.Content("z_script", &buf, data); err != nil {

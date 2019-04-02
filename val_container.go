@@ -3,7 +3,7 @@ package metla
 import (
 	"fmt"
 	_ "io"
-	_ "reflect"
+	"reflect"
 )
 
 func newValArray(p *parser) (res interface{}, err error) {
@@ -120,30 +120,71 @@ loop:
 }
 
 func newValField(p *parser) (res interface{}, err error) {
+	p.fieldFlag = true
 	tmp := p.stack.Pop()
-	p.stack.Push(&execMarker{"endfield"})
+	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldEnd, 0})
 	p.stack.Push(tmp)
 	var val interface{}
 	for !p.IsEndLine() {
 		p.PassSpaces()
 		if p.Char() != '.' {
+			p.fieldFlag = false
 			break
 		}
 		p.IncPos()
-		if _, err = initCodeVal(p); err != nil {
+		if val, err = initCodeVal(p); err != nil {
 			return
+		} else if v, check := val.(*valVariable); check {
+			p.stack.Pop()
+			p.stack.Push(v.name)
 		}
 	}
-	res = &execCommand{p.infoRecordFromMark(), execField, 0}
-	p.stack.Push(res)
+	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldStart, 0})
 	return
 }
 
-func execField(exec *tplExec, info *rawInfoRecord) (err error) {
-	owner := exec.st.Pop()
-	for {
+func execFieldStart(exec *tplExec, info *rawInfoRecord) (err error) {
+	exec.fieldFlag = true
+	exec.st.Push(&execMarker{"endField"})
+	return
+}
+
+func execFieldEnd(exec *tplExec, info *rawInfoRecord) (err error) {
+	exec.fieldFlag = false
+	for exec.st.Len() > 0 {
+		l := exec.st.Pop()
+		switch exec.st.Peek().(type) {
+		case *execMarker:
+			fmt.Println("EXEC_MARKER")
+			exec.st.Pop()
+			exec.st.Push(l)
+			return
+		case *execCommand:
+			fmt.Println("EXEC_COMMAND")
+			err = info.fatalError("!!!!!!")
+			return
+		case string:
+			left := reflect.ValueOf(l)
+			fmt.Println("LLLLLEEEEEEEFFFTTTTT", left)
+			if left.Kind() == reflect.Ptr {
+				fmt.Println("PTRRRRRR")
+				left = left.Elem()
+				fmt.Println("LEFT", left)
+			}
+			if left.Kind() != reflect.Struct {
+				err = info.fatalError(fmt.Sprintf("Field owner struct expected, not %v", left.Kind()))
+				return
+			}
+			fmt.Println("RRRRRRRRRRRRRRRRR", exec.st.Peek().(string))
+			val := left.FieldByName(exec.st.Pop().(string))
+			fmt.Println("LEFT", left, val)
+			if !val.IsValid() {
+				exec.st.Push(nil)
+			} else {
+				exec.st.Push(val.Interface())
+			}
+		}
 
 	}
-	err = info.fatalError("EXEC FIELD error")
 	return
 }

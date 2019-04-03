@@ -1,0 +1,6 @@
+Привет )))
+{%
+	if defined(arr)
+	  echoln "ArrLen:", len(arr)
+	endif
+%}

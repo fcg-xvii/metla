@@ -1,11 +1,4 @@
 {%
-	if !defined(index) 
-		index = 0
-		echoln "Index setup..."
-	endif
-	index = index + 1
-	echoln "index", index
-	if index < 10000
-		include "z_script" { index: index + 1 }
-	endif
+	obj = { one: 1, two: 2, three: 3 * 10 + 1}
+	echoln obj
 %}

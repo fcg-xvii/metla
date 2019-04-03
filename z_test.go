@@ -10,8 +10,12 @@ import (
 	"time"
 )
 
-type Test struct {
+type Child struct {
 	One string
+}
+
+type Test struct {
+	ChildObj *Child
 }
 
 func printMethod(s interface{}) {
@@ -94,7 +98,7 @@ func TestParser(t *testing.T) {
 		"cooler":  cooler,
 		"tr":      true,
 		"cli":     map[string]string{"one": "over one"},
-		"tst":     &Test{One: "adiiiin"},
+		"tst":     &Test{&Child{One: "adiiiin"}},
 	}
 
 	if err := root.Content("z_script", &buf, data); err != nil {

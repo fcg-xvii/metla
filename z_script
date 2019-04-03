@@ -1,3 +1,4 @@
 {%
-	echoln tst.One
+	obj = { one: "one value", two: 2 }
+	echoln obj.one
 %}

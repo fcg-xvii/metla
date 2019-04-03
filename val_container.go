@@ -120,17 +120,21 @@ loop:
 }
 
 func newValField(p *parser) (res interface{}, err error) {
+	fmt.Println("VAL_FIELD.........")
 	p.fieldFlag = true
 	tmp := p.stack.Pop()
 	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldEnd, 0})
 	p.stack.Push(tmp)
 	var val interface{}
 	for !p.IsEndLine() {
+		fmt.Println("STEP....")
 		p.PassSpaces()
+		fmt.Println("CHAR", string(p.Char()))
 		if p.Char() != '.' {
 			p.fieldFlag = false
 			break
 		}
+		fmt.Println("Continue")
 		p.IncPos()
 		if val, err = initCodeVal(p); err != nil {
 			return
@@ -153,6 +157,9 @@ func execFieldEnd(exec *tplExec, info *rawInfoRecord) (err error) {
 	exec.fieldFlag = false
 	for exec.st.Len() > 0 {
 		l := exec.st.Pop()
+		if v, check := l.(*variable); check {
+			l = v.value
+		}
 		switch exec.st.Peek().(type) {
 		case *execMarker:
 			fmt.Println("EXEC_MARKER")

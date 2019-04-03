@@ -8,7 +8,7 @@ import (
 )
 
 func newValPrint(p *parser) (err error) {
-	p.stack.Push(&execCommand{p.infoRecordFromMark(), execPrint, p.stack.Len() + 1})
+	p.stack.Push(&execCommand{p.infoRecordFromMark(), execPrint, "print"})
 	p.ForwardPos(2)
 	for !p.IsEndDocument() {
 		p.PassSpaces()

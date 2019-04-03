@@ -22,6 +22,8 @@ type storageLayout struct {
 }
 
 func (s *storageLayout) appendVariable(v *variable) {
+	//fmt.Println("APPEND_VARIABLE")
+	v.stored = true
 	s.list = append(s.list, v)
 	/*if _, check := s.findVariable(key); check {
 		err = fmt.Errorf("Set variable error :: variable [%v] exists on current layout", key)
@@ -85,7 +87,6 @@ func (s *storage) appendVariable(v *variable) {
 }
 
 func (s *storage) updateVariable(v *variable) (res *variable) {
-
 	var check bool
 	if res, check = s.findVariable(v.key); check {
 		res.value = v.value

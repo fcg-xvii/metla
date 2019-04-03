@@ -29,7 +29,8 @@ var (
 		},
 	}
 	functions = map[string]interface{}{
-		"len": coreLen,
+		"len":     coreLen,
+		"defined": coreDefined,
 	}
 )
 
@@ -61,7 +62,7 @@ func parseKeywordArgs(p *parser, info *rawInfoRecord) (err error) {
 
 func keywordPrint(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	res = &execCommand{info, execKeywordPrint, 0}
+	res = &execCommand{info, execKeywordPrint, "print"}
 	p.stack.Push(res)
 	p.pushSplitter()
 	return res, parseKeywordArgs(p, info)
@@ -69,7 +70,7 @@ func keywordPrint(p *parser) (res interface{}, err error) {
 
 func keywordPrintln(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	res = &execCommand{info, execKeywordPrint, 0}
+	res = &execCommand{info, execKeywordPrintln, "println"}
 	p.stack.Push(res)
 	p.pushSplitter()
 	return res, parseKeywordArgs(p, info)
@@ -77,7 +78,7 @@ func keywordPrintln(p *parser) (res interface{}, err error) {
 
 func keywordEcho(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	res = &execCommand{info, execEcho, 0}
+	res = &execCommand{info, execEcho, "echo"}
 	p.stack.Push(res)
 	p.pushSplitter()
 	return res, parseKeywordArgs(p, info)
@@ -85,7 +86,7 @@ func keywordEcho(p *parser) (res interface{}, err error) {
 
 func keywordEcholn(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	res = &execCommand{info, execEcholn, 0}
+	res = &execCommand{info, execEcholn, "echoln"}
 	p.stack.Push(res)
 	p.pushSplitter()
 	return res, parseKeywordArgs(p, info)
@@ -130,6 +131,13 @@ func execKeywordPrintln(exec *tplExec, info *rawInfoRecord) (err error) {
 }
 
 // core functions ///////////////////////////////////////////////////////////////
+
+func coreDefined(w io.Writer, val interface{}) (res bool) {
+	if sVar, check := val.(*variable); check {
+		res = sVar.stored
+	}
+	return
+}
 
 func coreLen(w io.Writer, val interface{}) int {
 	if sVar, check := val.(*variable); check {

@@ -1,4 +1,11 @@
 {%
-	obj = { one: "one value", two: 2 }
-	echoln obj.one
+	if !defined(index) 
+		index = 0
+		echoln "Index setup..."
+	endif
+	index = index + 1
+	echoln "index", index
+	if index < 10000
+		include "z_script" { index: index + 1 }
+	endif
 %}

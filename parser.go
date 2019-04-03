@@ -80,7 +80,7 @@ func (s *parser) infoRecordFromPos() *rawInfoRecord {
 }
 
 func (s *parser) pushSplitter() {
-	s.stack.Push(initSplitter())
+	//s.stack.Push(initSplitter())
 }
 
 func (s *parser) flushStack() {

@@ -8,7 +8,7 @@ import (
 
 func newValArray(p *parser) (res interface{}, err error) {
 	p.IncPos()
-	res = &execCommand{p.infoRecordFromMark(), initArray, 0}
+	res = &execCommand{p.infoRecordFromMark(), initArray, "init-array"}
 	p.stack.Push(res)
 	for !p.IsEndDocument() {
 		p.PassSpaces()
@@ -44,7 +44,7 @@ func initArray(exec *tplExec, info *rawInfoRecord) (err error) {
 }
 
 func newValObject(p *parser) (res interface{}, err error) {
-	res = &execCommand{p.infoRecordFromMark(), initObject, 0}
+	res = &execCommand{p.infoRecordFromMark(), initObject, "init-object"}
 	p.stack.Push(res)
 	p.IncPos()
 loop:
@@ -83,7 +83,7 @@ loop:
 }
 
 func initObject(exec *tplExec, info *rawInfoRecord) (err error) {
-	fmt.Println("INIT_OBJECT")
+	//fmt.Println("INIT_OBJECT")
 	m, pairAccepted, fieldName := make(map[string]interface{}), false, ""
 	var val interface{}
 loop:
@@ -120,21 +120,21 @@ loop:
 }
 
 func newValField(p *parser) (res interface{}, err error) {
-	fmt.Println("VAL_FIELD.........")
+	//fmt.Println("VAL_FIELD.........")
 	p.fieldFlag = true
 	tmp := p.stack.Pop()
-	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldEnd, 0})
+	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldEnd, "field-end"})
 	p.stack.Push(tmp)
 	var val interface{}
 	for !p.IsEndLine() {
-		fmt.Println("STEP....")
+		//fmt.Println("STEP....")
 		p.PassSpaces()
-		fmt.Println("CHAR", string(p.Char()))
+		//fmt.Println("CHAR", string(p.Char()))
 		if p.Char() != '.' {
 			p.fieldFlag = false
 			break
 		}
-		fmt.Println("Continue")
+		//fmt.Println("Continue")
 		p.IncPos()
 		if val, err = initCodeVal(p); err != nil {
 			return
@@ -143,18 +143,20 @@ func newValField(p *parser) (res interface{}, err error) {
 			p.stack.Push(v.name)
 		}
 	}
-	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldStart, 0})
+	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldStart, "field-start"})
 	return
 }
 
 func execFieldStart(exec *tplExec, info *rawInfoRecord) (err error) {
-	exec.fieldFlag = true
+	//fmt.Println("FIELD_START", exec.fieldLayout)
+	exec.fieldLayout++
 	exec.st.Push(&execMarker{"endField"})
 	return
 }
 
 func execFieldEnd(exec *tplExec, info *rawInfoRecord) (err error) {
-	exec.fieldFlag = false
+	//fmt.Println("EXEC_FIELD_END", exec.fieldLayout, exec.index)
+	exec.fieldLayout--
 	for exec.st.Len() > 0 {
 		l := exec.st.Pop()
 		if v, check := l.(*variable); check {
@@ -162,33 +164,40 @@ func execFieldEnd(exec *tplExec, info *rawInfoRecord) (err error) {
 		}
 		switch exec.st.Peek().(type) {
 		case *execMarker:
-			fmt.Println("EXEC_MARKER")
-			exec.st.Pop()
-			exec.st.Push(l)
-			return
-		case *execCommand:
-			fmt.Println("EXEC_COMMAND")
-			err = info.fatalError("!!!!!!")
-			return
-		case string:
-			left := reflect.ValueOf(l)
-			fmt.Println("LLLLLEEEEEEEFFFTTTTT", left)
-			if left.Kind() == reflect.Ptr {
-				fmt.Println("PTRRRRRR")
-				left = left.Elem()
-				fmt.Println("LEFT", left)
-			}
-			if left.Kind() != reflect.Struct {
-				err = info.fatalError(fmt.Sprintf("Field owner struct expected, not %v", left.Kind()))
+			if exec.st.Peek().(*execMarker).name == "endField" {
+				exec.st.Pop()
+				exec.st.Push(l)
 				return
 			}
-			fmt.Println("RRRRRRRRRRRRRRRRR", exec.st.Peek().(string))
-			val := left.FieldByName(exec.st.Pop().(string))
-			fmt.Println("LEFT", left, val)
+		case *execCommand:
+			ex := exec.st.Pop().(*execCommand)
+			exec.st.Push(l)
+			if err = ex.method(exec, ex.posInfo()); err != nil {
+				return
+			}
+		case string:
+			left := reflect.ValueOf(l)
+			if left.Kind() == reflect.Ptr {
+				left = left.Elem()
+			}
+			var val reflect.Value
+			switch left.Kind() {
+			case reflect.Struct:
+				val = left.FieldByName(exec.st.Pop().(string))
+			case reflect.Map:
+				val = left.MapIndex(reflect.ValueOf(exec.st.Pop()))
+			default:
+				return info.fatalError(fmt.Sprintf("Field expected type struct or map, not %v", left.Kind()))
+			}
 			if !val.IsValid() {
 				exec.st.Push(nil)
 			} else {
 				exec.st.Push(val.Interface())
+			}
+		default:
+			{
+				err = info.fatalError("Field uncnown error...")
+				return
 			}
 		}
 

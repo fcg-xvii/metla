@@ -8,12 +8,12 @@ import (
 	_ "github.com/golang-collections/collections/stack"
 )
 
-func rawItemsCount(val interface{}) int {
+/*func rawItemsCount(val interface{}) int {
 	if exec, check := val.(*execCommand); check {
 		return exec.itemsCount
 	}
 	return 1
-}
+}*/
 
 type splitter byte
 
@@ -47,8 +47,12 @@ func (s *execMarker) String() string {
 
 type execCommand struct {
 	*rawInfoRecord
-	method     func(*tplExec, *rawInfoRecord) error
-	itemsCount int
+	method func(*tplExec, *rawInfoRecord) error
+	name   string
+}
+
+func (s *execCommand) String() string {
+	return "{ exec :: " + s.name + " }"
 }
 
 type openFlag struct {

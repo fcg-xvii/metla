@@ -27,7 +27,7 @@ type template struct {
 	//lastRequest time.Time
 }
 
-func (s *template) execute(w io.Writer, vals map[string]interface{}) error {
+func (s *template) checkUpdate() error {
 	switch s.root.check(s.objPath, s.updateMark) {
 	case ResourceNotFound:
 		{
@@ -45,7 +45,11 @@ func (s *template) execute(w io.Writer, vals map[string]interface{}) error {
 			s.locker.Unlock()
 		}
 	}
-	fmt.Println("Update proceed...")
+	return nil
+}
+
+func (s *template) execute(w io.Writer, vals map[string]interface{}) error {
+	s.checkUpdate()
 	if s.err != nil {
 		return s.err
 	}
@@ -68,20 +72,24 @@ func (s *template) result(sto *storage, w io.Writer) (err error) {
 		s.locker.RUnlock()
 		return s.err
 	}
-	list := s.tokenList
+	list := make([]interface{}, len(s.tokenList))
+	copy(list, s.tokenList)
 	s.locker.RUnlock()
-	fmt.Println("LIST", list)
-	tplExec := &tplExec{list, stack.New(), sto, 0, w, false}
+	//fmt.Println("LIST", list)
+	sto.newLayout()
+	tplExec := &tplExec{list, stack.New(), sto, 0, w, 0, s.root}
+	sto.dropLayout()
 	return tplExec.exec()
 }
 
 type tplExec struct {
-	list      []interface{}
-	st        *stack.Stack
-	sto       *storage
-	index     int
-	w         io.Writer
-	fieldFlag bool
+	list        []interface{}
+	st          *stack.Stack
+	sto         *storage
+	index       int
+	w           io.Writer
+	fieldLayout int
+	root        *Metla
 }
 
 func (s *tplExec) exec() (err error) {
@@ -100,10 +108,16 @@ func (s *tplExec) execNext() (err error) {
 	if s.index >= len(s.list) {
 		return
 	}
+	//fmt.Println("EXEC_NEXT", s.list[s.index])
 	switch s.list[s.index].(type) {
 	case *execCommand:
-		//fmt.Println("EXEC_COMMAND")
+		//fmt.Println("EXEC_COMMAND", s)
 		exec := s.list[s.index].(*execCommand)
+		//fmt.Println(exec.name)
+		if s.fieldLayout > 0 && (exec.name != "field-end" && exec.name != "field-start") {
+			s.st.Push(exec)
+			break
+		}
 		if err = exec.method(s, exec.rawInfoRecord); err != nil {
 			return
 		}
@@ -117,6 +131,7 @@ func (s *tplExec) execNext() (err error) {
 			return
 		}
 	default:
+		//fmt.Println("DEFAULT...", s.list[s.index])
 		s.st.Push(s.list[s.index])
 	}
 	return

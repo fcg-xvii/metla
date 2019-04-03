@@ -205,7 +205,7 @@ func (s *operator) valsFromStack(st *stack.Stack) (l, r reflectNum, err error) {
 		if !l.IsNil() && !r.IsNil() && (l.Kind() != r.Kind()) {
 			lt := l.Type()
 			if !r.Type().ConvertibleTo(lt) {
-				err = fmt.Errorf("Coudn't convert type [%v] to [%v]", lt, r.Type())
+				err = fmt.Errorf("RPN :: Coudn't convert type [%v] to [%v]", lt, r.Type())
 				return
 			}
 			r = reflectNum{r.Convert(lt)}

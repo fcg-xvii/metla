@@ -3,7 +3,7 @@ package metla
 import (
 	"fmt"
 	"io"
-	"log"
+	_ "log"
 	"sync"
 )
 
@@ -48,7 +48,6 @@ type Metla struct {
 }
 
 func (s *Metla) Content(path string, w io.Writer, vals map[string]interface{}) error {
-	log.Println("METLA :: CONTENT")
 	if tpl, err := s.template(path); err == nil {
 		return tpl.execute(w, vals)
 	} else {

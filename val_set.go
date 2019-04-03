@@ -23,7 +23,7 @@ func newValSet(p *parser) (res interface{}, err error) {
 	}
 
 	tmp := p.stack.Pop()
-	res = &execCommand{info, execSet, 0}
+	res = &execCommand{info, execSet, "set"}
 	p.stack.Push(res)
 	p.stack.Push(tmp)
 	p.pushSplitter()
@@ -99,14 +99,16 @@ loop:
 	if len(args) != varsCount*2 {
 		err = info.fatalError(fmt.Sprintf("Mismatch count variables and values [%v vs %v]", varsCount, len(args)-varsCount))
 	}
-	fmt.Println(args)
+	//fmt.Println(args)
 	l := int(len(args) / 2)
 	for i := 0; i < l; i++ {
 		v, val := args[i].(*variable), args[i+l]
 		v.value = val
 		if storeUpdate {
+			//fmt.Println("store-update")
 			exec.sto.updateVariable(v)
 		} else {
+			//fmt.Println("store-append")
 			exec.sto.appendVariable(v)
 		}
 	}

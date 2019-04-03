@@ -59,8 +59,9 @@ func popStaticArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args
 		val := exec.st.Pop()
 		if _, check := val.(*execMarker); check {
 			break
-		} else if vVal, check := val.(*variable); check {
-			val = vVal.value
+		}
+		if fType.NumIn() <= len(args) {
+			return nil, info.fatalError(fmt.Sprintf("Too manu function args, expected %v", fType.NumIn()))
 		}
 		t := fType.In(len(args))
 		if val != nil {
@@ -77,7 +78,7 @@ func popStaticArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) (args
 }
 
 func popExecFunctionArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord) ([]reflect.Value, error) {
-	fmt.Println("fType", fType)
+	//fmt.Println("fType", fType)
 	if fType.IsVariadic() {
 		return popVariadicArgs(exec, fType, info)
 	} else {
@@ -88,17 +89,19 @@ func popExecFunctionArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord)
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 func newValFunction(name string, p *parser) (res interface{}, err error) {
-	info := p.infoRecordFromPos()
-	if !p.fieldFlag {
-		p.stack.Push(&execCommand{info, execFunction, 0})
+	info, fieldFlag := p.infoRecordFromPos(), p.fieldFlag
+	if !fieldFlag {
+		p.stack.Push(&execCommand{info, execFunction, "function"})
 	} else {
-		p.stack.Push(&execCommand{info, execMethod, 0})
+		p.fieldFlag = false
+		p.stack.Push(&execCommand{info, execMethod, "method"})
 	}
 	p.stack.Push(&valVariable{info, name})
 	p.IncPos()
 	if err = parseFuncArgs(p); err == nil {
 		p.stack.Push(&execMarker{name})
 	}
+	p.fieldFlag = fieldFlag
 	return
 }
 
@@ -134,15 +137,45 @@ func execFunction(exec *tplExec, info *rawInfoRecord) (err error) {
 }
 
 func execMethod(exec *tplExec, info *rawInfoRecord) (err error) {
-	err = info.fatalError("exec method error......")
+	owner, fName := reflect.ValueOf(exec.st.Pop()), ""
+	if owner.Kind() != reflect.Struct && owner.Kind() != reflect.Ptr {
+		return info.fatalError(fmt.Sprintf("Method exec error :: Struct or pointer type expected, not %v", owner.Kind()))
+	}
+	if v, check := exec.st.Pop().(*variable); !check {
+		err = info.fatalError("Method name variable expected")
+	} else {
+		fName = v.key
+	}
+	f := owner.MethodByName(fName)
+	if f.Kind() == reflect.Invalid {
+		err = info.fatalError(fmt.Sprintf("Method %v not found in owner", fName))
+		return
+	}
+	fType := f.Type()
+	var args []reflect.Value
+	if args, err = popExecFunctionArgs(exec, fType, info); err != nil {
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = info.fatalError(fmt.Sprintf("Function call fatal error (panic) :: %v", r))
+		}
+	}()
+	res := f.Call(args)
+	if len(res) > 0 {
+		for _, val := range res {
+			exec.st.Push(val.Interface())
+		}
+	}
 	return
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 func newStaticFunction(fIface interface{}, p *parser) (res interface{}, err error) {
+	fmt.Println("STATIC_FUNCTION")
 	info := p.infoRecordFromPos()
-	p.stack.Push(&execCommand{info, execFunction, 0})
+	p.stack.Push(&execCommand{info, execFunction, "static-function"})
 	p.stack.Push(fIface)
 	p.IncPos()
 	if err = parseFuncArgs(p); err == nil {

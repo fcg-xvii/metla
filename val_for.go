@@ -9,7 +9,7 @@ func init() {
 
 func keywordFor(p *parser) (res interface{}, err error) {
 	p.PassSpaces()
-	p.stack.Push(&execCommand{p.infoRecordFromPos(), execFor, 0})
+	p.stack.Push(&execCommand{p.infoRecordFromPos(), execFor, "for"})
 	p.openStack.Push(openFlag{p.infoRecordFromPos(), "for"})
 	// Получаем переменную индекса
 	if res, err = initCodeVal(p); err == nil {

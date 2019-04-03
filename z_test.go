@@ -11,11 +11,20 @@ import (
 )
 
 type Child struct {
-	One string
+	One int64
+}
+
+func (s *Child) Min10(left, right int) bool {
+	log.Println("MIN10", left, right)
+	return left < right
 }
 
 type Test struct {
 	ChildObj *Child
+}
+
+func (s *Test) GetChild() *Child {
+	return s.ChildObj
 }
 
 func printMethod(s interface{}) {
@@ -98,7 +107,7 @@ func TestParser(t *testing.T) {
 		"cooler":  cooler,
 		"tr":      true,
 		"cli":     map[string]string{"one": "over one"},
-		"tst":     &Test{&Child{One: "adiiiin"}},
+		"tst":     &Test{&Child{One: 5}},
 	}
 
 	if err := root.Content("z_script", &buf, data); err != nil {

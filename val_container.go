@@ -59,7 +59,6 @@ loop:
 			p.IncPos()
 			return
 		}
-
 		if p.Char() == ',' || p.Char() == '\n' {
 			p.IncPos()
 			continue
@@ -74,8 +73,14 @@ loop:
 			return nil, p.positionError("Object init error :: expected value splitter - ':'")
 		}
 		p.IncPos()
-		if _, err = initCodeVal(p); err != nil {
-			return
+		for !p.IsEndDocument() {
+			p.PassSpaces()
+			if p.Char() == ',' || p.Char() == '}' || p.Char() == '\n' {
+				break
+			}
+			if _, err = initCodeVal(p); err != nil {
+				return
+			}
 		}
 		p.stack.Push(&execMarker{"pair-split"})
 	}

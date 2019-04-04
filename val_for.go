@@ -5,6 +5,7 @@ import "fmt"
 func init() {
 	keywords["for"] = keywordFor
 	keywords["endfor"] = keywordEndfor
+	keywords["break"] = keywordBreak
 }
 
 func keywordFor(p *parser) (res interface{}, err error) {
@@ -75,6 +76,7 @@ func execFor(exec *tplExec, info *rawInfoRecord) (err error) {
 	exec.sto.appendVariable(indexVar)
 	for indexVar.value.(int64) < maxVal {
 		exec.index = codePos
+	cycleStep:
 		for {
 			//fmt.Println(exec.index, len(exec.list))
 			if err = exec.execNext(); err != nil {
@@ -82,12 +84,35 @@ func execFor(exec *tplExec, info *rawInfoRecord) (err error) {
 			} else if _, check := exec.st.Peek().(*execMarker); check {
 				exec.st.Pop()
 				break
+			} else if exec.breakFlag {
+				for _, v := range exec.list[exec.index:] {
+					if marker, check := v.(*execMarker); check && marker.name == "endfor" {
+						break cycleStep
+					}
+					exec.index++
+				}
 			}
 		}
-		indexVar.value = indexVar.value.(int64) + 1
+		if exec.breakFlag {
+			exec.breakFlag = false
+			break
+		} else {
+			indexVar.value = indexVar.value.(int64) + 1
+		}
 	}
 	exec.sto.dropLayout()
 	//fmt.Println("OKO", indexVar, minVal, maxVal)*/
 	//err = info.fatalError("AAAAAAAAAAAAAAAAAAAAAAA")
+	return
+}
+
+func keywordBreak(p *parser) (res interface{}, err error) {
+	res = &execCommand{p.infoRecordFromPos(), execBreak, "for"}
+	p.stack.Push(res)
+	return
+}
+
+func execBreak(exec *tplExec, info *rawInfoRecord) (err error) {
+	exec.breakFlag = true
 	return
 }

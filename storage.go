@@ -60,6 +60,7 @@ type storage struct {
 }
 
 func (s *storage) newLayout() *storageLayout {
+	fmt.Println("NewLayout", len(s.layouts))
 	layout := new(storageLayout)
 	s.layouts = append(s.layouts, layout)
 	s.layout = layout

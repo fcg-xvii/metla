@@ -77,7 +77,7 @@ func (s *template) result(sto *storage, w io.Writer) (err error) {
 	s.locker.RUnlock()
 	//fmt.Println("LIST", list)
 	sto.newLayout()
-	tplExec := &tplExec{list, stack.New(), sto, 0, w, 0, s.root}
+	tplExec := &tplExec{list, stack.New(), sto, 0, w, 0, false, s.root}
 	sto.dropLayout()
 	return tplExec.exec()
 }
@@ -89,6 +89,7 @@ type tplExec struct {
 	index       int
 	w           io.Writer
 	fieldLayout int
+	breakFlag   bool
 	root        *Metla
 }
 

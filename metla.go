@@ -79,14 +79,6 @@ func (s *Metla) template(path string) (res *template, err error) {
 	return
 }
 
-/*func (s *Metla) templateResult(path string, sto *storage) (*templateResult, error) {
-	if tpl, err := s.template(path); err == nil {
-		return tpl.result(sto)
-	} else {
-		return nil, err
-	}
-}*/
-
 func (s *Metla) removeTempalte(path string) {
 	s.locker.Lock()
 	delete(s.tpls, path)

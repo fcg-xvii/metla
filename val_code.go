@@ -20,6 +20,13 @@ func newValCode(p *parser) error {
 				}
 				return nil
 			}
+		case '/':
+			if p.NextChar() == '/' {
+				p.flushStack()
+				for !p.IsEndLine() {
+					p.IncPos()
+				}
+			}
 		default:
 			if _, err := initCodeVal(p); err != nil {
 				return err

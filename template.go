@@ -9,6 +9,10 @@ import (
 	"github.com/golang-collections/collections/stack"
 )
 
+var (
+	MaxStorageLayouts = 150
+)
+
 func newTemplate(root *Metla, objPath string) *template {
 	return &template{
 		root:    root,
@@ -77,9 +81,13 @@ func (s *template) result(sto *storage, w io.Writer) (err error) {
 	s.locker.RUnlock()
 	//fmt.Println("LIST", list)
 	sto.newLayout()
+	if len(sto.layouts) >= MaxStorageLayouts {
+		return fmt.Errorf("Fatal error :: Include loop arrived - max storage layouts")
+	}
 	tplExec := &tplExec{list, stack.New(), sto, 0, w, 0, false, s.root}
+	err = tplExec.exec()
 	sto.dropLayout()
-	return tplExec.exec()
+	return
 }
 
 type tplExec struct {

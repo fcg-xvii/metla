@@ -2,40 +2,10 @@ package metla
 
 import (
 	"fmt"
-	"io"
 	"reflect"
 
 	_ "github.com/golang-collections/collections/stack"
 )
-
-/*func rawItemsCount(val interface{}) int {
-	if exec, check := val.(*execCommand); check {
-		return exec.itemsCount
-	}
-	return 1
-}*/
-
-type splitter byte
-
-func initSplitter() splitter {
-	return splitter(0)
-}
-
-func isDataObject(obj interface{}) bool {
-	switch obj.(type) {
-	case splitter, *execCommand, *execMarker:
-		return false
-	}
-	return true
-}
-
-func isStaticDataObject(obj interface{}) bool {
-	switch obj.(type) {
-	case splitter, *execCommand, *execMarker, *valVariable:
-		return false
-	}
-	return true
-}
 
 type execMarker struct {
 	name string
@@ -68,7 +38,6 @@ type positionInformer interface {
 // Общий интерфейс объекта результирующих данных
 type token interface {
 	positionInformer
-	execObject(sto *storage) (executor, error)
 	IsExecutable() bool
 	String() string
 }
@@ -95,26 +64,6 @@ type valueBoolean interface {
 	value
 	Bool() bool
 }
-
-type executor interface {
-	String() string
-	Data(io.Writer) error // Запись результирующих данных в выходной поток
-	//Data(io.Writer) error // Запись результирующих данных в выходной поток
-	//Type() reflect.Kind
-	//Val() (interface{}, error)
-	//Vals() ([]interface{}, error)
-	//ValSingle() bool
-	//IsNil() bool
-	//String() string
-	//positionWarning(string) error
-	//receiveEvent(name string, params []interface{}) bool
-}
-
-/*type valueExecutor interface {
-	executor
-	Type() reflect.Kind
-
-}*/
 
 func checkKindInt(t reflect.Kind) bool {
 	return t == reflect.Int64 || t == reflect.Int32 || t == reflect.Int16 || t == reflect.Int8 || t == reflect.Int
@@ -170,20 +119,3 @@ func (s *rawInfoRecord) positionWarning(text string) error {
 func (s *rawInfoRecord) posInfo() *rawInfoRecord {
 	return s
 }
-
-type eventExec struct {
-	parent executor
-}
-
-func (s *eventExec) sendEvent(name string, params []interface{}) {
-	if s.parent != nil {
-		//s.parent.re
-	}
-}
-
-/*func (s *eventExec) receiveEvent(name string, params []interface{}) bool {
-	if s.parent != nil {
-		return s.parent.receiveEvent(name, params)
-	}
-	return false
-}*/

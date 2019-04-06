@@ -13,25 +13,24 @@ var (
 	MaxStorageLayouts = 150
 )
 
-func newTemplate(root *Metla, objPath string) *template {
-	return &template{
+func newTemplate(root *Metla, objPath string) *Template {
+	return &Template{
 		root:    root,
 		objPath: objPath,
 		locker:  new(sync.RWMutex),
 	}
 }
 
-type template struct {
+type Template struct {
 	root       *Metla
 	objPath    string
 	locker     *sync.RWMutex
 	tokenList  []interface{}
 	updateMark interface{}
 	err        error
-	//lastRequest time.Time
 }
 
-func (s *template) checkUpdate() error {
+func (s *Template) checkUpdate() error {
 	switch s.root.check(s.objPath, s.updateMark) {
 	case ResourceNotFound:
 		{
@@ -52,7 +51,7 @@ func (s *template) checkUpdate() error {
 	return nil
 }
 
-func (s *template) execute(w io.Writer, vals map[string]interface{}) error {
+func (s *Template) execute(w io.Writer, vals map[string]interface{}) error {
 	s.checkUpdate()
 	if s.err != nil {
 		return s.err
@@ -61,16 +60,16 @@ func (s *template) execute(w io.Writer, vals map[string]interface{}) error {
 	return s.result(sto, w)
 }
 
-func (s *template) parse(src []byte) error {
+func (s *Template) parse(src []byte) error {
 	parser := newParser(src, s, s.root)
 	return parser.parseDocument()
 }
 
-func (s *template) pushToken(t interface{}) {
+func (s *Template) pushToken(t interface{}) {
 	s.tokenList = append(s.tokenList, t)
 }
 
-func (s *template) result(sto *storage, w io.Writer) (err error) {
+func (s *Template) result(sto *storage, w io.Writer) (err error) {
 	s.locker.RLock()
 	if s.err != nil {
 		s.locker.RUnlock()
@@ -79,7 +78,6 @@ func (s *template) result(sto *storage, w io.Writer) (err error) {
 	list := make([]interface{}, len(s.tokenList))
 	copy(list, s.tokenList)
 	s.locker.RUnlock()
-	//fmt.Println("LIST", list)
 	sto.newLayout()
 	if len(sto.layouts) >= MaxStorageLayouts {
 		return fmt.Errorf("Fatal error :: Include loop arrived - max storage layouts")
@@ -102,7 +100,6 @@ type tplExec struct {
 }
 
 func (s *tplExec) exec() (err error) {
-	//fmt.Println("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
 	s.index = -1
 	for s.index < len(s.list) {
 		if err = s.execNext(); err != nil {

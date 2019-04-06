@@ -8,10 +8,6 @@ import (
 	"github.com/golang-collections/collections/stack"
 )
 
-type tokenContainer interface {
-	pushToken(token)
-}
-
 type parseMethod func(p *parser) error
 
 var (
@@ -19,15 +15,15 @@ var (
 	parseUnexpectedLiteral = errors.New("Parser :: Unexpected literal")
 )
 
-func newParser(src []byte, tpl *template, root *Metla) *parser {
-	return &parser{lineman.NewCodeLine(src), tpl, root, newCodeStack(), stack.New(), true, false}
+func newParser(src []byte, tpl *Template, root *Metla) *parser {
+	return &parser{lineman.NewCodeLine(src), tpl, root, stack.New(), stack.New(), true, false}
 }
 
 type parser struct {
 	*lineman.CodeLine
-	tpl       *template
+	tpl       *Template
 	root      *Metla
-	stack     *codeStack
+	stack     *stack.Stack
 	openStack *stack.Stack
 	textState bool
 	fieldFlag bool
@@ -83,8 +79,16 @@ func (s *parser) pushSplitter() {
 	//s.stack.Push(initSplitter())
 }
 
+func (s *parser) stackToSlice() []interface{} {
+	res := make([]interface{}, 0, s.stack.Len())
+	for i := s.stack.Len() - 1; i >= 0; i-- {
+		res = append(res, s.stack.Pop())
+	}
+	return res
+}
+
 func (s *parser) flushStack() {
-	s.tpl.tokenList = append(s.tpl.tokenList, s.stack.Flush()...)
+	s.tpl.tokenList = append(s.tpl.tokenList, s.stackToSlice()...)
 }
 
 func (s *parser) readStackVal() []interface{} {

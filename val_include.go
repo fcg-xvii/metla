@@ -51,8 +51,8 @@ func execInclude(exec *tplExec, info *rawInfoRecord) (err error) {
 			layout.appendVariable(&variable{key, val, true})
 		}
 	}
-	var tpl *template
-	if tpl, err = exec.root.template(tplName); err == nil {
+	var tpl *Template
+	if tpl, err = exec.root.Template(tplName); err == nil {
 		if err = tpl.checkUpdate(); err == nil {
 			err = tpl.result(exec.sto, exec.w)
 		}
@@ -60,6 +60,5 @@ func execInclude(exec *tplExec, info *rawInfoRecord) (err error) {
 	if paramsObj != nil {
 		exec.sto.dropLayout()
 	}
-	//fmt.Println("INCLUDE_COMPLETED...")
 	return
 }

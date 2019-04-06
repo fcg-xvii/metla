@@ -36,7 +36,7 @@ func New(check CheckMethod, content ContentMethod) *Metla {
 		check:   check,
 		content: content,
 		locker:  new(sync.RWMutex),
-		tpls:    make(map[string]*template),
+		tpls:    make(map[string]*Template),
 	}
 }
 
@@ -44,25 +44,25 @@ type Metla struct {
 	check   CheckMethod
 	content ContentMethod
 	locker  *sync.RWMutex
-	tpls    map[string]*template
+	tpls    map[string]*Template
 }
 
 func (s *Metla) Content(path string, w io.Writer, vals map[string]interface{}) error {
-	if tpl, err := s.template(path); err == nil {
+	if tpl, err := s.Template(path); err == nil {
 		return tpl.execute(w, vals)
 	} else {
 		return err
 	}
 }
 
-func (s *Metla) getTemplate(path string) (res *template, check bool) {
+func (s *Metla) getTemplate(path string) (res *Template, check bool) {
 	s.locker.RLock()
 	res, check = s.tpls[path]
 	s.locker.RUnlock()
 	return
 }
 
-func (s *Metla) template(path string) (res *template, err error) {
+func (s *Metla) Template(path string) (res *Template, err error) {
 	var check bool
 	if res, check = s.getTemplate(path); !check {
 		if state := s.check(path, nil); state != ResourceNotFound {

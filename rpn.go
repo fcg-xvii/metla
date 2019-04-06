@@ -280,30 +280,11 @@ func (s *operator) execBinary(st *stack.Stack) error {
 	return nil
 }
 
-func (s *operator) checkNil(l, r value) (res *valBoolean) {
-	res = &valBoolean{l.posInfo(), false}
-	if l.IsNil() == r.IsNil() {
-		res.val = true
-	}
-	return
-}
-
 func parseRPN(p *parser) (pn []interface{}, err error) {
 	//fmt.Println("PARSE_RPN", p.stack.Len(), p.stack.Peek())
 	prevVal := false
 	sPn := stack.New()
-	/*if p.stack.Len() > 0 {
-		for p.stack.Len() > 0 {
-			if _, check := p.stack.Peek().(splitter); !check {
-				pn = append(pn, p.stack.Pop())
-				prevVal = true
-			} else {
-				break
-			}
-		}
-	}*/
 	if p.Char() != '(' && p.Char() != '!' {
-		//fmt.Println("RRRRRRRR", p.readStackVal())
 		pn = append(pn, p.readStackVal()...)
 	}
 
@@ -384,7 +365,7 @@ loop:
 	return
 }
 
-func checkSimple(op *operator, st *stack.Stack) error {
+/*func checkSimple(op *operator, st *stack.Stack) error {
 	if st.Len() == 0 {
 		return op.fatalError("Empty args list")
 	}
@@ -405,7 +386,7 @@ func checkSimple(op *operator, st *stack.Stack) error {
 	}
 	st.Push(op)
 	return nil
-}
+}*/
 
 func simpleRPN(pl []interface{}) (res []interface{}, err error) {
 	/*fmt.Println("SIMPLE_RPN")

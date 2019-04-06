@@ -19,6 +19,7 @@ func keywordIf(p *parser) (res interface{}, err error) {
 			return
 		}
 	}
+	//fmt.Println("EEEEEEEEEEEEE", p.stack.Len(), p.stack.Peek())
 	return
 }
 

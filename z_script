@@ -1,4 +1,6 @@
-{% 
-  echoln "AAA"
-  include "z_script"
+{%
+	for i in 0:10
+		echoln i
+		i = 0
+	endfor
 %}

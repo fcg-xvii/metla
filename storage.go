@@ -3,6 +3,7 @@ package metla
 import (
 	"fmt"
 	"reflect"
+	"time"
 )
 
 func layoutFromMap(src map[string]interface{}) *storageLayout {
@@ -49,14 +50,20 @@ func (s *storageLayout) findVariable(key string) (res *variable, check bool) {
 func newStorage(src map[string]interface{}) *storage {
 	layout := layoutFromMap(src)
 	return &storage{
-		layouts: []*storageLayout{layout},
-		layout:  layout,
+		execStart: time.Now(),
+		layouts:   []*storageLayout{layout},
+		layout:    layout,
 	}
 }
 
 type storage struct {
-	layouts []*storageLayout
-	layout  *storageLayout
+	execStart time.Time
+	layouts   []*storageLayout
+	layout    *storageLayout
+}
+
+func (s *storage) checkTimeout() bool {
+	return time.Now().Sub(s.execStart) > time.Second*30
 }
 
 func (s *storage) newLayout() *storageLayout {

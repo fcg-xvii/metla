@@ -78,10 +78,13 @@ func execFor(exec *tplExec, info *rawInfoRecord) (err error) {
 		exec.index = codePos
 	cycleStep:
 		for {
+			if exec.sto.checkTimeout() {
+				return info.fatalError("Script timeout exec > 30 seconds")
+			}
 			//fmt.Println(exec.index, len(exec.list))
 			if err = exec.execNext(); err != nil {
 				return
-			} else if _, check := exec.st.Peek().(*execMarker); check {
+			} else if marker, check := exec.st.Peek().(*execMarker); check && marker.name == "endfor" {
 				exec.st.Pop()
 				break
 			} else if exec.breakFlag {

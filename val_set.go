@@ -45,7 +45,6 @@ func newValSet(p *parser) (res interface{}, err error) {
 				return
 			}
 			p.IncPos()
-			p.pushSplitter()
 			if _, err = initCodeVal(p); err != nil {
 				return
 			} else if err = peekVar(); err != nil {

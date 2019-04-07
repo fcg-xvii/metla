@@ -1,4 +1,4 @@
-Привет )))
+Привет ))) ->vfdvdffffvfvdf
 {%
 	if defined(arr)
 	  echoln "ArrLen:", len(arr)

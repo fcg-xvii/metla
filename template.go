@@ -5,6 +5,7 @@ import (
 	"io"
 	_ "reflect"
 	"sync"
+	"time"
 
 	"github.com/golang-collections/collections/stack"
 )
@@ -26,12 +27,12 @@ type Template struct {
 	objPath    string
 	locker     *sync.RWMutex
 	tokenList  []interface{}
-	updateMark interface{}
+	updateMark time.Time
 	err        error
 }
 
 func (s *Template) checkUpdate() error {
-	switch s.root.check(s.objPath, s.updateMark) {
+	switch s.root.check(s.objPath, &s.updateMark) {
 	case ResourceNotFound:
 		{
 			s.root.removeTempalte(s.objPath)
@@ -41,7 +42,7 @@ func (s *Template) checkUpdate() error {
 	case UpdateNeeded:
 		{
 			s.locker.Lock()
-			if content, newMark, state := s.root.content(s.objPath, s.updateMark); state == UpdateNeeded {
+			if content, newMark, state := s.root.content(s.objPath, &s.updateMark); state == UpdateNeeded {
 				s.updateMark = newMark
 				s.err = s.parse(content)
 			}
@@ -51,13 +52,15 @@ func (s *Template) checkUpdate() error {
 	return nil
 }
 
-func (s *Template) Execute(w io.Writer, vals map[string]interface{}) error {
+func (s *Template) Execute(w io.Writer, vals map[string]interface{}) (modified time.Time, err error) {
 	s.checkUpdate()
 	if s.err != nil {
-		return s.err
+		err = s.err
+	} else {
+		sto := newStorage(vals)
+		modified, err = s.result(sto, w)
 	}
-	sto := newStorage(vals)
-	return s.result(sto, w)
+	return
 }
 
 func (s *Template) parse(src []byte) error {
@@ -69,22 +72,24 @@ func (s *Template) pushToken(t interface{}) {
 	s.tokenList = append(s.tokenList, t)
 }
 
-func (s *Template) result(sto *storage, w io.Writer) (err error) {
+func (s *Template) result(sto *storage, w io.Writer) (modified time.Time, err error) {
 	s.locker.RLock()
 	if s.err != nil {
 		s.locker.RUnlock()
-		return s.err
+		err = s.err
+	} else {
+		list := make([]interface{}, len(s.tokenList))
+		copy(list, s.tokenList)
+		s.locker.RUnlock()
+		sto.newLayout()
+		if len(sto.layouts) >= MaxStorageLayouts {
+			err = fmt.Errorf("Fatal error :: Include loop arrived - max storage layouts")
+			return
+		}
+		tplExec := &tplExec{list, stack.New(), sto, 0, w, 0, false, s.root, s.updateMark}
+		modified, err = tplExec.exec()
+		sto.dropLayout()
 	}
-	list := make([]interface{}, len(s.tokenList))
-	copy(list, s.tokenList)
-	s.locker.RUnlock()
-	sto.newLayout()
-	if len(sto.layouts) >= MaxStorageLayouts {
-		return fmt.Errorf("Fatal error :: Include loop arrived - max storage layouts")
-	}
-	tplExec := &tplExec{list, stack.New(), sto, 0, w, 0, false, s.root}
-	err = tplExec.exec()
-	sto.dropLayout()
 	return
 }
 
@@ -97,15 +102,17 @@ type tplExec struct {
 	fieldLayout int
 	breakFlag   bool
 	root        *Metla
+	modified    time.Time
 }
 
-func (s *tplExec) exec() (err error) {
+func (s *tplExec) exec() (modified time.Time, err error) {
 	s.index = -1
 	for s.index < len(s.list) {
 		if err = s.execNext(); err != nil {
 			return
 		}
 	}
+	modified = s.modified
 	return
 }
 

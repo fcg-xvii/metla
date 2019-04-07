@@ -47,10 +47,10 @@ func cooler(one, two, three int) {
 	log.Println(one, two, three)
 }
 
-func check(path string, marker interface{}) (res UpdateState) {
+func check(path string, marker *time.Time) (res UpdateState) {
 	if info, err := os.Stat(path); err == nil {
 		if marker != nil {
-			if mTime := marker.(time.Time); mTime.Equal(info.ModTime()) {
+			if (*marker).Equal(info.ModTime()) {
 				res = UpdateNotNeeded
 			} else {
 				res = UpdateNeeded
@@ -64,7 +64,7 @@ func check(path string, marker interface{}) (res UpdateState) {
 	return
 }
 
-func content(path string, marker interface{}) (res []byte, newMarker interface{}, state UpdateState) {
+func content(path string, marker *time.Time) (res []byte, newMarker time.Time, state UpdateState) {
 	readContent := func() {
 		var err error
 		if res, err = ioutil.ReadFile(path); err != nil {
@@ -77,7 +77,7 @@ func content(path string, marker interface{}) (res []byte, newMarker interface{}
 			state = UpdateNeeded
 			readContent()
 		} else {
-			if markerTime, check := marker.(time.Time); check && markerTime.Equal(info.ModTime()) {
+			if marker != nil && (*marker).Equal(info.ModTime()) {
 				state = UpdateNotNeeded
 			} else {
 				state = UpdateNeeded
@@ -110,10 +110,10 @@ func TestParser(t *testing.T) {
 		"tst":     &Test{&Child{One: 5}},
 	}
 
-	if err := root.Content("z_script", &buf, data); err != nil {
+	if modified, err := root.Content("z_script", &buf, data); err != nil {
 		log.Println("ERR", err)
 	} else {
-		log.Println("OK")
+		log.Println("OK", modified)
 		buf.WriteTo(os.Stdout)
 	}
 }

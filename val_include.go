@@ -1,5 +1,6 @@
 package metla
 
+import "time"
 import _ "fmt"
 
 func init() {
@@ -54,7 +55,11 @@ func execInclude(exec *tplExec, info *rawInfoRecord) (err error) {
 	var tpl *Template
 	if tpl, err = exec.root.Template(tplName); err == nil {
 		if err = tpl.checkUpdate(); err == nil {
-			err = tpl.result(exec.sto, exec.w)
+			var modified time.Time
+			if modified, err = tpl.result(exec.sto, exec.w); err == nil && modified.After(exec.modified) {
+				//fmt.Println("EM", exec.modified, "MM", modified, modified.After(exec.modified))
+				exec.modified = modified
+			}
 		}
 	}
 	if paramsObj != nil {

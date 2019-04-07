@@ -5,6 +5,7 @@ import (
 	"io"
 	_ "log"
 	"sync"
+	"time"
 )
 
 type UpdateState byte
@@ -28,8 +29,8 @@ func (s UpdateState) String() string {
 	}
 }
 
-type CheckMethod func(string, interface{}) UpdateState
-type ContentMethod func(string, interface{}) ([]byte, interface{}, UpdateState)
+type CheckMethod func(string, *time.Time) UpdateState
+type ContentMethod func(string, *time.Time) ([]byte, time.Time, UpdateState)
 
 func New(check CheckMethod, content ContentMethod) *Metla {
 	return &Metla{
@@ -47,12 +48,11 @@ type Metla struct {
 	tpls    map[string]*Template
 }
 
-func (s *Metla) Content(path string, w io.Writer, vals map[string]interface{}) error {
+func (s *Metla) Content(path string, w io.Writer, vals map[string]interface{}) (modified time.Time, err error) {
 	if tpl, err := s.Template(path); err == nil {
-		return tpl.execute(w, vals)
-	} else {
-		return err
+		return tpl.Execute(w, vals)
 	}
+	return
 }
 
 func (s *Metla) getTemplate(path string) (res *Template, check bool) {

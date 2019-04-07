@@ -51,7 +51,7 @@ func (s *Template) checkUpdate() error {
 	return nil
 }
 
-func (s *Template) execute(w io.Writer, vals map[string]interface{}) error {
+func (s *Template) Execute(w io.Writer, vals map[string]interface{}) error {
 	s.checkUpdate()
 	if s.err != nil {
 		return s.err

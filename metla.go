@@ -10,9 +10,9 @@ import (
 type UpdateState byte
 
 const (
-	UpdateNotNeeded UpdateState = iota
+	ResourceNotFound UpdateState = iota
+	UpdateNotNeeded
 	UpdateNeeded
-	ResourceNotFound
 )
 
 func (s UpdateState) String() string {

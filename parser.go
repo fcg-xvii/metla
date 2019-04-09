@@ -16,17 +16,18 @@ var (
 )
 
 func newParser(src []byte, tpl *Template, root *Metla) *parser {
-	return &parser{lineman.NewCodeLine(src), tpl, root, stack.New(), stack.New(), true, false}
+	return &parser{lineman.NewCodeLine(src), tpl, root, stack.New(), stack.New(), true, false, false}
 }
 
 type parser struct {
 	*lineman.CodeLine
-	tpl       *Template
-	root      *Metla
-	stack     *stack.Stack
-	openStack *stack.Stack
-	textState bool
-	fieldFlag bool
+	tpl          *Template
+	root         *Metla
+	stack        *stack.Stack
+	openStack    *stack.Stack
+	textState    bool
+	fieldFlag    bool
+	fieldCommand bool
 }
 
 func (s *parser) parseDocument() (err error) {

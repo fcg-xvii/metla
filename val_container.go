@@ -125,11 +125,25 @@ loop:
 }
 
 func newValField(p *parser) (res interface{}, err error) {
-	//fmt.Println("VAL_FIELD.........")
+	fmt.Println("VAL_FIELD.........", p.fieldCommand)
 	p.fieldFlag = true
-	tmp := p.stack.Pop()
+	l := []interface{}{}
+	if p.fieldCommand {
+		for p.stack.Len() > 0 {
+			c := p.stack.Pop()
+			l = append(l, c)
+			if _, check := c.(*execCommand); check {
+				break
+			}
+		}
+	} else {
+		l = append(l, p.stack.Pop())
+	}
 	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldEnd, "field-end"})
-	p.stack.Push(tmp)
+	for i := len(l) - 1; i >= 0; i-- {
+		p.stack.Push(l[i])
+	}
+	//p.stack.Push(tmp)
 	var val interface{}
 	for !p.IsEndLine() {
 		//fmt.Println("STEP....")
@@ -159,13 +173,25 @@ func execFieldStart(exec *tplExec, info *rawInfoRecord) (err error) {
 	return
 }
 
+// Этот метод остро нуждается с рефакторинге!!!!!!!!!
 func execFieldEnd(exec *tplExec, info *rawInfoRecord) (err error) {
-	//fmt.Println("EXEC_FIELD_END", exec.fieldLayout, exec.index)
+	//fmt.Println("EXEC_FIELD_END", exec.fieldLayout, exec.index, exec.st.Peek())
 	exec.fieldLayout--
 	for exec.st.Len() > 0 {
 		l := exec.st.Pop()
-		if v, check := l.(*variable); check {
-			l = v.value
+		//fmt.Println("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", l)
+		switch l.(type) {
+		case *valuer:
+			l = l.(valuer).Value()
+		case *execCommand:
+			ex := l.(*execCommand)
+			if err = ex.method(exec, ex.posInfo()); err != nil {
+				return
+			}
+			l = exec.st.Pop()
+		}
+		if iv, check := l.(valuer); check {
+			l = iv.Value()
 		}
 		switch exec.st.Peek().(type) {
 		case *execMarker:
@@ -175,11 +201,16 @@ func execFieldEnd(exec *tplExec, info *rawInfoRecord) (err error) {
 				return
 			}
 		case *execCommand:
+			//fmt.Println("EXEC_COMMAND!!!!")
 			ex := exec.st.Pop().(*execCommand)
 			exec.st.Push(l)
 			if err = ex.method(exec, ex.posInfo()); err != nil {
 				return
 			}
+			//fmt.Println(exec.st.Peek())
+		case valuer:
+			fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+			return
 		case string:
 			left := reflect.ValueOf(l)
 			if left.Kind() == reflect.Ptr {
@@ -198,9 +229,29 @@ func execFieldEnd(exec *tplExec, info *rawInfoRecord) (err error) {
 				exec.st.Push(nil)
 			} else {
 				exec.st.Push(val.Interface())
+				//fmt.Println("PUSH......", val.Interface())
+			}
+		case int64:
+			left := reflect.ValueOf(l)
+			if left.Kind() == reflect.Ptr {
+				left = left.Elem()
+			}
+			var val reflect.Value
+			switch left.Kind() {
+			case reflect.Array, reflect.Slice:
+				val = left.Index(int(exec.st.Pop().(int64)))
+			default:
+				return info.fatalError(fmt.Sprintf("Index expected array of slice, not %v", left.Kind()))
+			}
+			if !val.IsValid() {
+				exec.st.Push(nil)
+			} else {
+				exec.st.Push(val.Interface())
+				//fmt.Println("PUSH......", val.Interface())
 			}
 		default:
 			{
+				//fmt.Printf("DDDDDDDDDD %T", exec.st.Peek())
 				err = info.fatalError("Field uncnown error...")
 				return
 			}

@@ -1,1 +1,4 @@
-{% include "z_inc_top" %}
+{% 
+	obj = { code: 101, child: tst }
+	echoln obj.child.ChildObj.Min10(10, 20)
+%}

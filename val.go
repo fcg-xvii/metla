@@ -57,6 +57,11 @@ func initCodeVal(p *parser) (val interface{}, err error) {
 		val, err = newValArray(p)
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		val, err = newValNumber(p)
+	case '.':
+		if !p.fieldFlag {
+			p.fieldCommand = true
+			val, err = newValField(p)
+		}
 	default:
 		if name, check := p.ReadName(); !check {
 			err = p.positionError(fmt.Sprintf("Unexpected symbol '%c'", p.Char()))
@@ -79,6 +84,7 @@ func initCodeVal(p *parser) (val interface{}, err error) {
 					val = &valVariable{p.infoRecordFromMark(), string(name)}
 					p.stack.Push(val)
 					if !p.fieldFlag {
+						p.fieldCommand = false
 						val, err = newValField(p)
 					}
 				default:

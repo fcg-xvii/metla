@@ -4,6 +4,7 @@
 		{ code: 102, child: tst }
 	]
 	for i in 0:len(objs)
+	obj = objs[i]
 %}
-	{{ objs[i].code }}
+	{{ obj.code }}
 {% endfor %}

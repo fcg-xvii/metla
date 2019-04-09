@@ -181,7 +181,7 @@ func execFieldEnd(exec *tplExec, info *rawInfoRecord) (err error) {
 		l := exec.st.Pop()
 		//fmt.Println("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", l)
 		switch l.(type) {
-		case *valuer:
+		case valuer:
 			l = l.(valuer).Value()
 		case *execCommand:
 			ex := l.(*execCommand)
@@ -209,22 +209,25 @@ func execFieldEnd(exec *tplExec, info *rawInfoRecord) (err error) {
 			}
 			//fmt.Println(exec.st.Peek())
 		case valuer:
-			fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+			//fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 			return
 		case string:
 			left := reflect.ValueOf(l)
 			if left.Kind() == reflect.Ptr {
 				left = left.Elem()
 			}
+			//fmt.Println("STRING>>>>>>>", left.Kind())
 			var val reflect.Value
 			switch left.Kind() {
 			case reflect.Struct:
 				val = left.FieldByName(exec.st.Pop().(string))
 			case reflect.Map:
+				//fmt.Println("MAPPpppppp")
 				val = left.MapIndex(reflect.ValueOf(exec.st.Pop()))
 			default:
 				return info.fatalError(fmt.Sprintf("Field expected type struct or map, not %v", left.Kind()))
 			}
+			//fmt.Println("AAAAAAAAAAAAAAAAA", val)
 			if !val.IsValid() {
 				exec.st.Push(nil)
 			} else {

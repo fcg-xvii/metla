@@ -37,6 +37,9 @@ func initCodeVal(p *parser) (val interface{}, err error) {
 	p.PassSpaces()
 	switch p.Char() {
 	case '+', '-', '*', '/', '(', '!', '>', '<', '%', '&', '|':
+		if p.Char() == '%' && p.NextChar() == '}' {
+			return
+		}
 		val, err = newValArifmetic(p)
 	case '"', '\'':
 		val, err = newValString(p)

@@ -1,4 +1,1 @@
-{%
-	echoln "AAAAAAA11222"
-	include "z_inc_top"
-%}
+{% include "z_inc_top" %}

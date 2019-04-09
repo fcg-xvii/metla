@@ -44,6 +44,7 @@ func (s *Template) checkUpdate() error {
 			s.locker.Lock()
 			if content, newMark, state := s.root.content(s.objPath, &s.updateMark); state == UpdateNeeded {
 				s.updateMark = newMark
+				s.tokenList = nil
 				s.err = s.parse(content)
 			}
 			s.locker.Unlock()

@@ -1,4 +1,9 @@
 {% 
-	obj = { code: 101, child: tst }
-	echoln obj.child.ChildObj.Min10(10, 20)
+	objs = [
+		{ code: 101, child: tst },
+		{ code: 102, child: tst }
+	]
+	for i in 0:len(objs)
 %}
+	{{ objs[i].code }}
+{% endfor %}

@@ -82,7 +82,7 @@ func (s *Template) result(sto *storage, w io.Writer) (modified time.Time, err er
 		list := make([]interface{}, len(s.tokenList))
 		copy(list, s.tokenList)
 		s.locker.RUnlock()
-		fmt.Println(list)
+		//fmt.Println(list)
 		sto.newLayout()
 		if len(sto.layouts) >= MaxStorageLayouts {
 			err = fmt.Errorf("Fatal error :: Include loop arrived - max storage layouts")
@@ -115,7 +115,7 @@ func (s *tplExec) exec() (modified time.Time, err error) {
 		}
 	}
 	modified = s.modified
-	fmt.Println("COMOM")
+	//fmt.Println("COMOM")
 	return
 }
 

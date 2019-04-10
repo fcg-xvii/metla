@@ -1,9 +1,9 @@
 package metla
 
-import "fmt"
+import _ "fmt"
 
 func newValArifmetic(p *parser) (res interface{}, err error) {
-	fmt.Println("VAL_ARIFMETIC")
+	//fmt.Println("VAL_ARIFMETIC")
 	var pn []interface{}
 	if pn, err = parseRPN(p); err == nil {
 		if pn, err = simpleRPN(pn); err == nil {
@@ -21,6 +21,6 @@ func newValArifmetic(p *parser) (res interface{}, err error) {
 			}
 		}
 	}
-	fmt.Println("PNNNNNNN!!!!!!!!!!!", pn)
+	//fmt.Println("PNNNNNNN!!!!!!!!!!!", pn)
 	return
 }

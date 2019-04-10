@@ -8,7 +8,7 @@ func init() {
 }
 
 func keywordInclude(p *parser) (res interface{}, err error) {
-	res = &execCommand{p.infoRecordFromPos(), execInclude, "include"}
+	res = &execCommand{p.infoRecordFromPos(), execInclude, "include", nil}
 	p.stack.Push(res)
 	if _, err = initCodeVal(p); err != nil {
 		return

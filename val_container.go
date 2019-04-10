@@ -8,7 +8,7 @@ import (
 
 func newValArray(p *parser) (res interface{}, err error) {
 	p.IncPos()
-	res = &execCommand{p.infoRecordFromMark(), initArray, "init-array"}
+	res = &execCommand{p.infoRecordFromMark(), initArray, "init-array", nil}
 	p.stack.Push(res)
 	for !p.IsEndDocument() {
 		p.PassSpaces()
@@ -44,7 +44,7 @@ func initArray(exec *tplExec, info *rawInfoRecord) (err error) {
 }
 
 func newValObject(p *parser) (res interface{}, err error) {
-	res = &execCommand{p.infoRecordFromMark(), initObject, "init-object"}
+	res = &execCommand{p.infoRecordFromMark(), initObject, "init-object", nil}
 	p.stack.Push(res)
 	p.IncPos()
 loop:
@@ -125,7 +125,7 @@ loop:
 }
 
 func newValField(p *parser) (res interface{}, err error) {
-	fmt.Println("VAL_FIELD.........", p.fieldCommand)
+	fmt.Println("VAL_FIELD.........", p.stack.Peek())
 	p.fieldFlag = true
 	l := []interface{}{}
 	if p.fieldCommand {
@@ -139,16 +139,16 @@ func newValField(p *parser) (res interface{}, err error) {
 	} else {
 		l = append(l, p.stack.Pop())
 	}
-	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldEnd, "field-end"})
+	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldEnd, "field-end", nil})
 	for i := len(l) - 1; i >= 0; i-- {
 		p.stack.Push(l[i])
 	}
 	//p.stack.Push(tmp)
 	var val interface{}
 	for !p.IsEndLine() {
-		//fmt.Println("STEP....")
+		fmt.Println("STEP....")
 		p.PassSpaces()
-		//fmt.Println("CHAR", string(p.Char()))
+		fmt.Println("CHAR", string(p.Char()))
 		if p.Char() != '.' {
 			p.fieldFlag = false
 			break
@@ -158,11 +158,15 @@ func newValField(p *parser) (res interface{}, err error) {
 		if val, err = initCodeVal(p); err != nil {
 			return
 		} else if v, check := val.(*valVariable); check {
+			fmt.Println("VARRRRR", p.stack.Peek())
 			p.stack.Pop()
 			p.stack.Push(v.name)
+		} else {
+			fmt.Println(val)
 		}
 	}
-	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldStart, "field-start"})
+	fmt.Println("EXEC", p.stack.Peek())
+	p.stack.Push(&execCommand{p.infoRecordFromMark(), execFieldStart, "field-start", nil})
 	return
 }
 

@@ -91,10 +91,10 @@ func popExecFunctionArgs(exec *tplExec, fType reflect.Type, info *rawInfoRecord)
 func newValFunction(name string, p *parser) (res interface{}, err error) {
 	info, fieldFlag := p.infoRecordFromPos(), p.fieldFlag
 	if !fieldFlag {
-		p.stack.Push(&execCommand{info, execFunction, "function"})
+		p.stack.Push(&execCommand{info, execFunction, "function", nil})
 	} else {
 		p.fieldFlag = false
-		p.stack.Push(&execCommand{info, execMethod, "method"})
+		p.stack.Push(&execCommand{info, execMethod, "method", nil})
 	}
 	p.stack.Push(&valVariable{info, name})
 	p.IncPos()
@@ -175,7 +175,7 @@ func execMethod(exec *tplExec, info *rawInfoRecord) (err error) {
 func newStaticFunction(fIface interface{}, p *parser) (res interface{}, err error) {
 	fmt.Println("STATIC_FUNCTION")
 	info := p.infoRecordFromPos()
-	p.stack.Push(&execCommand{info, execFunction, "static-function"})
+	p.stack.Push(&execCommand{info, execFunction, "static-function", nil})
 	p.stack.Push(fIface)
 	p.IncPos()
 	if err = parseFuncArgs(p); err == nil {

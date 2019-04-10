@@ -23,7 +23,7 @@ func newValSet(p *parser) (res interface{}, err error) {
 	}
 
 	tmp := p.stack.Pop()
-	res = &execCommand{info, execSet, "set"}
+	res = &execCommand{info, execSet, "set", nil}
 	p.stack.Push(res)
 	p.stack.Push(tmp)
 	p.pushSplitter()

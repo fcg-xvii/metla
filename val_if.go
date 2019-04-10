@@ -11,7 +11,7 @@ func init() {
 }
 
 func keywordIf(p *parser) (res interface{}, err error) {
-	res = &execCommand{p.infoRecordFromPos(), execIf, "if"}
+	res = &execCommand{p.infoRecordFromPos(), execIf, "if", nil}
 	p.stack.Push(res)
 	p.openStack.Push(openFlag{p.infoRecordFromPos(), "if"})
 	for !p.IsEndLine() {

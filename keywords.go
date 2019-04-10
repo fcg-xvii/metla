@@ -62,7 +62,7 @@ func parseKeywordArgs(p *parser, info *rawInfoRecord) (err error) {
 
 func keywordPrint(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	res = &execCommand{info, execKeywordPrint, "print"}
+	res = &execCommand{info, execKeywordPrint, "print", nil}
 	p.stack.Push(res)
 	p.pushSplitter()
 	return res, parseKeywordArgs(p, info)
@@ -70,7 +70,7 @@ func keywordPrint(p *parser) (res interface{}, err error) {
 
 func keywordPrintln(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	res = &execCommand{info, execKeywordPrintln, "println"}
+	res = &execCommand{info, execKeywordPrintln, "println", nil}
 	p.stack.Push(res)
 	p.pushSplitter()
 	return res, parseKeywordArgs(p, info)
@@ -78,7 +78,7 @@ func keywordPrintln(p *parser) (res interface{}, err error) {
 
 func keywordEcho(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	res = &execCommand{info, execEcho, "echo"}
+	res = &execCommand{info, execEcho, "echo", nil}
 	p.stack.Push(res)
 	p.pushSplitter()
 	return res, parseKeywordArgs(p, info)
@@ -86,7 +86,7 @@ func keywordEcho(p *parser) (res interface{}, err error) {
 
 func keywordEcholn(p *parser) (res interface{}, err error) {
 	info := p.infoRecordFromPos()
-	res = &execCommand{info, execEcholn, "echoln"}
+	res = &execCommand{info, execEcholn, "echoln", nil}
 	p.stack.Push(res)
 	p.pushSplitter()
 	return res, parseKeywordArgs(p, info)

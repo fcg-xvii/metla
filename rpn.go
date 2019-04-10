@@ -284,7 +284,7 @@ func (s *operator) execBinary(st *stack.Stack) error {
 }
 
 func parseRPN(p *parser) (pn []interface{}, err error) {
-	//fmt.Println("PARSE_RPN", p.stack.Len(), p.stack.Peek())
+	fmt.Println("PARSE_RPN", p.stack.Len(), p.stack.Peek())
 	prevVal := false
 	sPn := stack.New()
 	if p.Char() != '(' && !(p.Char() == '!' && p.NextChar() != '=') {

@@ -8,7 +8,7 @@ import (
 func newValIndex(p *parser) (res interface{}, err error) {
 	p.IncPos()
 	tmp := p.stack.Pop()
-	res = &execCommand{p.infoRecordFromMark(), execIndex, "index"}
+	res = &execCommand{p.infoRecordFromMark(), execIndex, "index", nil}
 	p.stack.Push(res)
 	p.stack.Push(tmp)
 	for !p.IsEndDocument() {

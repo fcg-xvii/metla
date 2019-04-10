@@ -5,6 +5,7 @@ import (
 	_ "errors"
 	"io/ioutil"
 	"log"
+	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
@@ -108,6 +109,7 @@ func TestParser(t *testing.T) {
 		"tr":      true,
 		"cli":     map[string]string{"one": "over one"},
 		"tst":     &Test{&Child{One: 5}},
+		"req":     httptest.NewRequest("GET", "/index.html", nil),
 	}
 
 	for {

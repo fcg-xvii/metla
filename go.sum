@@ -1,3 +1,11 @@
+github.com/fcg-xvii/containers v0.0.0-20190410101235-e1cbb0b557d3 h1:JnCONGvei6YOUe1HvZRKhzhoUDMcXfYqFA+R94x5K3k=
+github.com/fcg-xvii/containers v0.0.0-20190410101235-e1cbb0b557d3/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
+github.com/fcg-xvii/containers v0.0.0-20190410152858-c6260df6b889 h1:mxBNR2pc7HDB8DKDe5Ybj/tezA6rsbrvnl4cL1tgwms=
+github.com/fcg-xvii/containers v0.0.0-20190410152858-c6260df6b889/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
+github.com/fcg-xvii/containers v0.0.0-20190410154142-3b9d1be88f3b h1:D5Z/x5WseetAHfdodftfcRBZlcTRI1AWOEKveZDo/sQ=
+github.com/fcg-xvii/containers v0.0.0-20190410154142-3b9d1be88f3b/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
+github.com/fcg-xvii/containers v0.0.0-20190410160044-cecde47f3bd8 h1:IswBcMjOxuFVjD8dl5m+5uchUtFRU8sswcOlpzeFtLw=
+github.com/fcg-xvii/containers v0.0.0-20190410160044-cecde47f3bd8/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
 github.com/fcg-xvii/lineman v0.0.0-20190314151355-22106ed1266a h1:Svi/c88PVuOwgfPJaTahgx1Cz7ZmX8vXugImZZL7de4=
 github.com/fcg-xvii/lineman v0.0.0-20190314151355-22106ed1266a/go.mod h1:VD8ux12NFmRoAUD4YxBSu6YTwpGIozjCJqIcDQ+WXGc=
 github.com/fcg-xvii/lineman v0.0.0-20190314154620-36d40fa439af h1:cVXUMWElcdceWd31lyMaTZGFkFYzPDLl6t5j9Bt5z20=

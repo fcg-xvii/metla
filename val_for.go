@@ -10,7 +10,7 @@ func init() {
 
 func keywordFor(p *parser) (res interface{}, err error) {
 	p.PassSpaces()
-	p.stack.Push(&execCommand{p.infoRecordFromPos(), execFor, "for"})
+	p.stack.Push(&execCommand{p.infoRecordFromPos(), execFor, "for", nil})
 	p.openStack.Push(openFlag{p.infoRecordFromPos(), "for"})
 	// Получаем переменную индекса
 	if res, err = initCodeVal(p); err == nil {
@@ -110,7 +110,7 @@ func execFor(exec *tplExec, info *rawInfoRecord) (err error) {
 }
 
 func keywordBreak(p *parser) (res interface{}, err error) {
-	res = &execCommand{p.infoRecordFromPos(), execBreak, "for"}
+	res = &execCommand{p.infoRecordFromPos(), execBreak, "for", nil}
 	p.stack.Push(res)
 	return
 }

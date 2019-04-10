@@ -11,7 +11,7 @@ func newValText(p *parser) error {
 		}
 	}
 	if src := p.MarkVal(0); len(src) > 0 {
-		p.stack.Push(&execCommand{info, execText, "text"})
+		p.stack.Push(&execCommand{info, execText, "text", nil})
 		p.stack.Push(src)
 		p.flushStack()
 	}

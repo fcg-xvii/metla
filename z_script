@@ -1,5 +1,3 @@
 {% 
-	if colonel != "all"
-		echoln "!!!!!!!!!!!!!!!!!!!!!!"
-	endif
+	echoln all != req.URL.Path
 %}

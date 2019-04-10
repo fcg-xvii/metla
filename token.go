@@ -19,6 +19,7 @@ type execCommand struct {
 	*rawInfoRecord
 	method func(*tplExec, *rawInfoRecord) error
 	name   string
+	arg    interface{}
 }
 
 func (s *execCommand) String() string {

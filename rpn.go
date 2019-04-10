@@ -65,7 +65,7 @@ func (s reflectNum) IsNil() bool {
 }
 
 func isArifmeticSymbol(ch byte) bool {
-	return isOperatorSymbol(ch) || lineman.CheckLetter(ch) || lineman.CheckNumber(ch) || ch == '(' || ch == ')'
+	return isOperatorSymbol(ch) || lineman.CheckLetter(ch) || lineman.CheckNumber(ch) || ch == '(' || ch == ')' || ch == '"' || ch == '\''
 }
 
 func isOperatorSymbol(c byte) bool {
@@ -196,6 +196,7 @@ func (s *operator) valFromStack(st *stack.Stack) reflectNum {
 }
 
 func (s *operator) valsFromStack(st *stack.Stack) (l, r reflectNum, err error) {
+	fmt.Println("LEN", st.Len())
 	if st.Len() < 2 {
 		err = fmt.Errorf("Operands less then 2")
 	} else {
@@ -215,7 +216,9 @@ func (s *operator) valsFromStack(st *stack.Stack) (l, r reflectNum, err error) {
 }
 
 func (s *operator) execBinary(st *stack.Stack) error {
+	fmt.Println("EXEC_BINARY", st.Len(), s)
 	l, r, err := s.valsFromStack(st)
+	fmt.Println(l, r)
 	if err != nil {
 		return err
 	}
@@ -281,10 +284,10 @@ func (s *operator) execBinary(st *stack.Stack) error {
 }
 
 func parseRPN(p *parser) (pn []interface{}, err error) {
-	//fmt.Println("PARSE_RPN", p.stack.Len(), p.stack.Peek())
+	fmt.Println("PARSE_RPN", p.stack.Len(), p.stack.Peek())
 	prevVal := false
 	sPn := stack.New()
-	if p.Char() != '(' && p.Char() != '!' {
+	if p.Char() != '(' && !(p.Char() == '!' && p.NextChar() != '=') {
 		pn = append(pn, p.readStackVal()...)
 	}
 
@@ -361,7 +364,7 @@ loop:
 	for sPn.Len() > 0 {
 		pn = append(pn, sPn.Pop())
 	}
-	//fmt.Println(pn, len(pn), cap(pn))
+	fmt.Println("PN", pn, len(pn), cap(pn))
 	return
 }
 

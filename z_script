@@ -1,10 +1,5 @@
 {% 
-	objs = [
-		{ code: 101, child: tst },
-		{ code: 102, child: tst }
-	]
-	for i in 0:len(objs)
-	obj = objs[i]
+	if colonel != "all"
+		echoln "!!!!!!!!!!!!!!!!!!!!!!"
+	endif
 %}
-	{{ obj.code }}
-{% endfor %}

@@ -2,32 +2,6 @@ package prod
 
 import "fmt"
 
-func newValName(p *parser, line, pos int, key string) *parseError {
-	name := iName{line: line, pos: pos}
-	if p.varFlag {
-		index, err := p.store.setVariable(string(key))
-		if err != nil {
-			return p.initParseError(line, pos, err)
-		}
-		name.index = index
-	} else {
-		name.index = p.store.initVariable(string(key))
-	}
-	p.stack.Push(name)
-	return nil
-}
-
-type iName struct {
-	line, pos int
-	index     int
-}
-
-type set struct {
-	names   []interface{}
-	values  []interface{}
-	uppdate bool
-}
-
 func parseSetNames(p *parser) *parseError {
 
 	for !p.IsEndLine() {
@@ -65,11 +39,27 @@ func newValSet(p *parser) *parseError {
 	}
 
 	for !p.IsEndLine() {
-		//p
+		if err := p.initCodeVal(); err != nil {
+			return err
+		}
+		p.PassSpaces()
+		if p.Char() == ',' {
+			p.IncPos()
+		}
+		p.PassSpaces()
 	}
-	return p.initParseError(p.Line(), p.Pos(), fmt.Errorf("Error init set"))
+	ex.values = p.stack.PopAll()
+	fmt.Println("VALUES", ex.values)
+	p.execList = append(p.execList, &ex)
+	return nil
 }
 
-func newValArifmetic(p *parser) *parseError {
-	return p.initParseError(p.Line(), p.Pos(), fmt.Errorf("Error init arifmetic"))
+type set struct {
+	names   []interface{}
+	values  []interface{}
+	uppdate bool
+}
+
+func (s *set) Exec(exec *tplExec) error {
+	return fmt.Errorf("AAAAAAAAAAAAAAAAAAAAAAA")
 }

@@ -6,23 +6,44 @@ import (
 	_ "github.com/fcg-xvii/containers"
 )
 
+type coordinator interface {
+	parseError(error) *parseError
+}
+
 type executer interface {
-	Exec(*tplExec) error
+	coordinator
+	Exec(*tplExec) *execError
 }
 
 type getter interface {
+	coordinator
 	Get(*tplExec) error
 }
 
 type setter interface {
+	coordinator
 	Set(*tplExec, interface{}) error
 }
 
+type position struct {
+	tplName   string
+	line, pos int
+}
+
+func (s *position) parseError(err error) *parseError {
+	return &parseError{s.tplName, s.line, s.pos, err}
+}
+
+func (s *position) execError(err error) *execError {
+	return &execError{s.tplName, s.line, s.pos, err}
+}
+
 type execText struct {
+	*position
 	src []byte
 }
 
-func (s execText) Exec(exec *tplExec) error {
+func (s execText) Exec(exec *tplExec) *execError {
 	return exec.Write(s.src)
 }
 

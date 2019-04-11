@@ -17,12 +17,18 @@ type parseError struct {
 	err       error
 }
 
-func (s *parseError) IsNil() bool {
-	return s.err == nil
-}
-
 func (s *parseError) Error() string {
 	return fmt.Sprintf("[%v %v:%v] Parse error - %v", s.tplName, s.line, s.pos, s.err)
+}
+
+type execError struct {
+	tplName   string
+	line, pos int
+	err       error
+}
+
+func (s *execError) Error() string {
+	return fmt.Sprintf("[%v %v:%v] Exec error - %v", s.tplName, s.line, s.pos, s.err)
 }
 
 type parser struct {
@@ -50,7 +56,7 @@ func (s *parser) appendExec(obj executer) {
 func (s *parser) appendText(offset int) {
 	src := s.MarkVal(offset)
 	if len(src) > 0 {
-		s.appendExec(execText{s.MarkVal(offset)})
+		s.appendExec(execText{&position{s.tplName, s.MarkLine(), s.MarkLinePos()}, s.MarkVal(offset)})
 	}
 }
 
@@ -105,14 +111,19 @@ func (s *parser) initParseError(line, pos int, err error) *parseError {
 }
 
 func (s *parser) parseCode() *parseError {
+	line, pos := s.Line(), s.LinePos()
 	s.ForwardPos(2)
-	for !s.isEndCode() {
+	for !s.IsEndDocument() && !s.isEndCode() {
 		fmt.Println("STEP")
 		if err := s.initCodeVal(); err != nil {
 			return err
 		}
 	}
-	return s.initParseError(0, 0, fmt.Errorf("Err Parse code"))
+	if !s.isEndCode() {
+		return s.initParseError(line, pos, fmt.Errorf("Unclosed code tag"))
+	}
+	s.ForwardPos(2)
+	return nil
 }
 
 func (s *parser) initCodeVal() *parseError {
@@ -155,7 +166,7 @@ func (s *parser) initCodeVal() *parseError {
 	}*/
 	default:
 		if s.IsLetter() != 0 {
-			line, pos := s.Line(), s.LinePos()
+			line, pos := s.Line(), s.LinePos()-1
 			if name, check := s.ReadName(); check {
 				if keyword, check := getKeywordConstructor(string(name)); check {
 					return keyword(s)

@@ -3,7 +3,7 @@ package prod
 import "fmt"
 
 func newValName(p *parser, line, pos int, key string) *parseError {
-	name := iName{line: line, pos: pos}
+	name := iName{&position{p.tplName, line, pos}, 0}
 	if p.varFlag {
 		index, err := p.store.setVariable(string(key))
 		if err != nil {
@@ -13,13 +13,17 @@ func newValName(p *parser, line, pos int, key string) *parseError {
 	} else {
 		name.index = p.store.initVariable(string(key))
 	}
-	p.stack.Push(name)
+	p.stack.Push(&name)
 	return nil
 }
 
 type iName struct {
-	line, pos int
-	index     int
+	*position
+	index int
+}
+
+func (s *iName) StorageIndex() int {
+	return s.index
 }
 
 func newValArifmetic(p *parser) *parseError {

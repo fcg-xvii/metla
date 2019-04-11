@@ -28,7 +28,14 @@ func newValSet(p *parser) *parseError {
 		}
 	}
 	fmt.Println(p.stack)
-	ex.names = p.stack.PopAll()
+	for p.stack.Len() > 0 {
+		val := p.stack.Pop().(coordinator)
+		if v, check := val.(setter); check {
+			ex.names = append(ex.names, v)
+		} else {
+			return val.parseError(fmt.Errorf("Expected setter token"))
+		}
+	}
 	fmt.Println("EXNNN", ex.names)
 	fmt.Println("sto", p.store.list)
 	if p.Char() == '=' {
@@ -55,11 +62,30 @@ func newValSet(p *parser) *parseError {
 }
 
 type set struct {
-	names   []interface{}
+	*position
+	names   []setter
 	values  []interface{}
 	uppdate bool
 }
 
-func (s *set) Exec(exec *tplExec) error {
-	return fmt.Errorf("AAAAAAAAAAAAAAAAAAAAAAA")
+func (s *set) String() string {
+	return "{ set }"
+}
+
+func (s *set) Exec(exec *tplExec) *execError {
+	//return fmt.Errorf("AAAAAAAAAAAAAAAAAAAAAAA")
+	valsIndex := 0
+	for _, v := range s.names {
+		if exec.stack.Len() == 0 {
+			switch s.values[valsIndex].(type) {
+			case executer:
+				if err := s.values[valsIndex].(executer).Exec(exec); err != nil {
+					return err
+				}
+			default:
+				v.Set(exec, v)
+			}
+		}
+	}
+	return nil
 }

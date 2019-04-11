@@ -2,17 +2,24 @@ package prod
 
 import (
 	"io"
+
+	"github.com/fcg-xvii/containers"
 )
 
 type tplExec struct {
+	tplName  string
 	execList []executer
 	writer   io.Writer
 	sto      *storage
+	stack    *containers.Stack
 }
 
-func (s *tplExec) Write(data []byte) error {
+func (s *tplExec) Write(data []byte) *execError {
 	_, err := s.writer.Write(data)
-	return err
+	if err != nil {
+		return &execError{s.tplName, 0, 0, err}
+	}
+	return nil
 }
 
 func (s *tplExec) exec() error {

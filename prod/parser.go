@@ -8,7 +8,7 @@ import (
 )
 
 func initParser(tplName string, src []byte) *parser {
-	return &parser{lineman.NewCodeLine(src), tplName, new(containers.Stack), nil}
+	return &parser{lineman.NewCodeLine(src), tplName, new(containers.Stack), nil, new(storage), false}
 }
 
 type parseError struct {
@@ -30,6 +30,8 @@ type parser struct {
 	tplName  string
 	stack    *containers.Stack
 	execList []executer
+	store    *storage
+	varFlag  bool
 }
 
 func (s *parser) parseDocument() error {
@@ -105,6 +107,7 @@ func (s *parser) initParseError(line, pos int, err error) *parseError {
 func (s *parser) parseCode() *parseError {
 	s.ForwardPos(2)
 	for !s.isEndCode() {
+		fmt.Println("STEP")
 		if err := s.initCodeVal(); err != nil {
 			return err
 		}
@@ -114,6 +117,7 @@ func (s *parser) parseCode() *parseError {
 
 func (s *parser) initCodeVal() *parseError {
 	s.PassSpaces()
+	fmt.Println("INIT", string(s.Char()))
 	if s.IsEndLine() {
 		s.IncPos()
 		return nil
@@ -145,10 +149,10 @@ func (s *parser) initCodeVal() *parseError {
 			p.fieldCommand = true
 			val, err = newValField(p)
 		}*/
-	case ':':
-		if s.NextChar() == '=' {
-			return newValSet(s)
-		}
+	/*case ':':
+	if s.NextChar() == '=' {
+		return newValSet(s)
+	}*/
 	default:
 		if s.IsLetter() != 0 {
 			line, pos := s.Line(), s.LinePos()
@@ -156,8 +160,8 @@ func (s *parser) initCodeVal() *parseError {
 				if keyword, check := getKeywordConstructor(string(name)); check {
 					return keyword(s)
 				} else {
-					s.stack.Push(&iName{line, pos, string(name)})
-					return nil
+					//fmt.Println("NAME", string(s.Char()))
+					return newValName(s, line, pos, string(name))
 				}
 			} else {
 				return s.initParseError(s.Line(), s.Pos(), fmt.Errorf("Name read error..."))

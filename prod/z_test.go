@@ -17,7 +17,7 @@ func TestParser(t *testing.T) {
 		ex := &tplExec{
 			parser.execList,
 			&buf,
-			newStorage(map[string]interface{}{}),
+			new(storage),
 		}
 		if err := ex.exec(); err != nil {
 			log.Println(err)

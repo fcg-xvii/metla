@@ -1,5 +1,7 @@
 package prod
 
+import "errors"
+
 type keywordConstructor func(*parser) *parseError
 
 func init() {
@@ -19,6 +21,12 @@ var (
 			return nil
 		}, "false": func(p *parser) *parseError {
 			p.stack.Push(false)
+			return nil
+		}, "var": func(p *parser) *parseError {
+			if p.varFlag {
+				return p.initParseError(p.Line(), p.LinePos()-3, errors.New("Unexpected var keyword"))
+			}
+			p.varFlag = true
 			return nil
 		},
 	}

@@ -2,9 +2,24 @@ package prod
 
 import "fmt"
 
+func newValName(p *parser, line, pos int, key string) *parseError {
+	name := iName{line: line, pos: pos}
+	if p.varFlag {
+		index, err := p.store.setVariable(string(key))
+		if err != nil {
+			return p.initParseError(line, pos, err)
+		}
+		name.index = index
+	} else {
+		name.index = p.store.initVariable(string(key))
+	}
+	p.stack.Push(name)
+	return nil
+}
+
 type iName struct {
 	line, pos int
-	name      string
+	index     int
 }
 
 type set struct {
@@ -20,7 +35,7 @@ func parseSetNames(p *parser) *parseError {
 		switch p.Char() {
 		case ',':
 			p.IncPos()
-		case ':', '=':
+		case '=':
 			return nil
 		}
 		if err := p.initCodeVal(); err != nil {
@@ -31,17 +46,17 @@ func parseSetNames(p *parser) *parseError {
 }
 
 func newValSet(p *parser) *parseError {
-	//fmt.Println(p.stack)
-	stackLen := p.stack.Len()
+	//stackLen := p.stack.Len()
 	ex := set{}
 	if p.Char() == ',' {
 		if err := parseSetNames(p); err != nil {
 			return err
 		}
 	}
-	ex.names = p.stack.PopAllReverse()
+	fmt.Println(p.stack)
+	ex.names = p.stack.PopAll()
 	fmt.Println("EXNNN", ex.names)
-
+	fmt.Println("sto", p.store.list)
 	if p.Char() == '=' {
 		ex.uppdate = true
 		p.IncPos()

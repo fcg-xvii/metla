@@ -69,9 +69,47 @@ func (s *storage) saveInEmptyIndex(v *variable) int {
 	return len(s.list) - 1
 }
 
+func (s *storage) globalIndexes() (res []int) {
+	for i, v := range s.list {
+		if v.global {
+			res = append(res, i)
+		}
+	}
+	return
+}
+
+func (s *storage) execStorage(vals map[string]interface{}) *execStorage {
+	res := &execStorage{
+		values: make([]interface{}, len(s.list)),
+		store:  s,
+	}
+	if global := s.globalIndexes(); len(global) > 0 {
+		for key, val := range vals {
+			for _, index := range global {
+				if key == s.list[index].key {
+					res.values[index] = val
+				}
+			}
+		}
+	}
+	fmt.Println("STO_EXEC", res)
+	return res
+}
+
 /////////////////////////////////////////////
 
 type execStorage struct {
 	values []interface{}
 	store  *storage
+}
+
+func (s *execStorage) setValue(index int, value interface{}) {
+	s.values[index] = value
+}
+
+func (s *execStorage) getValue(index int) (res interface{}) {
+	if index > 0 && index < len(s.values) {
+		res = s.values[index]
+	}
+	return
 }

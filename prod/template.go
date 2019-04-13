@@ -10,7 +10,7 @@ type tplExec struct {
 	tplName  string
 	execList []executer
 	writer   io.Writer
-	sto      *storage
+	sto      *execStorage
 	stack    *containers.Stack
 }
 

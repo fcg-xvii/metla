@@ -83,7 +83,8 @@ func (s *set) Exec(exec *tplExec) *execError {
 					return err
 				}
 			default:
-				v.Set(exec, v)
+				v.Set(exec, s.values[valsIndex])
+				valsIndex++
 			}
 		}
 	}

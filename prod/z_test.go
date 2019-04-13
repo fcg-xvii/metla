@@ -11,6 +11,10 @@ import (
 )
 
 func TestParser(t *testing.T) {
+	exVals := map[string]interface{}{
+		"one": 1,
+	}
+
 	src, _ := ioutil.ReadFile("z_content")
 	//log.Println(string(src))
 	parser := initParser("z_content", src)
@@ -21,12 +25,13 @@ func TestParser(t *testing.T) {
 			"z_content",
 			parser.execList,
 			&buf,
-			new(storage),
+			parser.store.execStorage(exVals),
 			new(containers.Stack),
 		}
 		if err := ex.exec(); err != nil {
 			log.Println(err)
 		} else {
+			log.Println(ex.sto.values)
 			log.Println("======================")
 			buf.WriteTo(os.Stdout)
 			log.Println("======================")

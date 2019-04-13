@@ -26,6 +26,16 @@ func (s *iName) StorageIndex() int {
 	return s.index
 }
 
+func (s *iName) Set(exec *tplExec, val interface{}) error {
+	fmt.Println("VAL.....", val)
+	switch val.(type) {
+	case *iName:
+		val = exec.sto.getValue(val.(*iName).index)
+	}
+	exec.sto.setValue(s.index, val)
+	return nil
+}
+
 func newValArifmetic(p *parser) *parseError {
 	return p.initParseError(p.Line(), p.Pos(), fmt.Errorf("Error init arifmetic"))
 }

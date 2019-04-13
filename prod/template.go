@@ -17,7 +17,7 @@ type tplExec struct {
 func (s *tplExec) Write(data []byte) *execError {
 	_, err := s.writer.Write(data)
 	if err != nil {
-		return &execError{s.tplName, 0, 0, err}
+		return &execError{s.tplName, 0, 0, err.Error()}
 	}
 	return nil
 }

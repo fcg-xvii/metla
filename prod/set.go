@@ -16,7 +16,7 @@ func parseSetNames(p *parser) *parseError {
 			return err
 		}
 	}
-	return p.initParseError(p.Line(), p.LinePos(), fmt.Errorf("Unexpected endLine, expected ':' or '='"))
+	return p.initParseError(p.Line(), p.LinePos(), "Unexpected endLine, expected ':' or '='")
 }
 
 func newValSet(p *parser) *parseError {
@@ -33,11 +33,11 @@ func newValSet(p *parser) *parseError {
 		if v, check := val.(setter); check {
 			ex.names = append(ex.names, v)
 		} else {
-			return val.parseError(fmt.Errorf("Expected setter token"))
+			return val.parseError("Expected setter token")
 		}
 	}
-	fmt.Println("EXNNN", ex.names)
-	fmt.Println("sto", p.store.list)
+	//fmt.Println("EXNNN", ex.names)
+	//fmt.Println("sto", p.store.list)
 	if p.Char() == '=' {
 		ex.uppdate = true
 		p.IncPos()
@@ -56,8 +56,9 @@ func newValSet(p *parser) *parseError {
 		p.PassSpaces()
 	}
 	ex.values = p.stack.PopAll()
-	fmt.Println("VALUES", ex.values)
-	p.execList = append(p.execList, &ex)
+	fmt.Println("VALUES", ex.values, p.stack.Len())
+	//p.execList = append(p.execList, &ex)
+	p.stack.Push(&ex)
 	return nil
 }
 
@@ -73,19 +74,28 @@ func (s *set) String() string {
 }
 
 func (s *set) Exec(exec *tplExec) *execError {
-	//return fmt.Errorf("AAAAAAAAAAAAAAAAAAAAAAA")
 	valsIndex := 0
+	//fmt.Println("NAMES", s.names)
+	//fmt.Println("VALS", s.values)
 	for _, v := range s.names {
+		//fmt.Println("!!!!!!", exec.stack.Len(), v)
 		if exec.stack.Len() == 0 {
 			switch s.values[valsIndex].(type) {
 			case executer:
+				//fmt.Println("EXECUTERT")
 				if err := s.values[valsIndex].(executer).Exec(exec); err != nil {
 					return err
 				}
+			case getter:
+				//fmt.Println("GETTER")
+				if err := v.Set(exec, s.values[valsIndex]); err != nil {
+					return err
+				}
 			default:
-				v.Set(exec, s.values[valsIndex])
-				valsIndex++
+				//fmt.Println("DEFAULT")
+				return v.(coordinator).execError("Expected executer or getter token")
 			}
+			valsIndex++
 		}
 	}
 	return nil

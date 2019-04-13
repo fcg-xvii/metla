@@ -1,8 +1,6 @@
 package prod
 
 import (
-	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/fcg-xvii/lineman"
@@ -10,12 +8,12 @@ import (
 
 func newValNumber(p *parser) *parseError {
 	p.SetupMark()
-	line, pos := p.Line(), p.LinePos()
+	pos := position{p.tplName, p.Line(), p.LinePos()}
 	intVal := true
 	for lineman.CheckNumber(p.Char()) || p.Char() == '.' {
 		if p.Char() == '.' {
 			if !intVal {
-				return p.initParseError(line, pos, errors.New("Unexpected float point"))
+				return p.initParseError(pos.line, pos.pos, "Unexpected float point")
 			} else {
 				intVal = false
 			}
@@ -24,12 +22,23 @@ func newValNumber(p *parser) *parseError {
 	}
 	if intVal {
 		res, _ := strconv.ParseInt(p.MarkValString(0), 10, 64)
-		fmt.Println("RES", res)
-		p.stack.Push(res)
+		p.stack.Push(&static{&pos, res})
 	} else {
 		res, _ := strconv.ParseFloat(p.MarkValString(0), 64)
-		fmt.Println("RES", res)
-		p.stack.Push(res)
+		p.stack.Push(&static{&pos, res})
 	}
 	return nil
+}
+
+type static struct {
+	*position
+	val interface{}
+}
+
+func (s *static) Get() interface{} {
+	return s.val
+}
+
+func (s *static) String() string {
+	return "{ static }"
 }

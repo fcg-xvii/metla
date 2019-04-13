@@ -14,21 +14,21 @@ func initParser(tplName string, src []byte) *parser {
 type parseError struct {
 	tplName   string
 	line, pos int
-	err       error
+	text      string
 }
 
 func (s *parseError) Error() string {
-	return fmt.Sprintf("[%v %v:%v] Parse error - %v", s.tplName, s.line, s.pos, s.err)
+	return fmt.Sprintf("[%v %v:%v] Parse error - %v", s.tplName, s.line, s.pos, s.text)
 }
 
 type execError struct {
 	tplName   string
 	line, pos int
-	err       error
+	text      string
 }
 
 func (s *execError) Error() string {
-	return fmt.Sprintf("[%v %v:%v] Exec error - %v", s.tplName, s.line, s.pos, s.err)
+	return fmt.Sprintf("[%v %v:%v] Exec error - %v", s.tplName, s.line, s.pos, s.text)
 }
 
 type parser struct {
@@ -38,6 +38,19 @@ type parser struct {
 	execList []executer
 	store    *storage
 	varFlag  bool
+}
+
+func (s *parser) PopExecuters() (list []executer, err *parseError) {
+	list = make([]executer, s.stack.Len())
+	fmt.Println(s.stack.Len())
+	for i, v := range s.stack.PopAll() {
+		if ex, check := v.(executer); check {
+			list[i] = ex
+		} else {
+			return nil, v.(coordinator).parseError("Evaluted but not used")
+		}
+	}
+	return
 }
 
 func (s *parser) parseDocument() error {
@@ -93,7 +106,7 @@ func (s *parser) isEndCode() bool {
 }
 
 func (s *parser) parsePrint() *parseError {
-	return s.initParseError(0, 0, fmt.Errorf("Err Parse print"))
+	return s.initParseError(0, 0, "Err Parse print")
 }
 
 func (s *parser) parseComment() *parseError {
@@ -103,27 +116,37 @@ func (s *parser) parseComment() *parseError {
 		s.ForwardPos(2)
 		return nil
 	}
-	return s.initParseError(line, pos, fmt.Errorf("Unclosed comment tag"))
+	return s.initParseError(line, pos, "Unclosed comment tag")
 }
 
-func (s *parser) initParseError(line, pos int, err error) *parseError {
-	return &parseError{s.tplName, line, pos, err}
+func (s *parser) initParseError(line, pos int, text string) *parseError {
+	return &parseError{s.tplName, line, pos, text}
 }
 
 func (s *parser) parseCode() *parseError {
 	line, pos := s.Line(), s.LinePos()
 	s.ForwardPos(2)
-	for !s.IsEndDocument() && !s.isEndCode() {
-		fmt.Println("STEP")
+	for !s.IsEndDocument() {
 		if err := s.initCodeVal(); err != nil {
 			return err
 		}
+		s.PassSpaces()
+		if s.IsEndLine() {
+			if exList, err := s.PopExecuters(); err == nil {
+				s.execList = append(s.execList, exList...)
+				fmt.Println(s.execList)
+				if s.isEndCode() {
+					s.ForwardPos(2)
+					return nil
+				} else if s.isEndCode() {
+					s.IncPos()
+				}
+			} else {
+				return err
+			}
+		}
 	}
-	if !s.isEndCode() {
-		return s.initParseError(line, pos, fmt.Errorf("Unclosed code tag"))
-	}
-	s.ForwardPos(2)
-	return nil
+	return s.initParseError(line, pos, "Unclosed code tag")
 }
 
 func (s *parser) initCodeVal() *parseError {
@@ -175,9 +198,9 @@ func (s *parser) initCodeVal() *parseError {
 					return newValName(s, line, pos, string(name))
 				}
 			} else {
-				return s.initParseError(s.Line(), s.Pos(), fmt.Errorf("Name read error..."))
+				return s.initParseError(s.Line(), s.Pos(), "Name read error...")
 			}
 		}
 	}
-	return s.initParseError(s.Line(), s.Pos(), fmt.Errorf("Unexpected synbol %c", s.Char()))
+	return s.initParseError(s.Line(), s.Pos(), fmt.Sprintf("Unexpected synbol %c", s.Char()))
 }

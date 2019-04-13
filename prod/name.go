@@ -7,7 +7,7 @@ func newValName(p *parser, line, pos int, key string) *parseError {
 	if p.varFlag {
 		index, err := p.store.setVariable(string(key))
 		if err != nil {
-			return p.initParseError(line, pos, err)
+			return p.initParseError(line, pos, err.Error())
 		}
 		name.index = index
 	} else {
@@ -26,16 +26,16 @@ func (s *iName) StorageIndex() int {
 	return s.index
 }
 
-func (s *iName) Set(exec *tplExec, val interface{}) error {
+func (s *iName) Set(exec *tplExec, val interface{}) *execError {
 	fmt.Println("VAL.....", val)
-	switch val.(type) {
-	case *iName:
-		val = exec.sto.getValue(val.(*iName).index)
+	if g, check := val.(getter); check {
+		exec.sto.setValue(s.index, g.Get(exec))
+	} else {
+		return val.(coordinator).execError("Set variable error - expected getter right side")
 	}
-	exec.sto.setValue(s.index, val)
 	return nil
 }
 
 func newValArifmetic(p *parser) *parseError {
-	return p.initParseError(p.Line(), p.Pos(), fmt.Errorf("Error init arifmetic"))
+	return p.initParseError(p.Line(), p.Pos(), "Error init arifmetic")
 }

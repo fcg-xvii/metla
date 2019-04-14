@@ -36,6 +36,10 @@ func (s *iName) Set(exec *tplExec, val interface{}) *execError {
 	return nil
 }
 
+func (s *iName) String() string {
+	return fmt.Sprintf("{ iName: %v }", s.index)
+}
+
 func newValArifmetic(p *parser) *parseError {
 	return p.initParseError(p.Line(), p.Pos(), "Error init arifmetic")
 }

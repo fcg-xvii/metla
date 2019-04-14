@@ -8,3 +8,7 @@ type execText struct {
 func (s execText) Exec(exec *tplExec) *execError {
 	return exec.Write(s.src)
 }
+
+func (s execText) String() string {
+	return "{ text }"
+}

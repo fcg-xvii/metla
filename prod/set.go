@@ -20,6 +20,7 @@ func parseSetNames(p *parser) *parseError {
 }
 
 func newValSet(p *parser) *parseError {
+	fmt.Println("NEW_VAL_SET")
 	//stackLen := p.stack.Len()
 	ex := set{}
 	if p.Char() == ',' {
@@ -56,8 +57,8 @@ func newValSet(p *parser) *parseError {
 		p.PassSpaces()
 	}
 	ex.values = p.stack.PopAll()
+	fmt.Println("NAMES", ex.names, p.stack.Len())
 	fmt.Println("VALUES", ex.values, p.stack.Len())
-	//p.execList = append(p.execList, &ex)
 	p.stack.Push(&ex)
 	return nil
 }
@@ -75,8 +76,8 @@ func (s *set) String() string {
 
 func (s *set) Exec(exec *tplExec) *execError {
 	valsIndex := 0
-	//fmt.Println("NAMES", s.names)
-	//fmt.Println("VALS", s.values)
+	fmt.Println("NAMES", s.names)
+	fmt.Println("VALS", s.values)
 	for _, v := range s.names {
 		//fmt.Println("!!!!!!", exec.stack.Len(), v)
 		if exec.stack.Len() == 0 {

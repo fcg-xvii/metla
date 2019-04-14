@@ -1,6 +1,7 @@
 package prod
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/fcg-xvii/containers"
@@ -23,7 +24,9 @@ func (s *tplExec) Write(data []byte) *execError {
 }
 
 func (s *tplExec) exec() error {
+	fmt.Println("EXEC.....")
 	for _, v := range s.execList {
+		fmt.Println(v)
 		if err := v.Exec(s); err != nil {
 			return err
 		}

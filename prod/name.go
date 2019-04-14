@@ -29,7 +29,11 @@ func (s *iName) StorageIndex() int {
 func (s *iName) Set(exec *tplExec, val interface{}) *execError {
 	fmt.Println("VAL.....", val)
 	if g, check := val.(getter); check {
-		exec.sto.setValue(s.index, g.Get(exec))
+		if iface, err := g.Get(exec); err == nil {
+			exec.sto.setValue(s.index, iface)
+		} else {
+			return err
+		}
 	} else {
 		return val.(coordinator).execError("Set variable error - expected getter right side")
 	}

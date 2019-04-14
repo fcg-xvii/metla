@@ -12,13 +12,13 @@ func init() {
 var (
 	keywords = map[string]keywordConstructor{
 		"nil": func(p *parser) *parseError {
-			p.stack.Push(nil)
+			p.stack.Push(initStatic(p, nil, 3))
 			return nil
 		}, "true": func(p *parser) *parseError {
-			p.stack.Push(true)
+			p.stack.Push(initStatic(p, true, 4))
 			return nil
 		}, "false": func(p *parser) *parseError {
-			p.stack.Push(false)
+			p.stack.Push(initStatic(p, false, 5))
 			return nil
 		}, "var": func(p *parser) *parseError {
 			if p.varFlag {

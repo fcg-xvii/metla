@@ -163,7 +163,7 @@ func (s *parser) initCodeVal() *parseError {
 		}
 		return newValArifmetic(p)*/
 	case '"', '\'':
-		//return newValString(p)
+		return newValString(s)
 	case ',':
 		return newValSet(s)
 	case '=':
@@ -192,6 +192,7 @@ func (s *parser) initCodeVal() *parseError {
 			line, pos := s.Line(), s.LinePos()-1
 			if name, check := s.ReadName(); check {
 				if keyword, check := getKeywordConstructor(string(name)); check {
+					fmt.Println("KEYWORD!!!!!!!!!!!!", string(name), keyword)
 					return keyword(s)
 				} else {
 					//fmt.Println("NAME", string(s.Char()))

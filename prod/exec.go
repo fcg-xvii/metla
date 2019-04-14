@@ -12,7 +12,7 @@ type executer interface {
 
 type getter interface {
 	coordinator
-	Get(*tplExec) error
+	Get(*tplExec) (interface{}, *execError)
 }
 
 type setter interface {

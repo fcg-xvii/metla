@@ -94,7 +94,7 @@ func (s *set) Exec(exec *tplExec) *execError {
 				}
 			default:
 				//fmt.Println("DEFAULT")
-				return v.(coordinator).execError("Expected executer or getter token")
+				return s.values[valsIndex].(coordinator).execError("Expected executer or getter token")
 			}
 			valsIndex++
 		}

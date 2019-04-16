@@ -203,5 +203,6 @@ func (s *parser) initCodeVal() *parseError {
 			}
 		}
 	}
+	fmt.Println("UNEXPECTED")
 	return s.initParseError(s.Line(), s.Pos(), fmt.Sprintf("Unexpected synbol %c", s.Char()))
 }

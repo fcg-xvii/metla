@@ -24,7 +24,7 @@ func (s *tplExec) Write(data []byte) *execError {
 }
 
 func (s *tplExec) exec() error {
-	fmt.Println("EXEC.....")
+	fmt.Println("EXEC.....", s.execList)
 	for _, v := range s.execList {
 		fmt.Println(v)
 		if err := v.Exec(s); err != nil {

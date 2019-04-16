@@ -57,8 +57,8 @@ type static struct {
 	val interface{}
 }
 
-func (s *static) Get(*tplExec) (interface{}, *execError) {
-	return s.val, nil
+func (s *static) Get(*tplExec) interface{} {
+	return s.val
 }
 
 func (s *static) String() string {

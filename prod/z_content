@@ -1,3 +1,6 @@
 Строка 1
-{% index, pool, house = 10, 20, "PREVED!!!!" %}
+{% 
+	index, pool, house = 10, 20, "PREVED!!!!"
+	echoln index 
+%}
 Привет

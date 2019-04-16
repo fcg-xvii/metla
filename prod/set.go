@@ -56,7 +56,7 @@ func newValSet(p *parser) *parseError {
 		}
 		p.PassSpaces()
 	}
-	ex.values = p.stack.PopAll()
+	ex.values = p.stack.PopAllReverse()
 	fmt.Println("NAMES", ex.names, p.stack.Len())
 	fmt.Println("VALUES", ex.values, p.stack.Len())
 	p.stack.Push(&ex)

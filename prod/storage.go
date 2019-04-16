@@ -107,9 +107,6 @@ func (s *execStorage) setValue(index int, value interface{}) {
 	s.values[index] = value
 }
 
-func (s *execStorage) getValue(index int) (res interface{}) {
-	if index > 0 && index < len(s.values) {
-		res = s.values[index]
-	}
-	return
+func (s *execStorage) getValue(index int) interface{} {
+	return s.values[index]
 }

@@ -10,9 +10,14 @@ import (
 	"github.com/fcg-xvii/containers"
 )
 
+type Test struct {
+	Val string
+}
+
 func TestParser(t *testing.T) {
 	exVals := map[string]interface{}{
-		"one": 1,
+		"one":  1,
+		"tVal": &Test{"cool!!!"},
 	}
 
 	src, _ := ioutil.ReadFile("z_content")

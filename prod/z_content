@@ -1,6 +1,6 @@
 Строка 1
 {% 
 	index, pool, house = 10, 20, "PREVED!!!!"
-	echoln index 
+	echoln index, pool, house, tVal.Val
 %}
 Привет

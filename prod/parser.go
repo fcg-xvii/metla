@@ -79,7 +79,7 @@ func (s *parser) parseText() *parseError {
 	if check {
 		switch s.NextChar() {
 		case '%':
-			s.appendText(1)
+			s.appendText(0)
 			return s.parseCode()
 		case '{':
 			s.appendText(1)
@@ -137,6 +137,9 @@ func (s *parser) parseCode() *parseError {
 				fmt.Println(s.execList)
 				if s.isEndCode() {
 					s.ForwardPos(2)
+					if s.IsEndLine() {
+						s.IncPos()
+					}
 					return nil
 				} else if s.isEndCode() {
 					s.IncPos()
@@ -179,23 +182,14 @@ func (s *parser) initCodeVal() *parseError {
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		return newValNumber(s)
 	case '.':
-		/*if !p.fieldFlag {
-			p.fieldCommand = true
-			val, err = newValField(p)
-		}*/
-	/*case ':':
-	if s.NextChar() == '=' {
-		return newValSet(s)
-	}*/
+		return newField(s)
 	default:
 		if s.IsLetter() != 0 {
 			line, pos := s.Line(), s.LinePos()-1
 			if name, check := s.ReadName(); check {
 				if keyword, check := getKeywordConstructor(string(name)); check {
-					fmt.Println("KEYWORD!!!!!!!!!!!!", string(name), keyword)
 					return keyword(s)
 				} else {
-					//fmt.Println("NAME", string(s.Char()))
 					return newValName(s, line, pos, string(name))
 				}
 			} else {

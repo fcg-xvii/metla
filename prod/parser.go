@@ -8,7 +8,7 @@ import (
 )
 
 func initParser(tplName string, src []byte) *parser {
-	return &parser{lineman.NewCodeLine(src), tplName, new(containers.Stack), nil, new(storage), false}
+	return &parser{lineman.NewCodeLine(src), tplName, new(containers.Stack), nil, new(storage), false, false, false}
 }
 
 type parseError struct {
@@ -33,11 +33,13 @@ func (s *execError) Error() string {
 
 type parser struct {
 	*lineman.CodeLine
-	tplName  string
-	stack    *containers.Stack
-	execList []executer
-	store    *storage
-	varFlag  bool
+	tplName   string
+	stack     *containers.Stack
+	execList  []executer
+	store     *storage
+	fieldFlag bool
+	varFlag   bool
+	rpnFlag   bool
 }
 
 func (s *parser) PopExecuters() (list []executer, err *parseError) {
@@ -123,28 +125,52 @@ func (s *parser) initParseError(line, pos int, text string) *parseError {
 	return &parseError{s.tplName, line, pos, text}
 }
 
+func (s *parser) flushExec() *parseError {
+	if exList, err := s.PopExecuters(); err == nil {
+		s.execList = append(s.execList, exList...)
+	} else {
+		return err
+	}
+	return nil
+}
+
 func (s *parser) parseCode() *parseError {
 	line, pos := s.Line(), s.LinePos()
 	s.ForwardPos(2)
 	for !s.IsEndDocument() {
-		if err := s.initCodeVal(); err != nil {
-			return err
-		}
 		s.PassSpaces()
-		if s.IsEndLine() {
-			if exList, err := s.PopExecuters(); err == nil {
-				s.execList = append(s.execList, exList...)
-				fmt.Println(s.execList)
-				if s.isEndCode() {
+		switch {
+		case s.Char() == '/' && s.NextChar() == '/':
+			s.ToChar('\n')
+		case s.Char() == '/' && s.NextChar() == '*':
+			line, pos = s.Line(), s.LinePos()
+			s.ForwardPos(2)
+			for !s.IsEndDocument() {
+				if !s.ToChar('*') {
+					return s.initParseError(line, pos, "Unclosed comment")
+				} else if s.NextChar() == '/' {
 					s.ForwardPos(2)
-					if s.IsEndLine() {
-						s.IncPos()
-					}
-					return nil
-				} else if s.isEndCode() {
+					break
+				} else {
 					s.IncPos()
 				}
-			} else {
+			}
+		case s.isEndCode():
+			if err := s.flushExec(); err != nil {
+				return err
+			}
+			s.ForwardPos(2)
+			if s.IsEndLine() {
+				s.IncPos()
+			}
+			return nil
+		case s.IsEndLine():
+			if err := s.flushExec(); err != nil {
+				return err
+			}
+			s.IncPos()
+		default:
+			if err := s.initCodeVal(); err != nil {
 				return err
 			}
 		}
@@ -154,13 +180,10 @@ func (s *parser) parseCode() *parseError {
 
 func (s *parser) initCodeVal() *parseError {
 	s.PassSpaces()
-	fmt.Println("INIT", string(s.Char()))
-	if s.IsEndLine() {
-		s.IncPos()
-		return nil
-	}
+	//fmt.Println("INIT", string(s.Char()))
 	switch s.Char() {
 	case '+', '-', '*', '/', '(', '!', '>', '<', '%', '&', '|':
+		return newFunction(s)
 		/*if p.Char() == '%' && p.NextChar() == '}' {
 			return
 		}
@@ -190,13 +213,17 @@ func (s *parser) initCodeVal() *parseError {
 				if keyword, check := getKeywordConstructor(string(name)); check {
 					return keyword(s)
 				} else {
-					return newValName(s, line, pos, string(name))
+					if !s.fieldFlag {
+						return newValName(s, line, pos, string(name))
+					} else {
+						s.stack.Push(initStatic(s, string(name), -len(name)))
+						return nil
+					}
 				}
 			} else {
 				return s.initParseError(s.Line(), s.Pos(), "Name read error...")
 			}
 		}
 	}
-	fmt.Println("UNEXPECTED")
-	return s.initParseError(s.Line(), s.Pos(), fmt.Sprintf("Unexpected synbol %c", s.Char()))
+	return s.initParseError(s.Line(), s.Pos(), fmt.Sprintf("Unexpected symbol %c", s.Char()))
 }

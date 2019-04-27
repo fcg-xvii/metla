@@ -15,7 +15,7 @@ func newValString(p *parser) *parseError {
 		return p.initParseError(pos.line, pos.pos, "Unclosed string")
 	} else {
 		// Закрывающая кавычка найдена. Инициализируем результирующее значение
-		p.stack.Push(&static{&pos, p.MarkValString(0)[1:]}) // Обрезаем кавычки для результирующего значения
+		p.stack.Push(&static{pos, p.MarkValString(0)[1:]}) // Обрезаем кавычки для результирующего значения
 		p.IncPos()
 	}
 	return nil
@@ -37,23 +37,23 @@ func newValNumber(p *parser) *parseError {
 	}
 	if intVal {
 		res, _ := strconv.ParseInt(p.MarkValString(0), 10, 64)
-		p.stack.Push(&static{&pos, res})
+		p.stack.Push(&static{pos, res})
 	} else {
 		res, _ := strconv.ParseFloat(p.MarkValString(0), 64)
-		p.stack.Push(&static{&pos, res})
+		p.stack.Push(&static{pos, res})
 	}
 	return nil
 }
 
 func initStatic(p *parser, val interface{}, offset int) *static {
 	return &static{
-		&position{p.tplName, p.Line(), p.LinePos() + offset},
+		position{p.tplName, p.Line(), p.LinePos() + offset},
 		val,
 	}
 }
 
 type static struct {
-	*position
+	position
 	val interface{}
 }
 

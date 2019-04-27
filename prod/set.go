@@ -20,8 +20,6 @@ func parseSetNames(p *parser) *parseError {
 }
 
 func newValSet(p *parser) *parseError {
-	fmt.Println("NEW_VAL_SET")
-	//stackLen := p.stack.Len()
 	ex := set{}
 	if p.Char() == ',' {
 		if err := parseSetNames(p); err != nil {
@@ -37,8 +35,6 @@ func newValSet(p *parser) *parseError {
 			return val.parseError("Expected setter token")
 		}
 	}
-	//fmt.Println("EXNNN", ex.names)
-	//fmt.Println("sto", p.store.list)
 	if p.Char() == '=' {
 		ex.uppdate = true
 		p.IncPos()
@@ -57,14 +53,14 @@ func newValSet(p *parser) *parseError {
 		p.PassSpaces()
 	}
 	ex.values = p.stack.PopAllReverse()
-	fmt.Println("NAMES", ex.names, p.stack.Len())
-	fmt.Println("VALUES", ex.values, p.stack.Len())
+	//fmt.Println("NAMES", ex.names, p.stack.Len())
+	//fmt.Println("VALUES", ex.values, p.stack.Len())
 	p.stack.Push(&ex)
 	return nil
 }
 
 type set struct {
-	*position
+	position
 	names   []setter
 	values  []interface{}
 	uppdate bool
@@ -84,12 +80,12 @@ func (s *set) Exec(exec *tplExec) *execError {
 			switch s.values[valsIndex].(type) {
 			case executer:
 				//fmt.Println("EXECUTERT")
-				if err := s.values[valsIndex].(executer).Exec(exec); err != nil {
+				if err := s.values[valsIndex].(executer).exec(exec); err != nil {
 					return err
 				}
 			case getter:
 				//fmt.Println("GETTER")
-				if err := v.Set(exec, s.values[valsIndex]); err != nil {
+				if err := v.set(exec, s.values[valsIndex]); err != nil {
 					return err
 				}
 			default:

@@ -27,7 +27,7 @@ func (s *tplExec) exec() error {
 	fmt.Println("EXEC.....", s.execList)
 	for _, v := range s.execList {
 		fmt.Println(v)
-		if err := v.Exec(s); err != nil {
+		if err := v.exec(s); err != nil {
 			return err
 		}
 	}

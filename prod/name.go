@@ -3,7 +3,7 @@ package prod
 import "fmt"
 
 func newValName(p *parser, line, pos int, key string) *parseError {
-	name := iName{&position{p.tplName, line, pos}, key, 0}
+	name := iName{position{p.tplName, line, pos}, key, 0}
 	if p.varFlag {
 		index, err := p.store.setVariable(string(key))
 		if err != nil {
@@ -18,7 +18,7 @@ func newValName(p *parser, line, pos int, key string) *parseError {
 }
 
 type iName struct {
-	*position
+	position
 	name  string
 	index int
 }
@@ -30,14 +30,14 @@ func (s *iName) StorageIndex() int {
 func (s *iName) Set(exec *tplExec, val interface{}) *execError {
 	fmt.Println("VAL.....", val)
 	if g, check := val.(getter); check {
-		exec.sto.setValue(s.index, g.Get(exec))
+		exec.sto.setValue(s.index, g.get(exec))
 	} else {
 		return val.(coordinator).execError("Set variable error - expected getter right side")
 	}
 	return nil
 }
 
-func (s *iName) Get(exec *tplExec) interface{} {
+func (s *iName) get(exec *tplExec) interface{} {
 	return exec.sto.getValue(s.index)
 }
 

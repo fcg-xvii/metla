@@ -18,8 +18,13 @@ type Test struct {
 	Val TestSingle
 }
 
+func Inc(val int) int {
+	return val + 1
+}
+
 func TestParser(t *testing.T) {
 	exVals := map[string]interface{}{
+		"inc":  Inc,
 		"one":  1,
 		"tVal": &Test{TestSingle{"SINGLE___"}},
 		"stringMap": map[string]interface{}{

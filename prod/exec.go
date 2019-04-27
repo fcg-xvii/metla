@@ -7,17 +7,17 @@ type coordinator interface {
 
 type executer interface {
 	coordinator
-	Exec(*tplExec) *execError
+	exec(*tplExec) *execError
 }
 
 type getter interface {
 	coordinator
-	Get(*tplExec) interface{}
+	get(*tplExec) interface{}
 }
 
 type setter interface {
 	coordinator
-	Set(*tplExec, interface{}) *execError
+	set(*tplExec, interface{}) *execError
 }
 
 type position struct {
@@ -25,10 +25,10 @@ type position struct {
 	line, pos int
 }
 
-func (s *position) parseError(text string) *parseError {
+func (s position) parseError(text string) *parseError {
 	return &parseError{s.tplName, s.line, s.pos, text}
 }
 
-func (s *position) execError(text string) *execError {
+func (s position) execError(text string) *execError {
 	return &execError{s.tplName, s.line, s.pos, text}
 }

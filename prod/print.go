@@ -20,12 +20,12 @@ func newEcholn(p *parser) *parseError {
 		}
 		p.PassSpaces()
 	}
-	p.stack.Push(&echoln{&pos, p.stack.PopAll()})
+	p.stack.Push(&echoln{pos, p.stack.PopAll()})
 	return nil
 }
 
 type echoln struct {
-	*position
+	position
 	items []interface{}
 }
 
@@ -33,7 +33,7 @@ func (s *echoln) Exec(exec *tplExec) *execError {
 	for _, v := range s.items {
 		switch v.(type) {
 		case executer:
-			if err := v.(executer).Exec(exec); err != nil {
+			if err := v.(executer).exec(exec); err != nil {
 				return err
 			}
 			for exec.stack.Len() > 0 {
@@ -43,7 +43,7 @@ func (s *echoln) Exec(exec *tplExec) *execError {
 			}
 		case getter:
 			fmt.Println("GETTER")
-			if err := exec.Write([]byte(fmt.Sprint(v.(getter).Get(exec)) + " ")); err != nil {
+			if err := exec.Write([]byte(fmt.Sprint(v.(getter).get(exec)) + " ")); err != nil {
 				return err
 			}
 		}

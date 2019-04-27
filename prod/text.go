@@ -1,11 +1,11 @@
 package prod
 
 type execText struct {
-	*position
+	position
 	src []byte
 }
 
-func (s execText) Exec(exec *tplExec) *execError {
+func (s execText) exec(exec *tplExec) *execError {
 	return exec.Write(s.src)
 }
 

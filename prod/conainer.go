@@ -57,11 +57,11 @@ func (s *field) Exec(exec *tplExec) *execError {
 		//fmt.Println(owner)
 		switch owner.(type) {
 		case executer:
-			if err := owner.(executer).Exec(exec); err != nil {
+			if err := owner.(executer).exec(exec); err != nil {
 				return err
 			}
 		case getter:
-			exec.stack.Push(owner.(getter).Get(exec))
+			exec.stack.Push(owner.(getter).get(exec))
 		default:
 			rOwner := reflect.ValueOf(owner)
 			if rOwner.Kind() == reflect.Ptr {

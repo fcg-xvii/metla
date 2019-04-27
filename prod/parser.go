@@ -71,7 +71,7 @@ func (s *parser) appendExec(obj executer) {
 func (s *parser) appendText(offset int) {
 	src := s.MarkVal(offset)
 	if len(src) > 0 {
-		s.appendExec(execText{&position{s.tplName, s.MarkLine(), s.MarkLinePos()}, s.MarkVal(offset)})
+		s.appendExec(execText{position{s.tplName, s.MarkLine(), s.MarkLinePos()}, s.MarkVal(offset)})
 	}
 }
 
@@ -226,4 +226,8 @@ func (s *parser) initCodeVal() *parseError {
 		}
 	}
 	return s.initParseError(s.Line(), s.Pos(), fmt.Sprintf("Unexpected symbol %c", s.Char()))
+}
+
+func (s *parser) posObject() position {
+	return position{s.tplName, s.Line(), s.Pos()}
 }

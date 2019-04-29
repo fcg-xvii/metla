@@ -3,6 +3,8 @@ package prod
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/fcg-xvii/lineman"
 )
 
 func newField(p *parser) *parseError {
@@ -11,40 +13,49 @@ func newField(p *parser) *parseError {
 		return p.initParseError(pos.line, pos.pos, "Expected field owner")
 	}
 	list := []interface{}{p.stack.Pop()}
+	stackLen := p.stack.Len()
 	p.IncPos()
 	p.fieldFlag = true
-
 mainLoop:
 	for !p.IsEndDocument() {
-		if err := p.initCodeVal(); err != nil {
-			return err
-		}
-		list = append(list, p.stack.Pop())
-		/*p.PassSpaces()
-		if p.Char() != '.' {
-			break
-		}
-		p.IncPos()*/
+		fmt.Println("FIELD_FLAG", p.fieldFlag)
 		p.PassSpaces()
-		switch p.Char() {
-		case '.':
-			fmt.Println("POINT")
-			p.IncPos()
+		switch {
+		case !lineman.CheckLetter(p.Char()) && p.Char() != '(':
+			fmt.Println(stackLen, p.stack.Len(), string(p.Char()))
+			if stackLen != p.stack.Len()-1 {
+				return p.initParseError(p.Line(), p.LinePos(), "Field parse error :: unexpected value")
+			}
+			list = append(list, p.stack.Pop())
+			fmt.Println(p.Char())
+			if p.Char() != '.' {
+				break mainLoop
+			} else {
+				p.IncPos()
+			}
 		default:
-			break mainLoop
+			if err := p.initCodeVal(); err != nil {
+				return err
+			}
 		}
 	}
 	p.fieldFlag = false
-	p.stack.Push(&field{&pos, list})
+	p.stack.Push(&field{pos, list})
+	fmt.Println("FIELD_ENDDD")
 	return nil
 }
 
 type field struct {
-	*position
+	position
 	list []interface{}
 }
 
-func (s *field) Exec(exec *tplExec) *execError {
+func (s *field) execType() execType {
+	return execField
+}
+
+func (s *field) exec(exec *tplExec) *execError {
+	fmt.Println("field_exec")
 	pos, stackLen := s.position, exec.stack.Len()
 	exec.stack.Push(s.list[0])
 	l := s.list[1:]
@@ -72,19 +83,19 @@ func (s *field) Exec(exec *tplExec) *execError {
 				sVal := l[0]
 				switch sVal.(type) {
 				case *static:
-					fieldName := sVal.(*static).Get(exec).(string)
+					fieldName := sVal.(*static).get(exec).(string)
 					rVal := rOwner.FieldByName(fieldName)
 					if rVal.Kind() == reflect.Invalid {
 						return s.execError(fmt.Sprintf("Field %v not found in owner", fieldName))
 					}
-					exec.stack.Push(rVal.Interface())
+					exec.stack.Push(static{s.position, rVal.Interface()})
 					l = l[1:]
 				default:
 					return pos.execError("!!!!!!!!!!!!!!!!") // Релазовать методы
 				}
 			case reflect.Map:
 				if st, check := l[0].(*static); check {
-					rVal := reflect.ValueOf(st.Get(exec))
+					rVal := reflect.ValueOf(st.get(exec))
 					rType, keyType := rVal.Type(), reflect.TypeOf(owner).Key()
 					if rType != keyType {
 						if !rType.ConvertibleTo(keyType) {
@@ -95,7 +106,7 @@ func (s *field) Exec(exec *tplExec) *execError {
 					}
 					rResult := rOwner.MapIndex(rVal)
 					if rResult.Kind() == reflect.Invalid {
-						return st.execError(fmt.Sprintf("Map index [%v] not found", st.Get(exec)))
+						return st.execError(fmt.Sprintf("Map index [%v] not found", st.get(exec)))
 					} else {
 						exec.stack.Push(rResult.Interface())
 						l = l[1:]
@@ -106,5 +117,6 @@ func (s *field) Exec(exec *tplExec) *execError {
 			}
 		}
 	}
+	fmt.Println("TTTTTTTTTTTTTTTTTTTTTT", exec.stack.Peek())
 	return nil
 }

@@ -20,7 +20,7 @@ func newEcholn(p *parser) *parseError {
 		}
 		p.PassSpaces()
 	}
-	p.stack.Push(&echoln{pos, p.stack.PopAll()})
+	p.stack.Push(echoln{pos, p.stack.PopAll()})
 	return nil
 }
 
@@ -29,23 +29,26 @@ type echoln struct {
 	items []interface{}
 }
 
-func (s *echoln) Exec(exec *tplExec) *execError {
+func (s echoln) execType() execType {
+	return execEcholn
+}
+
+func (s echoln) exec(exec *tplExec) *execError {
+	fmt.Println("ST_LENNN", exec.stack.Len())
 	for _, v := range s.items {
 		switch v.(type) {
 		case executer:
 			if err := v.(executer).exec(exec); err != nil {
 				return err
 			}
-			for exec.stack.Len() > 0 {
-				if err := exec.Write([]byte(fmt.Sprint(exec.stack.Pop()) + " ")); err == nil {
-					return err
-				}
-			}
-		case getter:
-			fmt.Println("GETTER")
-			if err := exec.Write([]byte(fmt.Sprint(v.(getter).get(exec)) + " ")); err != nil {
-				return err
-			}
+		default:
+			exec.stack.Push(v)
+		}
+	}
+	fmt.Println("STACKLEN", exec.stack.Len())
+	for exec.stack.Len() > 0 {
+		if err := exec.Write([]byte(fmt.Sprint(exec.stack.Pop().(getter).get(exec)) + " ")); err != nil {
+			return err
 		}
 	}
 	return exec.Write([]byte{'\n'})

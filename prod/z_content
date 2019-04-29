@@ -1,5 +1,5 @@
 Строка 1
 {% 
-	inc(10)
+	echoln tVal.Val.Methodd()
 %}
 Привет

@@ -71,7 +71,7 @@ func (s *parser) appendExec(obj executer) {
 func (s *parser) appendText(offset int) {
 	src := s.MarkVal(offset)
 	if len(src) > 0 {
-		s.appendExec(execText{position{s.tplName, s.MarkLine(), s.MarkLinePos()}, s.MarkVal(offset)})
+		s.appendExec(text{position{s.tplName, s.MarkLine(), s.MarkLinePos()}, s.MarkVal(offset)})
 	}
 }
 
@@ -183,7 +183,12 @@ func (s *parser) initCodeVal() *parseError {
 	//fmt.Println("INIT", string(s.Char()))
 	switch s.Char() {
 	case '+', '-', '*', '/', '(', '!', '>', '<', '%', '&', '|':
-		return newFunction(s)
+		fmt.Println(s.fieldFlag)
+		if s.fieldFlag {
+			return newMethod(s)
+		} else {
+			return newFunction(s)
+		}
 		/*if p.Char() == '%' && p.NextChar() == '}' {
 			return
 		}
@@ -230,4 +235,12 @@ func (s *parser) initCodeVal() *parseError {
 
 func (s *parser) posObject() position {
 	return position{s.tplName, s.Line(), s.Pos()}
+}
+
+func (s *parser) resetFlags() func() {
+	fieldFlag, varFlag, rpnFlag := s.fieldFlag, s.varFlag, s.rpnFlag
+	s.fieldFlag, s.varFlag, s.rpnFlag = false, false, false
+	return func() {
+		s.fieldFlag, s.varFlag, s.rpnFlag = fieldFlag, varFlag, rpnFlag
+	}
 }

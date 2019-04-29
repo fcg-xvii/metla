@@ -1,5 +1,47 @@
 package prod
 
+type execType uint8
+
+const (
+	execFunction execType = iota
+	execMethod
+	execFor
+	execIf
+	execRPN
+	execEcho
+	execEcholn
+	execPrint
+	execText
+	execField
+)
+
+func (s execType) String() string {
+	switch execFunction {
+	case execFunction:
+		return "function"
+	case execMethod:
+		return "method"
+	case execFor:
+		return "for"
+	case execIf:
+		return "if"
+	case execRPN:
+		return "rpn"
+	case execEcho:
+		return "echo"
+	case execEcholn:
+		return "echoln"
+	case execPrint:
+		return "print"
+	case execText:
+		return "text"
+	case execField:
+		return "field"
+	default:
+		return "undefined"
+	}
+}
+
 type coordinator interface {
 	parseError(string) *parseError
 	execError(string) *execError
@@ -8,6 +50,7 @@ type coordinator interface {
 type executer interface {
 	coordinator
 	exec(*tplExec) *execError
+	execType() execType
 }
 
 type getter interface {

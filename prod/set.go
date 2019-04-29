@@ -30,7 +30,8 @@ func newValSet(p *parser) *parseError {
 	for p.stack.Len() > 0 {
 		val := p.stack.Pop().(coordinator)
 		if v, check := val.(setter); check {
-			ex.names = append(ex.names, v)
+			//ex.names = append(ex.names, v)
+			ex.names = append([]setter{v}, ex.names...)
 		} else {
 			return val.parseError("Expected setter token")
 		}
@@ -70,7 +71,7 @@ func (s *set) String() string {
 	return "{ set }"
 }
 
-func (s *set) Exec(exec *tplExec) *execError {
+func (s *set) exec(exec *tplExec) *execError {
 	valsIndex := 0
 	fmt.Println("NAMES", s.names)
 	fmt.Println("VALS", s.values)
@@ -79,21 +80,20 @@ func (s *set) Exec(exec *tplExec) *execError {
 		if exec.stack.Len() == 0 {
 			switch s.values[valsIndex].(type) {
 			case executer:
-				//fmt.Println("EXECUTERT")
 				if err := s.values[valsIndex].(executer).exec(exec); err != nil {
 					return err
 				}
 			case getter:
-				//fmt.Println("GETTER")
-				if err := v.set(exec, s.values[valsIndex]); err != nil {
-					return err
-				}
+				exec.stack.Push(s.values[valsIndex])
 			default:
-				//fmt.Println("DEFAULT")
 				return s.values[valsIndex].(coordinator).execError("Expected executer or getter token")
 			}
 			valsIndex++
 		}
+		if err := v.set(exec, exec.stack.Pop()); err != nil {
+			return err
+		}
 	}
+	fmt.Println("SET_STACK", exec.stack)
 	return nil
 }

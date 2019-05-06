@@ -2,6 +2,8 @@ package prod
 
 import (
 	"fmt"
+
+	"github.com/fcg-xvii/containers"
 )
 
 func isOperatorSymbol(p *parser) bool {
@@ -61,4 +63,17 @@ type operator struct {
 
 func (s operator) String() string {
 	return string(s.source)
+}
+
+func (s *opeartor) lrNumber() (left, right float64)
+
+func (s operator) exec(stack *containers.Stack, exec *tplExec) *execError {
+	switch string(s.source) {
+	case "+", "-", "*", "/":
+
+	}
+}
+
+func (s operator) execArifmetic(stack *containers.Stack) *execError {
+
 }

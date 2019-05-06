@@ -103,7 +103,7 @@ func (s rpn) exec(exec *tplExec) *execError {
 	st := new(containers.Stack)
 	for _, v := range s.pn {
 		if op, check := v.(operator); check {
-			//operator
+			o
 		}
 	}
 }

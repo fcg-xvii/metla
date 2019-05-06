@@ -1,6 +1,7 @@
 package prod
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/fcg-xvii/lineman"
@@ -45,8 +46,8 @@ func newValNumber(p *parser) *parseError {
 	return nil
 }
 
-func initStatic(p *parser, val interface{}, offset int) *static {
-	return &static{
+func initStatic(p *parser, val interface{}, offset int) static {
+	return static{
 		position{p.tplName, p.Line(), p.LinePos() + offset},
 		val,
 	}
@@ -62,5 +63,5 @@ func (s static) get(*tplExec) interface{} {
 }
 
 func (s static) String() string {
-	return "{ static }"
+	return fmt.Sprintf("{ static: %v }", s.val)
 }

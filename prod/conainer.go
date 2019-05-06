@@ -21,7 +21,7 @@ mainLoop:
 		fmt.Println("FIELD_FLAG", p.fieldFlag)
 		p.PassSpaces()
 		switch {
-		case !lineman.CheckLetter(p.Char()) && p.Char() != '(':
+		case !lineman.CheckLetter(p.Char()) && !lineman.CheckNumber(p.Char()) && p.Char() != '(':
 			fmt.Println(stackLen, p.stack.Len(), string(p.Char()))
 			if stackLen != p.stack.Len()-1 {
 				return p.initParseError(p.Line(), p.LinePos(), "Field parse error :: unexpected value")
@@ -75,26 +75,32 @@ func (s *field) exec(exec *tplExec) *execError {
 			exec.stack.Push(owner.(getter).get(exec))
 		default:
 			rOwner := reflect.ValueOf(owner)
-			if rOwner.Kind() == reflect.Ptr {
-				rOwner = rOwner.Elem()
-			}
 			switch rOwner.Kind() {
-			case reflect.Struct:
+			case reflect.Struct, reflect.Ptr:
 				sVal := l[0]
 				switch sVal.(type) {
-				case *static:
-					fieldName := sVal.(*static).get(exec).(string)
+				case static:
+					if rOwner.Kind() == reflect.Ptr {
+						rOwner = rOwner.Elem()
+					}
+					fieldName := sVal.(static).get(exec).(string)
 					rVal := rOwner.FieldByName(fieldName)
 					if rVal.Kind() == reflect.Invalid {
 						return s.execError(fmt.Sprintf("Field %v not found in owner", fieldName))
 					}
 					exec.stack.Push(static{s.position, rVal.Interface()})
 					l = l[1:]
+				case *method:
+					exec.stack.Push(owner)
+					if err := sVal.(*method).exec(exec); err != nil {
+						return err
+					}
+					l = l[1:]
 				default:
 					return pos.execError("!!!!!!!!!!!!!!!!") // Релазовать методы
 				}
 			case reflect.Map:
-				if st, check := l[0].(*static); check {
+				if st, check := l[0].(static); check {
 					rVal := reflect.ValueOf(st.get(exec))
 					rType, keyType := rVal.Type(), reflect.TypeOf(owner).Key()
 					if rType != keyType {
@@ -108,7 +114,7 @@ func (s *field) exec(exec *tplExec) *execError {
 					if rResult.Kind() == reflect.Invalid {
 						return st.execError(fmt.Sprintf("Map index [%v] not found", st.get(exec)))
 					} else {
-						exec.stack.Push(rResult.Interface())
+						exec.stack.Push(static{s.position, rResult.Interface()})
 						l = l[1:]
 					}
 				} else {
@@ -117,6 +123,6 @@ func (s *field) exec(exec *tplExec) *execError {
 			}
 		}
 	}
-	fmt.Println("TTTTTTTTTTTTTTTTTTTTTT", exec.stack.Peek())
+	//fmt.Println("TTTTTTTTTTTTTTTTTTTTTT", exec.stack.Peek())
 	return nil
 }

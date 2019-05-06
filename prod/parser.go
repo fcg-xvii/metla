@@ -187,7 +187,12 @@ func (s *parser) initCodeVal() *parseError {
 		if s.fieldFlag {
 			return newMethod(s)
 		} else {
-			return newFunction(s)
+			if s.Char() == ')' {
+				if _, check := s.stack.Peek().(iName); check {
+					return newFunction(s)
+				}
+			}
+			return newRPN(s)
 		}
 		/*if p.Char() == '%' && p.NextChar() == '}' {
 			return
@@ -219,7 +224,13 @@ func (s *parser) initCodeVal() *parseError {
 					return keyword(s)
 				} else {
 					if !s.fieldFlag {
-						return newValName(s, line, pos, string(name))
+						if err := newValName(s, line, pos, string(name)); err == nil {
+							s.PassSpaces()
+							if s.Char() == '(' { // Функция
+								return s.initCodeVal()
+							}
+						}
+						return nil
 					} else {
 						s.stack.Push(initStatic(s, string(name), -len(name)))
 						return nil

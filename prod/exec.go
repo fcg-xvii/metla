@@ -13,6 +13,7 @@ const (
 	execPrint
 	execText
 	execField
+	execSet
 )
 
 func (s execType) String() string {

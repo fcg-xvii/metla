@@ -20,6 +20,7 @@ func parseSetNames(p *parser) *parseError {
 }
 
 func newValSet(p *parser) *parseError {
+	fmt.Println("SETTTTTTTTTTTTTTTTTTTTTT >>>>>>>>>>>>>>>>>>.")
 	ex := set{}
 	if p.Char() == ',' {
 		if err := parseSetNames(p); err != nil {
@@ -31,7 +32,7 @@ func newValSet(p *parser) *parseError {
 		val := p.stack.Pop().(coordinator)
 		if v, check := val.(setter); check {
 			//ex.names = append(ex.names, v)
-			ex.names = append([]setter{v}, ex.names...)
+			ex.names = append(ex.names, v)
 		} else {
 			return val.parseError("Expected setter token")
 		}
@@ -71,7 +72,12 @@ func (s *set) String() string {
 	return "{ set }"
 }
 
+func (s *set) execType() execType {
+	return execSet
+}
+
 func (s *set) exec(exec *tplExec) *execError {
+	fmt.Println("SET_EXEC...")
 	valsIndex := 0
 	fmt.Println("NAMES", s.names)
 	fmt.Println("VALS", s.values)

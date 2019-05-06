@@ -14,12 +14,16 @@ type TestSingle struct {
 	Single string
 }
 
-func (s *TestSingle) Methodd() string {
-	return "Returned method..."
+func (s *TestSingle) Methodd(i, j int) (int, int) {
+	return i + 1, j + 1
 }
 
 type Test struct {
-	Val TestSingle
+	Val *TestSingle
+}
+
+func (s *Test) ValStruct() *TestSingle {
+	return s.Val
 }
 
 func Inc(val int) int {
@@ -38,8 +42,8 @@ func TestParser(t *testing.T) {
 		"inc":  Inc,
 		"min":  min,
 		"one":  1,
-		"tVal": &Test{TestSingle{"SINGLE___"}},
-		"stringMap": map[string]interface{}{
+		"tVal": &Test{&TestSingle{"SINGLE___"}},
+		"map": map[string]interface{}{
 			"one": map[int]interface{}{
 				100: 200,
 			},

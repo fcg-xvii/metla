@@ -6,16 +6,19 @@ import (
 )
 
 func parseFunctionArgs(p *parser, fPos *position) (list []interface{}, err *parseError) {
-	stackLen := p.stack.Len()
+	stackLen, argAppend := p.stack.Len(), false
 	for !p.IsEndDocument() {
+		p.PassSpaces()
 		switch {
 		case p.isEndCode():
 			return nil, p.initParseError(p.Line(), p.LinePos(), "Uncosed function")
 		case p.Char() == ',' || p.Char() == ')':
-			if stackLen != p.stack.Len()-1 {
+			if stackLen < p.stack.Len()-1 {
 				return nil, fPos.parseError("Expected ',' or ')' character")
 			}
-			list = append(list, p.stack.Pop())
+			if argAppend {
+				list = append(list, p.stack.Pop())
+			}
 			if p.Char() == ')' {
 				return
 			} else {
@@ -25,6 +28,7 @@ func parseFunctionArgs(p *parser, fPos *position) (list []interface{}, err *pars
 			if err = p.initCodeVal(); err != nil {
 				return
 			}
+			argAppend = true
 			//list = append(list, p.stack.Pop())
 			//valAccepted = false
 		}
@@ -32,13 +36,14 @@ func parseFunctionArgs(p *parser, fPos *position) (list []interface{}, err *pars
 	return nil, (*fPos).parseError("Unexpected end of document")
 }
 
-func execArgsPrepare(exec *tplExec, fType reflect.Type, args []interface{}) (rArgs []reflect.Value, err *execError) {
+func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []interface{}) (rArgs []reflect.Value, err *execError) {
 	fCount, stackLen := fType.NumIn(), exec.stack.Len()
 	rArgs = make([]reflect.Value, 0, fCount)
 
 	argsLenCheck := func(v interface{}) {
-		if fCount < len(rArgs) {
-			err = v.(coordinator).execError("Args count more than needed")
+		fmt.Println("args len", fCount, len(rArgs))
+		if fCount <= len(rArgs) {
+			err = pos.execError("Args count more than needed")
 		}
 	}
 
@@ -59,11 +64,13 @@ func execArgsPrepare(exec *tplExec, fType reflect.Type, args []interface{}) (rAr
 		return
 	}
 
+	fmt.Println("AAAARRRGGGGGSSSSSS", args)
 	for _, v := range args {
+		fmt.Println("CHI")
 		if argsLenCheck(v); err != nil {
 			return
 		}
-		fmt.Println("222", v)
+		fmt.Println("222", v, err)
 		switch v.(type) {
 		case getter:
 			if rArg := convert(v.(getter).get(exec), fType.In(len(rArgs))); err != nil {
@@ -95,17 +102,14 @@ func execArgsPrepare(exec *tplExec, fType reflect.Type, args []interface{}) (rAr
 }
 
 func newFunction(p *parser) (err *parseError) {
-	fmt.Println("NEW_FUNCTION")
 	f, check, returnCall := function{position: p.posObject()}, false, p.resetFlags()
 	if f.nameVar, check = p.stack.Pop().(*iName); !check {
 		return f.parseError("Function parse error :: expected variable in prefix")
 	}
-	//return p.initParseError(10, 10, "Function error test")
 	p.IncPos()
 	if f.args, err = parseFunctionArgs(p, &f.position); err != nil {
 		return err
 	}
-	fmt.Println(">>>>", f.args)
 	p.stack.Push(&f)
 	p.IncPos()
 	returnCall()
@@ -129,17 +133,19 @@ func functionCheckExecType(eType execType) bool {
 }
 
 func (s *function) exec(exec *tplExec) (err *execError) {
-	//return s.execError("TTTTT")
 	rName := reflect.ValueOf(s.nameVar.get(exec))
 	if rName.Kind() != reflect.Func {
 		return s.execError("Variable is not a function")
 	}
 	//fRArgs, fRType := make([]reflect.Value, 0, len(s.args)), rName.Type()
 	var args []reflect.Value
-	if args, err = execArgsPrepare(exec, rName.Type(), s.args); err != nil {
+	if args, err = execArgsPrepare(s.position, exec, rName.Type(), s.args); err != nil {
 		return
 	}
-	fmt.Println(len(args), rName.Type().NumIn())
+	if len(args) != rName.Type().NumIn() {
+		err = s.execError("Too few function args")
+		return
+	}
 	for _, v := range rName.Call(args) {
 		exec.stack.Push(static{s.position, v.Interface()})
 	}
@@ -150,17 +156,20 @@ func (s *function) exec(exec *tplExec) (err *execError) {
 /////////////////////////////////////
 
 func newMethod(p *parser) (err *parseError) {
-	fmt.Println("NEW_Method")
-	f, check, returnCall := function{position: p.posObject()}, false, p.resetFlags()
-	if f.nameVar, check = p.stack.Pop().(*iName); !check {
+	f, returnCall := method{position: p.posObject()}, p.resetFlags()
+	//fmt.Println(p.stack.Peek().(getter).get(nil))
+	if nameStatic, check := p.stack.Pop().(static); !check {
 		return f.parseError("Function parse error :: expected variable in prefix")
+	} else {
+		if f.nameVar, check = nameStatic.get(nil).(string); !check {
+			return nameStatic.parseError("Function parse error :: unexpected method name")
+		}
 	}
 	//return p.initParseError(10, 10, "Function error test")
 	p.IncPos()
 	if f.args, err = parseFunctionArgs(p, &f.position); err != nil {
 		return err
 	}
-	fmt.Println(">>>>", f.args)
 	p.stack.Push(&f)
 	p.IncPos()
 	returnCall()
@@ -169,6 +178,29 @@ func newMethod(p *parser) (err *parseError) {
 
 type method struct {
 	position
-	nameVar getter
+	nameVar string
 	args    []interface{}
+}
+
+func (s *method) exec(exec *tplExec) (err *execError) {
+	rOwner := reflect.ValueOf(exec.stack.Pop())
+	fmt.Println(rOwner.Kind(), s.nameVar)
+	rMethod := rOwner.MethodByName(s.nameVar)
+	if rMethod.Kind() == reflect.Invalid {
+		return s.execError(fmt.Sprintf("Method '%v' not found", s.nameVar))
+	}
+	var args []reflect.Value
+	if args, err = execArgsPrepare(s.position, exec, rMethod.Type(), s.args); err != nil {
+		return
+	}
+	fmt.Println(len(args), rMethod.Type().NumIn())
+	if len(args) != rMethod.Type().NumIn() {
+		err = s.execError("Too few method args")
+		return
+	}
+	for _, v := range rMethod.Call(args) {
+		exec.stack.Push(static{s.position, v.Interface()})
+	}
+	fmt.Println("F_STACK", exec.stack)
+	return
 }

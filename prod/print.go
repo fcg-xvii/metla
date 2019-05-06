@@ -20,7 +20,7 @@ func newEcholn(p *parser) *parseError {
 		}
 		p.PassSpaces()
 	}
-	p.stack.Push(echoln{pos, p.stack.PopAll()})
+	p.stack.Push(echoln{pos, p.stack.PopAllReverse()})
 	return nil
 }
 

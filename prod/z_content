@@ -1,5 +1,5 @@
 Строка 1
 {% 
-	echoln tVal.Val.Methodd()
+	!false < 10
 %}
 Привет

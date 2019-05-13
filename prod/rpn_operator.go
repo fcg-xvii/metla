@@ -102,12 +102,21 @@ func (s operator) lrBool(r, l interface{}) (left, right bool, err *execError) {
 	return
 }
 
+func nilConvertible(r *reflect.Value) bool {
+	switch (*r).Kind() {
+	case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Interface, reflect.Chan, reflect.Func:
+		return true
+	default:
+		return false
+	}
+}
+
 func (s operator) lrEqual(r, l interface{}) bool {
 	lVal, rVal := reflect.ValueOf(l), reflect.ValueOf(r)
 	if lVal.Kind() == reflect.Invalid {
-		return rVal.Kind() == reflect.Invalid || rVal.IsNil()
+		return rVal.Kind() == reflect.Invalid || (nilConvertible(&rVal) && rVal.IsNil())
 	} else if rVal.Kind() == reflect.Invalid {
-		return lVal.Kind() == reflect.Invalid || lVal.IsNil()
+		return lVal.Kind() == reflect.Invalid || (nilConvertible(&lVal) && lVal.IsNil())
 	} else if lVal.Kind() == rVal.Kind() {
 		return l == r
 	} else {

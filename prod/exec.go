@@ -15,6 +15,9 @@ const (
 	execText
 	execField
 	execSet
+	execIndex
+	execArray
+	execObject
 )
 
 func (s execType) String() string {
@@ -47,6 +50,7 @@ func (s execType) String() string {
 type coordinator interface {
 	parseError(string) *parseError
 	execError(string) *execError
+	getPosition() position
 }
 
 type executer interface {
@@ -76,4 +80,26 @@ func (s position) parseError(text string) *parseError {
 
 func (s position) execError(text string) *execError {
 	return &execError{s.tplName, s.line, s.pos, text}
+}
+
+func (s position) getPosition() position {
+	return s
+}
+
+func execOneReturn(crd coordinator, exec *tplExec) (res interface{}, err *execError) {
+	switch crd.(type) {
+	case getter:
+		res = crd.(getter).get(exec)
+	case executer:
+		stackLen := exec.stack.Len()
+		if err = crd.(executer).exec(exec); err != nil {
+			return
+		}
+		if stackLen+1 != exec.stack.Len() {
+			err = crd.execError("Expected one return value")
+			return
+		}
+		res = exec.stack.Pop().(executer).exec(exec)
+	}
+	return
 }

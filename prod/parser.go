@@ -213,9 +213,13 @@ func (s *parser) initCodeVal() *parseError {
 			return newRPN(s)
 		}
 	case '{':
-		//val, err = newValObject(p)
+		return newObject(s)
 	case '[':
-		//val, err = newValArray(p)
+		if _, check := s.stack.Peek().(iName); check {
+			return newIndex(s)
+		} else {
+			return newArray(s)
+		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		return newValNumber(s)
 	case '.':
@@ -230,7 +234,7 @@ func (s *parser) initCodeVal() *parseError {
 					if !s.fieldFlag {
 						if err := newValName(s, line, pos, string(name)); err == nil {
 							s.PassSpaces()
-							if s.Char() == '(' || s.Char() == '.' { // Функция
+							if s.Char() == '(' || s.Char() == '.' || s.Char() == '[' { // Функция
 								return s.initCodeVal()
 							}
 							return nil
@@ -247,7 +251,14 @@ func (s *parser) initCodeVal() *parseError {
 			}
 		}
 	}
-	return s.initParseError(s.Line(), s.Pos(), fmt.Sprintf("Unexpected symbol %c", s.Char()))
+	var message string
+	switch s.Char() {
+	case '\n', ';':
+		message = "Unexpected endline"
+	default:
+		message = fmt.Sprintf("Unexpected symbol %c", s.Char())
+	}
+	return s.initParseError(s.Line(), s.Pos(), message)
 }
 
 func (s *parser) posObject() position {

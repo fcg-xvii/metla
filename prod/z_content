@@ -1,7 +1,17 @@
 Строка 1
 {% 
-	range index in 0 : 1000
-		echoln index
-	endfor
+	mongo = 10
+	o = { 
+		"one": {
+			"adin": mongo
+			"dva": 2
+		}
+		"two": 2
+	}
+	mongo = 20
+	echoln o.one.adin
+	/*if 100 +  > 10 
+		echoln "more"
+	endif*/
 %}
 Привет

@@ -184,6 +184,10 @@ func (s *cRange) dec(min, max int, exec *tplExec) *execError {
 			if err := v.exec(exec); err != nil {
 				return err
 			}
+			if exec.breakFlag {
+				exec.breakFlag = false
+				return nil
+			}
 		}
 	}
 	return nil
@@ -195,6 +199,10 @@ func (s *cRange) inc(min, max int, exec *tplExec) *execError {
 		for _, v := range s.commands {
 			if err := v.exec(exec); err != nil {
 				return err
+			}
+			if exec.breakFlag {
+				exec.breakFlag = false
+				return nil
 			}
 		}
 	}
@@ -304,6 +312,10 @@ func (s *cEach) exec(exec *tplExec) *execError {
 				for _, v := range s.commands {
 					if err := v.exec(exec); err != nil {
 						return err
+					}
+					if exec.breakFlag {
+						exec.breakFlag = false
+						return nil
 					}
 				}
 			}

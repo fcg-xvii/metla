@@ -53,6 +53,17 @@ var (
 				}
 			}
 			return p.initParseError(p.Line(), p.LinePos(), "Unexpected endfor token")
+		}, "endif": func(p *parser) *parseError {
+			if ck, i, check := findThread(p); !check {
+				return p.initParseError(p.Line(), p.LinePos(), "Unexpected endif token - 'if' token not found")
+			} else {
+				ck.closed = true
+				lastBlock := ck.blocks[len(ck.blocks)-1]
+				lastBlock.commands = make([]executer, len(p.execList)-i-1)
+				copy(lastBlock.commands, p.execList[i+1:])
+				p.execList = p.execList[:i+1]
+				return nil
+			}
 		},
 	}
 	functions = map[string]interface{}{

@@ -1,7 +1,7 @@
 package prod
 
 import (
-	_ "fmt"
+	"fmt"
 
 	"github.com/fcg-xvii/containers"
 )
@@ -19,6 +19,7 @@ func newRPN(p *parser) *parseError {
 	}
 mainLoop:
 	for !p.IsEndDocument() {
+		fmt.Println("!!!")
 		switch {
 		case isOperatorSymbol(p):
 			//fmt.Println("OPSYMBOL", st)

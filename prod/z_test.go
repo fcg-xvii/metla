@@ -12,6 +12,7 @@ import (
 
 type TestSingle struct {
 	Single string
+	Number int
 }
 
 func (s *TestSingle) Methodd(i, j int) (int, int) {
@@ -48,7 +49,7 @@ func TestParser(t *testing.T) {
 		"list": []string{"one", "two", "three", "four", "five"},
 		"mmap": map[string]interface{}{"one": 1, "two": 2, "three": 3},
 		"rMap": map[string]int{"min": 1, "max": 100000},
-		"tVal": &Test{&TestSingle{"SINGLE___"}},
+		"tVal": &Test{&TestSingle{"SINGLE___", 777}},
 		"map": map[string]interface{}{
 			"one": map[int]interface{}{
 				100: 200,

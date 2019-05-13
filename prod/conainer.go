@@ -18,16 +18,16 @@ func newField(p *parser) *parseError {
 	p.fieldFlag = true
 mainLoop:
 	for !p.IsEndDocument() {
-		fmt.Println("FIELD_FLAG", p.fieldFlag)
+		//fmt.Println("FIELD_FLAG", p.fieldFlag)
 		p.PassSpaces()
 		switch {
 		case !lineman.CheckLetter(p.Char()) && !lineman.CheckNumber(p.Char()) && p.Char() != '(':
-			fmt.Println(stackLen, p.stack.Len(), string(p.Char()))
+			//fmt.Println(stackLen, p.stack.Len(), string(p.Char()))
 			if stackLen != p.stack.Len()-1 {
 				return p.initParseError(p.Line(), p.LinePos(), "Field parse error :: unexpected value")
 			}
 			list = append(list, p.stack.Pop())
-			fmt.Println(p.Char())
+			//fmt.Println(p.Char())
 			if p.Char() != '.' {
 				break mainLoop
 			} else {
@@ -41,7 +41,7 @@ mainLoop:
 	}
 	p.fieldFlag = false
 	p.stack.Push(&field{pos, list})
-	fmt.Println("FIELD_ENDDD")
+	//fmt.Println("FIELD_ENDDD", p.stack.Peek())
 	return nil
 }
 
@@ -55,7 +55,7 @@ func (s *field) execType() execType {
 }
 
 func (s *field) exec(exec *tplExec) *execError {
-	fmt.Println("field_exec")
+	//fmt.Println("field_exec")
 	pos, stackLen := s.position, exec.stack.Len()
 	exec.stack.Push(s.list[0])
 	l := s.list[1:]
@@ -123,6 +123,5 @@ func (s *field) exec(exec *tplExec) *execError {
 			}
 		}
 	}
-	//fmt.Println("TTTTTTTTTTTTTTTTTTTTTT", exec.stack.Peek())
 	return nil
 }

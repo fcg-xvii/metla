@@ -38,10 +38,16 @@ func min(left, right int) int {
 }
 
 func TestParser(t *testing.T) {
+	var null *Test
+
 	exVals := map[string]interface{}{
 		"inc":  Inc,
 		"min":  min,
+		"null": null,
 		"one":  1,
+		"list": []string{"one", "two", "three", "four", "five"},
+		"mmap": map[string]interface{}{"one": 1, "two": 2, "three": 3},
+		"rMap": map[string]int{"min": 1, "max": 100000},
 		"tVal": &Test{&TestSingle{"SINGLE___"}},
 		"map": map[string]interface{}{
 			"one": map[int]interface{}{
@@ -62,6 +68,7 @@ func TestParser(t *testing.T) {
 			&buf,
 			parser.store.execStorage(exVals),
 			new(containers.Stack),
+			false,
 		}
 		if err := ex.exec(); err != nil {
 			log.Println(err)

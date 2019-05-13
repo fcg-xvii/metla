@@ -78,6 +78,19 @@ func (s *storage) globalIndexes() (res []int) {
 	return
 }
 
+func (s *storage) incLayout() {
+	s.layout++
+}
+
+func (s *storage) decLayout() {
+	for i, v := range s.list {
+		if v.layout == s.layout {
+			s.list[i] = nil
+		}
+	}
+	s.layout--
+}
+
 func (s *storage) execStorage(vals map[string]interface{}) *execStorage {
 	res := &execStorage{
 		values: make([]interface{}, len(s.list)),
@@ -92,7 +105,7 @@ func (s *storage) execStorage(vals map[string]interface{}) *execStorage {
 			}
 		}
 	}
-	fmt.Println("STO_EXEC", res)
+	//fmt.Println("STO_EXEC", res)
 	return res
 }
 

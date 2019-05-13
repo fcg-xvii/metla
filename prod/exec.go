@@ -6,6 +6,7 @@ const (
 	execFunction execType = iota
 	execMethod
 	execFor
+	execBreak
 	execIf
 	execRPN
 	execEcho

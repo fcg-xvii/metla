@@ -8,7 +8,7 @@ import (
 )
 
 func initParser(tplName string, src []byte) *parser {
-	return &parser{lineman.NewCodeLine(src), tplName, new(containers.Stack), nil, new(storage), false, false, false}
+	return &parser{lineman.NewCodeLine(src), tplName, new(containers.Stack), nil, new(storage), false, false, false, 0}
 }
 
 type parseError struct {
@@ -33,18 +33,19 @@ func (s *execError) Error() string {
 
 type parser struct {
 	*lineman.CodeLine
-	tplName   string
-	stack     *containers.Stack
-	execList  []executer
-	store     *storage
-	fieldFlag bool
-	varFlag   bool
-	rpnFlag   bool
+	tplName     string
+	stack       *containers.Stack
+	execList    []executer
+	store       *storage
+	fieldFlag   bool
+	varFlag     bool
+	rpnFlag     bool
+	cycleLayout byte
 }
 
 func (s *parser) PopExecuters() (list []executer, err *parseError) {
 	list = make([]executer, s.stack.Len())
-	fmt.Println(s.stack.Len())
+	//fmt.Println(s.stack.Len())
 	for i, v := range s.stack.PopAll() {
 		if ex, check := v.(executer); check {
 			list[i] = ex
@@ -60,6 +61,9 @@ func (s *parser) parseDocument() error {
 		if err := s.parseText(); err != nil {
 			return err
 		}
+	}
+	if s.cycleLayout > 0 {
+		return fmt.Errorf("Unclosed for token")
 	}
 	return nil
 }
@@ -183,7 +187,7 @@ func (s *parser) initCodeVal() *parseError {
 	//fmt.Println("INIT", string(s.Char()))
 	switch s.Char() {
 	case '+', '-', '*', '/', '(', '!', '>', '<', '%', '&', '|':
-		fmt.Println(s.fieldFlag)
+		//fmt.Println(s.fieldFlag)
 		if s.fieldFlag {
 			return newMethod(s)
 		} else {
@@ -206,7 +210,7 @@ func (s *parser) initCodeVal() *parseError {
 		if s.NextChar() != '=' {
 			return newValSet(s)
 		} else {
-			return newValArifmetic(s)
+			return newRPN(s)
 		}
 	case '{':
 		//val, err = newValObject(p)
@@ -226,11 +230,13 @@ func (s *parser) initCodeVal() *parseError {
 					if !s.fieldFlag {
 						if err := newValName(s, line, pos, string(name)); err == nil {
 							s.PassSpaces()
-							if s.Char() == '(' { // Функция
+							if s.Char() == '(' || s.Char() == '.' { // Функция
 								return s.initCodeVal()
 							}
+							return nil
+						} else {
+							return err
 						}
-						return nil
 					} else {
 						s.stack.Push(initStatic(s, string(name), -len(name)))
 						return nil

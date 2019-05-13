@@ -29,8 +29,6 @@ func parseFunctionArgs(p *parser, fPos *position) (list []interface{}, err *pars
 				return
 			}
 			argAppend = true
-			//list = append(list, p.stack.Pop())
-			//valAccepted = false
 		}
 	}
 	return nil, (*fPos).parseError("Unexpected end of document")
@@ -41,17 +39,14 @@ func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []int
 	rArgs = make([]reflect.Value, 0, fCount)
 
 	argsLenCheck := func(v interface{}) {
-		fmt.Println("args len", fCount, len(rArgs))
 		if fCount <= len(rArgs) {
 			err = pos.execError("Args count more than needed")
 		}
 	}
 
 	convert := func(v interface{}, rType reflect.Type) (val reflect.Value) {
-		fmt.Println("convert <<< ", v)
 		lVal := reflect.ValueOf(v)
 		lType := lVal.Type()
-		fmt.Println("PPPP", lType, rType)
 		if lType != rType {
 			if lType.ConvertibleTo(rType) {
 				val = lVal.Convert(rType)
@@ -64,13 +59,10 @@ func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []int
 		return
 	}
 
-	fmt.Println("AAAARRRGGGGGSSSSSS", args)
 	for _, v := range args {
-		fmt.Println("CHI")
 		if argsLenCheck(v); err != nil {
 			return
 		}
-		fmt.Println("222", v, err)
 		switch v.(type) {
 		case getter:
 			if rArg := convert(v.(getter).get(exec), fType.In(len(rArgs))); err != nil {

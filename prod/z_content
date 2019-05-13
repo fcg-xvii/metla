@@ -1,5 +1,7 @@
 Строка 1
 {% 
-	!false < 10
+	range index in 0 : 1000
+		echoln index
+	endfor
 %}
 Привет

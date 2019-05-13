@@ -112,7 +112,14 @@ func TestParser(t *testing.T) {
 		"req":     httptest.NewRequest("GET", "/index.html", nil),
 	}
 
-	for {
+	if modified, err := root.Content("z_script", &buf, data); err != nil {
+		log.Println("ERR", err)
+	} else {
+		log.Println("OK", modified)
+		buf.WriteTo(os.Stdout)
+	}
+
+	/*for {
 
 		if modified, err := root.Content("z_script", &buf, data); err != nil {
 			log.Println("ERR", err)
@@ -122,5 +129,5 @@ func TestParser(t *testing.T) {
 		}
 
 		time.Sleep(time.Second * 3)
-	}
+	}*/
 }

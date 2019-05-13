@@ -1,3 +1,5 @@
 {% 
-	echoln
+	for i in 0:100000
+		echoln i
+	endfor
 %}

@@ -13,7 +13,7 @@ func newValName(p *parser, line, pos int, key string) *parseError {
 	} else {
 		name.index = p.store.initVariable(string(key))
 	}
-	p.stack.Push(&name)
+	p.stack.Push(name)
 	return nil
 }
 
@@ -23,12 +23,12 @@ type iName struct {
 	index int
 }
 
-func (s *iName) StorageIndex() int {
+func (s iName) StorageIndex() int {
 	return s.index
 }
 
-func (s *iName) set(exec *tplExec, val interface{}) *execError {
-	fmt.Println("VAL.....", val)
+func (s iName) set(exec *tplExec, val interface{}) *execError {
+	//fmt.Println("VAL.....", val)
 	if g, check := val.(getter); check {
 		exec.sto.setValue(s.index, g.get(exec))
 	} else {
@@ -37,11 +37,15 @@ func (s *iName) set(exec *tplExec, val interface{}) *execError {
 	return nil
 }
 
-func (s *iName) get(exec *tplExec) interface{} {
+func (s iName) setRaw(exec *tplExec, val interface{}) {
+	exec.sto.setValue(s.index, val)
+}
+
+func (s iName) get(exec *tplExec) interface{} {
 	return exec.sto.getValue(s.index)
 }
 
-func (s *iName) String() string {
+func (s iName) String() string {
 	return fmt.Sprintf("{ iName: %v, %v }", s.name, s.index)
 }
 

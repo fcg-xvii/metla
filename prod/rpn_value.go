@@ -1,10 +1,10 @@
 package prod
 
 import (
-	"reflect"
+	_ "reflect"
 )
 
-func rpnValueNumber(val interface{}, pos position, exec *tplExec) (float64, *execError) {
+/*func rpnValueNumber(val interface{}, pos position, exec *tplExec) (float64, *execError) {
 	var rVal reflect.Value
 	switch val.(type) {
 	case getter:
@@ -17,4 +17,4 @@ func rpnValueNumber(val interface{}, pos position, exec *tplExec) (float64, *exe
 			return 0, err
 		}
 	}
-}
+}*/

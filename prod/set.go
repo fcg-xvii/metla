@@ -1,9 +1,8 @@
 package prod
 
-import "fmt"
+import _ "fmt"
 
 func parseSetNames(p *parser) *parseError {
-
 	for !p.IsEndLine() {
 		p.PassSpaces()
 		switch p.Char() {
@@ -16,18 +15,18 @@ func parseSetNames(p *parser) *parseError {
 			return err
 		}
 	}
-	return p.initParseError(p.Line(), p.LinePos(), "Unexpected endLine, expected ':' or '='")
+	return p.initParseError(p.Line(), p.LinePos(), "Unexpected endLine, expected '='")
 }
 
 func newValSet(p *parser) *parseError {
-	fmt.Println("SETTTTTTTTTTTTTTTTTTTTTT >>>>>>>>>>>>>>>>>>.")
+	//fmt.Println("SETTTTTTTTTTTTTTTTTTTTTT >>>>>>>>>>>>>>>>>>.", string(p.Char()))
 	ex := set{}
 	if p.Char() == ',' {
 		if err := parseSetNames(p); err != nil {
 			return err
 		}
 	}
-	fmt.Println(p.stack)
+	//fmt.Println(p.stack)
 	for p.stack.Len() > 0 {
 		val := p.stack.Pop().(coordinator)
 		if v, check := val.(setter); check {
@@ -55,9 +54,9 @@ func newValSet(p *parser) *parseError {
 		p.PassSpaces()
 	}
 	ex.values = p.stack.PopAllReverse()
-	//fmt.Println("NAMES", ex.names, p.stack.Len())
-	//fmt.Println("VALUES", ex.values, p.stack.Len())
-	p.stack.Push(&ex)
+	p.stack.Push(ex)
+	//fmt.Println("ENDST....", string(p.Char()))
+	p.varFlag = false
 	return nil
 }
 
@@ -68,19 +67,19 @@ type set struct {
 	uppdate bool
 }
 
-func (s *set) String() string {
+func (s set) String() string {
 	return "{ set }"
 }
 
-func (s *set) execType() execType {
+func (s set) execType() execType {
 	return execSet
 }
 
-func (s *set) exec(exec *tplExec) *execError {
-	fmt.Println("SET_EXEC...")
+func (s set) exec(exec *tplExec) *execError {
+	//fmt.Println("SET_EXEC...")
 	valsIndex := 0
-	fmt.Println("NAMES", s.names)
-	fmt.Println("VALS", s.values)
+	//fmt.Println("NAMES", s.names)
+	//fmt.Println("VALS", s.values)
 	for _, v := range s.names {
 		//fmt.Println("!!!!!!", exec.stack.Len(), v)
 		if exec.stack.Len() == 0 {
@@ -100,6 +99,6 @@ func (s *set) exec(exec *tplExec) *execError {
 			return err
 		}
 	}
-	fmt.Println("SET_STACK", exec.stack)
+	//fmt.Println("SET_STACK", exec.stack)
 	return nil
 }

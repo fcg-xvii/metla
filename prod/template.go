@@ -1,18 +1,19 @@
 package prod
 
 import (
-	"fmt"
+	_ "fmt"
 	"io"
 
 	"github.com/fcg-xvii/containers"
 )
 
 type tplExec struct {
-	tplName  string
-	execList []executer
-	writer   io.Writer
-	sto      *execStorage
-	stack    *containers.Stack
+	tplName   string
+	execList  []executer
+	writer    io.Writer
+	sto       *execStorage
+	stack     *containers.Stack
+	breakFlag bool
 }
 
 func (s *tplExec) Write(data []byte) *execError {
@@ -24,9 +25,9 @@ func (s *tplExec) Write(data []byte) *execError {
 }
 
 func (s *tplExec) exec() error {
-	fmt.Println("EXEC.....", s.execList)
+	//fmt.Println("EXEC.....", s.execList)
 	for _, v := range s.execList {
-		fmt.Println(v)
+		//fmt.Println(v)
 		if err := v.exec(s); err != nil {
 			return err
 		}

@@ -1,10 +1,5 @@
 Строка 1
 {% 
-	mongo = 10
-	o = [{"name": "name 1", "val": "val1"}, {"name": "name 2", "val": "val 2"}]
-	mongo = 20
-	each _, val -> o
-		echoln val.name, val.val
-	endfor
+	include "z_top" { "name": "Вован" }
 %}
-Привет
+Привет всем ))

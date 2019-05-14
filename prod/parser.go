@@ -7,8 +7,8 @@ import (
 	"github.com/fcg-xvii/lineman"
 )
 
-func initParser(tplName string, src []byte) *parser {
-	return &parser{lineman.NewCodeLine(src), tplName, new(containers.Stack), nil, new(storage), false, false, false, 0}
+func initParser(tplName string, src []byte, root *Metla) *parser {
+	return &parser{lineman.NewCodeLine(src), root, tplName, new(containers.Stack), nil, new(storage), false, false, false, 0}
 }
 
 type parseError struct {
@@ -33,6 +33,7 @@ func (s *execError) Error() string {
 
 type parser struct {
 	*lineman.CodeLine
+	root        *Metla
 	tplName     string
 	stack       *containers.Stack
 	execList    []executer
@@ -88,7 +89,7 @@ func (s *parser) parseText() *parseError {
 			s.appendText(0)
 			return s.parseCode()
 		case '{':
-			s.appendText(1)
+			s.appendText(0)
 			return s.parsePrint()
 		case '*':
 			s.appendText(1)
@@ -112,7 +113,11 @@ func (s *parser) isEndCode() bool {
 }
 
 func (s *parser) parsePrint() *parseError {
-	return s.initParseError(0, 0, "Err Parse print")
+	if err := newPrint(s); err != nil {
+		return err
+	}
+	s.appendExec(s.stack.Pop().(executer))
+	return nil
 }
 
 func (s *parser) parseComment() *parseError {

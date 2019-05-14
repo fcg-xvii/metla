@@ -18,6 +18,7 @@ const (
 	execIndex
 	execArray
 	execObject
+	execInclude
 )
 
 func (s execType) String() string {

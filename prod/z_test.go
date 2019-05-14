@@ -3,11 +3,12 @@ package prod
 import (
 	"bytes"
 	"io/ioutil"
-	"log"
+	_ "log"
 	"os"
 	"testing"
+	"time"
 
-	"github.com/fcg-xvii/containers"
+	_ "github.com/fcg-xvii/containers"
 )
 
 type TestSingle struct {
@@ -38,7 +39,7 @@ func min(left, right int) int {
 	return right
 }
 
-func TestParser(t *testing.T) {
+/*func TestParser(t *testing.T) {
 	var null *Test
 
 	exVals := map[string]interface{}{
@@ -71,15 +72,86 @@ func TestParser(t *testing.T) {
 			new(containers.Stack),
 			false,
 		}
-		if err := ex.exec(); err != nil {
-			log.Println(err)
-		} else {
-			log.Println(ex.sto.values)
+		ex.exec()
+		log.Println(ex.sto.values)
+		log.Println("======================")
+		buf.WriteTo(os.Stdout)
+		log.Println("======================")
+	} else {
+		log.Println(err)
+	}
+}*/
+
+var (
+	m      = New(&MRequester{})
+	buf    bytes.Buffer
+	params = map[string]interface{}{}
+)
+
+type MRequester struct {
+	path string
+}
+
+func (s *MRequester) RequestContent(path string) (content []byte, marker time.Time, exists bool, err error) {
+	if info, infoErr := os.Stat(path); infoErr == nil {
+		exists, marker = true, info.ModTime()
+		content, err = ioutil.ReadFile(path)
+	}
+	return
+}
+
+func (s *MRequester) RequestUpdate(path string, modified time.Time) (content []byte, marker time.Time, exists bool, err error) {
+	if info, infoErr := os.Stat(path); infoErr == nil {
+		marker, exists = info.ModTime(), true
+		if !modified.Equal(info.ModTime()) {
+			content, err = ioutil.ReadFile(path)
+		}
+	} else {
+		marker = time.Now()
+	}
+	return
+}
+
+/*func TestMetla(t *testing.T) {
+	m := New(&MRequester{})
+
+	for {
+		var buf bytes.Buffer
+
+		params := map[string]interface{}{
+			"one": 1,
+		}
+
+		log.Println(m.Content("z_content", &buf, params))
+		log.Println("======================")
+		buf.WriteTo(os.Stdout)
+		log.Println("======================")
+
+		//time.Sleep(time.Second * 5)
+		return
+	}
+}*/
+
+/*func TestRace(t *testing.T) {
+
+	for i := 0; i < 500; i++ {
+		go func() {
+			var buf bytes.Buffer
+
+			params := map[string]interface{}{
+				"one": 1,
+			}
+
+			m.Content("z_content", &buf, params)
 			log.Println("======================")
 			buf.WriteTo(os.Stdout)
 			log.Println("======================")
-		}
-	} else {
-		log.Println(err)
+		}()
+	}
+}*/
+
+func BenchmarkShow(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		m.Content("z_content", &buf, params)
 	}
 }

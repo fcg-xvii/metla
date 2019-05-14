@@ -10,6 +10,8 @@ github.com/fcg-xvii/containers v0.0.0-20190414061214-ee3f66475e9f h1:O5vdTviHHaU
 github.com/fcg-xvii/containers v0.0.0-20190414061214-ee3f66475e9f/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
 github.com/fcg-xvii/containers v0.0.0-20190511182433-3c357856f179 h1:9wBRdNJmwfC/PomQfXj22GyClqkHZVQMZxAOTXKam5A=
 github.com/fcg-xvii/containers v0.0.0-20190511182433-3c357856f179/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
+github.com/fcg-xvii/containers v0.0.0-20190514140812-7673a44ef8ef h1:vJvMl/nq3lNsSM4C4bZbEx/gulHE6fC9YR31N0kwIMU=
+github.com/fcg-xvii/containers v0.0.0-20190514140812-7673a44ef8ef/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
 github.com/fcg-xvii/lineman v0.0.0-20190314151355-22106ed1266a h1:Svi/c88PVuOwgfPJaTahgx1Cz7ZmX8vXugImZZL7de4=
 github.com/fcg-xvii/lineman v0.0.0-20190314151355-22106ed1266a/go.mod h1:VD8ux12NFmRoAUD4YxBSu6YTwpGIozjCJqIcDQ+WXGc=
 github.com/fcg-xvii/lineman v0.0.0-20190314154620-36d40fa439af h1:cVXUMWElcdceWd31lyMaTZGFkFYzPDLl6t5j9Bt5z20=

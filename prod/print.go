@@ -53,3 +53,54 @@ func (s echoln) exec(exec *tplExec) *execError {
 	}
 	return exec.Write([]byte{'\n'})
 }
+
+func newPrint(p *parser) *parseError {
+	pos, stackLen, closeTag := position{p.tplName, p.Line(), p.LinePos()}, p.stack.Len(), []byte("}}")
+	p.ForwardPos(2)
+	for !p.IsEndDocument() {
+		if err := p.initCodeVal(); err != nil {
+			return err
+		}
+		p.PassSpaces()
+		//fmt.Println(string(p.Char()))
+		if p.PosMatchSlice(closeTag) {
+			if stackLen+1 != p.stack.Len() {
+				return pos.parseError("Expected single token")
+			}
+			p.stack.Push(print{pos, p.stack.Pop().(coordinator)})
+			p.ForwardPos(2)
+			return nil
+		}
+	}
+	return pos.parseError("Unclosed print tag")
+}
+
+type print struct {
+	position
+	item coordinator
+}
+
+func (s print) execType() execType {
+	return execPrint
+}
+
+func (s print) exec(exec *tplExec) *execError {
+	//stackLen := exec.stack.Len()
+	switch s.item.(type) {
+	case getter:
+		//exec.stack.Push(s.item.(getter).get(exec))
+		if err := exec.Write([]byte(fmt.Sprint(s.item.(getter).get(exec)))); err != nil {
+			return err
+		}
+	case executer:
+		if err := s.item.(executer).exec(exec); err != nil {
+			return err
+		}
+		for exec.stack.Len() > 0 {
+			if err := exec.Write([]byte(fmt.Sprint(exec.stack.Pop().(getter).get(exec)) + " ")); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}

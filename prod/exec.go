@@ -99,7 +99,8 @@ func execOneReturn(crd coordinator, exec *tplExec) (res interface{}, err *execEr
 			err = crd.execError("Expected one return value")
 			return
 		}
-		res = exec.stack.Pop().(executer).exec(exec)
+		return execOneReturn(exec.stack.Pop().(coordinator), exec)
+		//res = exec.stack.Pop().(executer).exec(exec)
 	}
 	return
 }

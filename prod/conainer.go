@@ -59,7 +59,6 @@ func (s *field) exec(exec *tplExec) *execError {
 	//fmt.Println("field_exec")
 	pos, stackLen := s.position, exec.stack.Len()
 	exec.stack.Push(s.list[0])
-	fmt.Println(exec.stack.Peek())
 	l := s.list[1:]
 	for len(l) > 0 {
 		//fmt.Println(exec.stack.Len(), stackLen, len(l))
@@ -74,7 +73,6 @@ func (s *field) exec(exec *tplExec) *execError {
 				return err
 			}
 		case getter:
-			fmt.Println("GETTER", owner)
 			val := owner.(getter).get(exec)
 			if val == nil {
 				return owner.(coordinator).execError("Invalid field owner")
@@ -107,9 +105,7 @@ func (s *field) exec(exec *tplExec) *execError {
 					return pos.execError("!!!!!!!!!!!!!!!!") // Релазовать методы
 				}
 			case reflect.Map:
-				fmt.Println("MMMAAAA")
 				if st, check := l[0].(static); check {
-					fmt.Println("IF")
 					rVal := reflect.ValueOf(st.get(exec))
 					rType, keyType := rVal.Type(), reflect.TypeOf(owner).Key()
 					if rType != keyType {
@@ -120,18 +116,14 @@ func (s *field) exec(exec *tplExec) *execError {
 						}
 					}
 					rResult := rOwner.MapIndex(rVal)
-					fmt.Println(">>>>>>>>>>>>>>>>>>>>", rResult)
 					if rResult.Kind() == reflect.Invalid {
 						return st.execError(fmt.Sprintf("Map index [%v] not found", st.get(exec)))
 					} else {
-						fmt.Sprintf("STTTTT... %T", rResult.Interface())
 						switch iface := rResult.Interface(); iface.(type) {
 						case static:
 							exec.stack.Push(iface)
 						case iName:
-							fmt.Println("INNNNAMMMMMMEEEEEEEEE")
 							exec.stack.Push(static{s.position, iface.(getter).get(exec)})
-							fmt.Println("><<<<<<<<<<<<<<<<<<<<<<<<<", exec.stack.Peek())
 						default:
 							exec.stack.Push(static{s.position, rResult.Interface()})
 						}
@@ -143,7 +135,7 @@ func (s *field) exec(exec *tplExec) *execError {
 			}
 		}
 	}
-	fmt.Println(exec.stack.Peek())
+	//fmt.Println(exec.stack.Peek())
 	return nil
 }
 
@@ -256,4 +248,145 @@ func (s objIndex) exec(exec *tplExec) *execError {
 
 func (s objIndex) execType() execType {
 	return execIndex
+}
+
+///////////////////////////////////////////////////////////
+
+func newArray(p *parser) *parseError {
+	var list []coordinator
+	pos, stackLen := position{p.tplName, p.Line(), p.LinePos()}, p.stack.Len()
+
+	flushArg := func() *parseError {
+		if stackLen+1 != p.stack.Len() {
+			return p.initParseError(p.Line(), p.LinePos(), "Expected one value")
+		}
+		list = append(list, p.stack.Pop().(coordinator))
+		return nil
+	}
+	valArrived := false
+	p.IncPos()
+	for !p.IsEndDocument() {
+		p.PassSpaces()
+		switch p.Char() {
+		case ']':
+			if valArrived {
+				flushArg()
+			}
+			p.stack.Push(array{pos, list})
+			p.IncPos()
+			return nil
+		case ',', '\n', ';':
+			if valArrived {
+				if err := flushArg(); err != nil {
+					return err
+				}
+				valArrived = false
+			}
+			p.IncPos()
+		default:
+			valArrived = true
+			if err := p.initCodeVal(); err != nil {
+				return err
+			}
+		}
+	}
+	return pos.parseError("Unclosed array token")
+}
+
+type array struct {
+	position
+	vals []coordinator
+}
+
+func (s array) execType() execType {
+	return execArray
+}
+
+func (s array) exec(exec *tplExec) *execError {
+	arr := make([]interface{}, len(s.vals))
+	for i, v := range s.vals {
+		if obj, err := execOneReturn(v, exec); err != nil {
+			return err
+		} else {
+			arr[i] = obj
+		}
+	}
+	exec.stack.Push(static{s.position, arr})
+	return nil
+}
+
+////////////////////////////////////////////////////////////
+
+func newObject(p *parser) *parseError {
+	rMap := make(map[string]coordinator)
+	key, stackLen, pos := "", p.stack.Len(), position{p.tplName, p.Line(), p.LinePos()}
+
+	flushValue := func() *parseError {
+		if key == "" && stackLen == p.stack.Len() {
+			return nil
+		} else if key == "" {
+			return p.initParseError(p.Line(), p.LinePos(), "Unexpected value, name expected")
+		} else if p.stack.Len() != stackLen+1 {
+			return p.initParseError(p.Line(), p.LinePos(), "Expected single token")
+		}
+		rMap[key], key = p.stack.Pop().(coordinator), ""
+		return nil
+	}
+
+	p.IncPos()
+	for !p.IsEndDocument() {
+		p.PassSpaces()
+		switch ch := p.Char(); ch {
+		case ':':
+			if key != "" {
+				return p.initParseError(p.Line(), p.LinePos(), "Unexpected ':' splitter, value expected")
+			}
+			if p.stack.Len() != stackLen+1 {
+				return p.initParseError(p.Line(), p.LinePos(), "Expected string token 1")
+			}
+			if g, check := p.stack.Pop().(static); !check {
+				return p.initParseError(p.Line(), p.LinePos(), "Expected string token 2")
+			} else if key, check = g.get(nil).(string); !check {
+				return p.initParseError(p.Line(), p.LinePos(), "Expected string token 3")
+			}
+			p.IncPos()
+
+		case '\n', ',', '}':
+			if err := flushValue(); err != nil {
+				return err
+			}
+			p.IncPos()
+			if ch == '}' {
+				p.stack.Push(object{pos, rMap})
+				return nil
+			}
+		default:
+			if err := p.initCodeVal(); err != nil {
+				return err
+			}
+		}
+	}
+	return pos.parseError("Unclosed object token")
+}
+
+type object struct {
+	position
+	vals map[string]coordinator
+}
+
+func (s object) execType() execType {
+	return execObject
+}
+
+func (s object) exec(exec *tplExec) *execError {
+	res := make(map[string]interface{})
+	for k, v := range s.vals {
+		if obj, err := execOneReturn(v, exec); err != nil {
+			return err
+		} else {
+			res[k] = obj
+		}
+	}
+	exec.stack.Push(static{s.position, res})
+	return nil
 }

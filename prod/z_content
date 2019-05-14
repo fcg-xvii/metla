@@ -1,17 +1,10 @@
 Строка 1
 {% 
 	mongo = 10
-	o = { 
-		"one": {
-			"adin": mongo
-			"dva": 2
-		}
-		"two": 2
-	}
+	o = [{"name": "name 1", "val": "val1"}, {"name": "name 2", "val": "val 2"}]
 	mongo = 20
-	echoln o.one.adin
-	/*if 100 +  > 10 
-		echoln "more"
-	endif*/
+	each _, val -> o
+		echoln val.name, val.val
+	endfor
 %}
 Привет

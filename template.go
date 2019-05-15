@@ -140,5 +140,6 @@ func (s *tplExec) exec() (modified time.Time) {
 			return
 		}
 	}
+	modified = s.modified
 	return
 }

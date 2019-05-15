@@ -1,5 +1,6 @@
 Строка 1
 {% 
-	echoln "!!!"
+	echoln "!!!!"
+	include "z_top" { "name": "vladimir" }
 %}
 Привет всем ))

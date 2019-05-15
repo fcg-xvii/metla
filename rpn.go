@@ -10,7 +10,7 @@ func newRPN(p *parser) *parseError {
 	//fmt.Println("NEW_RPN", string(p.Char()))
 	obj, valAccepted := rpn{position: position{p.tplName, p.Line(), p.LinePos()}}, false
 	st, bracketLayout := new(containers.Stack), 0
-	if p.Char() != '!' && p.Char() != '(' {
+	if !(p.Char() == '!' && p.NextChar() != '=') && p.Char() != '(' {
 		if p.stack.Len() == 0 {
 			return obj.parseError("RPN parse error :: left side is empty")
 		} else {
@@ -19,7 +19,7 @@ func newRPN(p *parser) *parseError {
 	}
 mainLoop:
 	for !p.IsEndDocument() {
-		fmt.Println("!!!")
+		//fmt.Println("!!!")
 		switch {
 		case isOperatorSymbol(p):
 			//fmt.Println("OPSYMBOL", st)
@@ -96,7 +96,7 @@ mainLoop:
 		return obj.parseError("Unclosed bracket")
 	}
 	obj.pn = append(obj.pn, st.PopAllReverse()...)
-	//fmt.Println("PNNNN", obj.pn)
+	fmt.Println("PNNNN", obj.pn)
 	p.stack.Push(obj)
 	return nil
 }

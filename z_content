@@ -1,9 +1,13 @@
-Строка 1
 {%
-  var o = [0, 1, 2]
-  echoln o.id, o.name
-  each key, val -> o
-    echoln key, "->" val
-  endfor
+	k = true
+	if !k
+%} 
+<nav aria-label="breadcrumb" class="p-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ breadcrumbName }}</li>
+  </ol>
+</nav>
+{%
+	endif 
 %}
-Привет всем ))

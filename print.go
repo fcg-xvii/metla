@@ -88,15 +88,15 @@ func (s print) exec(exec *tplExec) *execError {
 	case getter:
 		//exec.stack.Push(s.item.(getter).get(exec))
 		if err := exec.Write([]byte(fmt.Sprint(s.item.(getter).get(exec)))); err != nil {
-			return err
+			return nil
 		}
 	case executer:
 		if err := s.item.(executer).exec(exec); err != nil {
-			return err
+			return nil
 		}
 		for exec.stack.Len() > 0 {
 			if err := exec.Write([]byte(fmt.Sprint(exec.stack.Pop().(getter).get(exec)) + " ")); err != nil {
-				return err
+				return nil
 			}
 		}
 	}

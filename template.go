@@ -43,7 +43,7 @@ func (s *template) parse(content []byte, root *Metla) error {
 	return s.err
 }
 
-func (s *template) initExec(w io.Writer, parent *tplExec) *tplExec {
+func (s *template) initExec(w io.Writer, parent *tplExec, params map[string]interface{}) *tplExec {
 	res := &tplExec{
 		tplName:  s.path,
 		execList: make([]executer, len(s.commands)),
@@ -69,7 +69,7 @@ func (s *template) content(w io.Writer, params map[string]interface{}, parent *t
 			err = s.err
 		} else {
 
-			ex := s.initExec(w, parent)
+			ex := s.initExec(w, parent, params)
 			s.locker.RUnlock()
 			modified = ex.exec()
 			return
@@ -80,7 +80,7 @@ func (s *template) content(w io.Writer, params map[string]interface{}, parent *t
 		s.modified, s.err = modified, err
 		if s.err == nil {
 			if err = s.parse(content, s.root); err == nil {
-				ex := s.initExec(w, parent)
+				ex := s.initExec(w, parent, params)
 				s.locker.Unlock()
 				modified = ex.exec()
 				return
@@ -96,7 +96,7 @@ func (s *template) contentWithoutUpdate(w io.Writer, params map[string]interface
 	if s.err != nil {
 		err = s.err
 	} else {
-		ex := s.initExec(w, nil)
+		ex := s.initExec(w, nil, params)
 		s.locker.RUnlock()
 		modified = ex.exec()
 		return

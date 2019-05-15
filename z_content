@@ -1,8 +1,5 @@
 Строка 1
 {% 
-	k = 0
-	for k < 10
-		//echoln k
-	endfor
+	echoln "!!!"
 %}
 Привет всем ))

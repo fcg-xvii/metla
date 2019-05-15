@@ -1,6 +1,7 @@
 package metla
 
 import (
+	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -44,6 +45,7 @@ func (s *template) parse(content []byte, root *Metla) error {
 
 func (s *template) initExec(w io.Writer, parent *tplExec, params map[string]interface{}) *tplExec {
 	res := &tplExec{
+		parent:   parent,
 		tplName:  s.path,
 		execList: make([]executer, len(s.commands)),
 		writer:   w,
@@ -107,6 +109,7 @@ func (s *template) contentWithoutUpdate(w io.Writer, params map[string]interface
 //////////////////////////////////////////////////////////////////////////
 
 type tplExec struct {
+	parent    *tplExec
 	tplName   string
 	execList  []executer
 	writer    io.Writer
@@ -140,5 +143,10 @@ func (s *tplExec) exec() (modified time.Time) {
 		}
 	}
 	modified = s.modified
+	if s.parent != nil {
+		s.parent.sto.compare(s.sto)
+	}
+
+	fmt.Println(s.sto.globalMapNotNil())
 	return
 }

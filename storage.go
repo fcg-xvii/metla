@@ -78,6 +78,16 @@ func (s *storage) globalIndexes() (res []int) {
 	return
 }
 
+func (s *storage) globalKeys() map[string]int {
+	res := make(map[string]int)
+	for i, v := range s.list {
+		if v.global {
+			res[v.key] = i
+		}
+	}
+	return res
+}
+
 func (s *storage) incLayout() {
 	s.layout++
 }
@@ -122,4 +132,24 @@ func (s *execStorage) setValue(index int, value interface{}) {
 
 func (s *execStorage) getValue(index int) interface{} {
 	return s.values[index]
+}
+
+func (s *execStorage) globalMapNotNil() map[string]interface{} {
+	res := make(map[string]interface{})
+	for _, v := range s.store.globalIndexes() {
+		if val := s.values[v]; val != nil {
+			res[s.store.list[v].key] = val
+		}
+	}
+	return res
+}
+
+func (s *execStorage) compare(sto *execStorage) {
+	sVals, globalKeys := sto.globalMapNotNil(), s.store.globalKeys()
+	delete(sVals, "params")
+	for key, val := range sVals {
+		if index, check := globalKeys[key]; check {
+			s.values[index] = val
+		}
+	}
 }

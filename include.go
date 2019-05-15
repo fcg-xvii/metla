@@ -50,6 +50,7 @@ func (s include) exec(exec *tplExec) *execError {
 		return s.resource.execError("String value expected")
 	} else {
 		if tpl, check := s.root.template(path); check {
+			vals := exec.sto.globalMapNotNil()
 			m := make(map[string]interface{})
 			for key, crd := range s.params {
 				if iface, err := execOneReturn(crd, exec); err != nil {
@@ -58,7 +59,8 @@ func (s include) exec(exec *tplExec) *execError {
 					m[key] = iface
 				}
 			}
-			if exists, modified, err := tpl.content(exec.writer, m, exec); err != nil {
+			vals["params"] = m
+			if exists, modified, err := tpl.content(exec.writer, vals, exec); err != nil {
 				return s.execError(err.Error())
 			} else if !exists {
 				return s.execError(fmt.Sprintf("Template %v is not exists\n", path))

@@ -1,13 +1,6 @@
 {%
-	k = true
-	if !k
+	var t = 0
+	k = 10
+	include "z_top" { name: "vovan" }
+	echoln k, params
 %} 
-<nav aria-label="breadcrumb" class="p-4">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/">Главная</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ breadcrumbName }}</li>
-  </ol>
-</nav>
-{%
-	endif 
-%}

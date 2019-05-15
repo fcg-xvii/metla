@@ -1,7 +1,6 @@
 package metla
 
 import (
-	"fmt"
 	"io"
 	"sync/atomic"
 	"time"
@@ -22,7 +21,6 @@ type ContentCallback func(path string) (marker time.Time, content []byte, err er
 type UpdateCallback func(path string, marker time.Time) (newMarker time.Time, content []byte, err error)
 
 func New(requester Requester) *Metla {
-	fmt.Println("NEW_METLA")
 	return &Metla{int64(DEFAULT_MAX_EXEC_DURATION), requester, containers.NewCache(time.Hour, time.Hour, nil)}
 }
 

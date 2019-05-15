@@ -59,7 +59,7 @@ func (s *parser) PopExecuters() (list []executer, err *parseError) {
 }
 
 func (s *parser) parseDocument() error {
-	fmt.Println("444")
+	//fmt.Println("444")
 	for !s.IsEndDocument() {
 		if err := s.parseText(); err != nil {
 			return err

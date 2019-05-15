@@ -1,5 +1,8 @@
 Строка 1
 {% 
-	include "z_top" { "name": "Вован" }
+	i = 0
+	if i < 10
+		echoln "!!!"
+	endif
 %}
 Привет всем ))

@@ -57,6 +57,7 @@ var (
 			if ck, i, check := findThread(p); !check {
 				return p.initParseError(p.Line(), p.LinePos(), "Unexpected endif token - 'if' token not found")
 			} else {
+				p.threadLayout--
 				ck.closed = true
 				lastBlock := ck.blocks[len(ck.blocks)-1]
 				lastBlock.commands = make([]executer, len(p.execList)-i-1)

@@ -8,7 +8,7 @@ import (
 )
 
 func initParser(tplName string, src []byte, root *Metla) *parser {
-	return &parser{lineman.NewCodeLine(src), root, tplName, new(containers.Stack), nil, new(storage), false, false, false, 0}
+	return &parser{lineman.NewCodeLine(src), root, tplName, new(containers.Stack), nil, new(storage), false, false, false, 0, 0}
 }
 
 type parseError struct {
@@ -33,15 +33,16 @@ func (s *execError) Error() string {
 
 type parser struct {
 	*lineman.CodeLine
-	root        *Metla
-	tplName     string
-	stack       *containers.Stack
-	execList    []executer
-	store       *storage
-	fieldFlag   bool
-	varFlag     bool
-	rpnFlag     bool
-	cycleLayout byte
+	root         *Metla
+	tplName      string
+	stack        *containers.Stack
+	execList     []executer
+	store        *storage
+	fieldFlag    bool
+	varFlag      bool
+	rpnFlag      bool
+	cycleLayout  byte
+	threadLayout byte
 }
 
 func (s *parser) PopExecuters() (list []executer, err *parseError) {
@@ -65,6 +66,10 @@ func (s *parser) parseDocument() error {
 	}
 	if s.cycleLayout > 0 {
 		return fmt.Errorf("Unclosed for token")
+	}
+	if s.threadLayout > 0 {
+		thread, _, _ := findThread(s)
+		return thread.parseError("Unclosed if tag")
 	}
 	return nil
 }

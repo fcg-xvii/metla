@@ -114,7 +114,7 @@ func (s *MRequester) RequestUpdate(path string, modified time.Time) (content []b
 
 func TestMetla(t *testing.T) {
 	m := New(&MRequester{})
-
+	m.SetMaxExecDuration(time.Second * 5)
 	for {
 		var buf bytes.Buffer
 

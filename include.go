@@ -58,7 +58,7 @@ func (s include) exec(exec *tplExec) *execError {
 					m[key] = iface
 				}
 			}
-			if exists, modified, err := tpl.content(exec.writer, m); err != nil {
+			if exists, modified, err := tpl.content(exec.writer, m, exec); err != nil {
 				return s.execError(err.Error())
 			} else if !exists {
 				return s.execError(fmt.Sprintf("Template %v is not exists\n", path))

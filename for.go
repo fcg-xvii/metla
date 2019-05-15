@@ -3,6 +3,7 @@ package metla
 import (
 	"fmt"
 	"reflect"
+	"time"
 )
 
 func init() {
@@ -62,9 +63,16 @@ type cCycle struct {
 	checkPN rpn
 }
 
+func (s *cycle) checkMaxTime(exec *tplExec) bool {
+	return time.Now().After(exec.execStop)
+}
+
 func (s *cCycle) exec(exec *tplExec) (err *execError) {
 	var checkRes bool
 	for {
+		if s.checkMaxTime(exec) {
+			return s.execError("Fatal error :: Excess maximum execute time")
+		}
 		if err = s.checkPN.execToBool(exec, &checkRes); err != nil {
 			return err
 		}
@@ -179,6 +187,9 @@ func (s *cRange) exec(exec *tplExec) *execError {
 
 func (s *cRange) dec(min, max int, exec *tplExec) *execError {
 	for i := min; i > max; i-- {
+		if s.checkMaxTime(exec) {
+			return s.execError("Fatal error :: Excess maximum execute time")
+		}
 		s.countVar.set(exec, i)
 		for _, v := range s.commands {
 			if err := v.exec(exec); err != nil {
@@ -195,6 +206,9 @@ func (s *cRange) dec(min, max int, exec *tplExec) *execError {
 
 func (s *cRange) inc(min, max int, exec *tplExec) *execError {
 	for i := min; i < max; i++ {
+		if s.checkMaxTime(exec) {
+			return s.execError("Fatal error :: Excess maximum execute time")
+		}
 		s.countVar.setRaw(exec, i)
 		for _, v := range s.commands {
 			if err := v.exec(exec); err != nil {
@@ -285,6 +299,9 @@ func (s *cEach) exec(exec *tplExec) *execError {
 	case reflect.Slice, reflect.Array:
 		{
 			for i := 0; i < rVal.Len(); i++ {
+				if s.checkMaxTime(exec) {
+					return s.execError("Fatal error :: Excess maximum execute time")
+				}
 				if s.keyVar != nil {
 					s.keyVar.setRaw(exec, i)
 				}
@@ -303,6 +320,9 @@ func (s *cEach) exec(exec *tplExec) *execError {
 		{
 			iterator := rVal.MapRange()
 			for iterator.Next() {
+				if s.checkMaxTime(exec) {
+					return s.execError("Fatal error :: Excess maximum execute time")
+				}
 				if s.keyVar != nil {
 					s.keyVar.setRaw(exec, iterator.Key().Interface())
 				}

@@ -4,6 +4,7 @@ import (
 	_ "fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fcg-xvii/containers"
@@ -42,7 +43,25 @@ func (s *template) parse(content []byte, root *Metla) error {
 	return s.err
 }
 
-func (s *template) content(w io.Writer, params map[string]interface{}) (exists bool, modified time.Time, err error) {
+func (s *template) initExec(w io.Writer, parent *tplExec) *tplExec {
+	res := &tplExec{
+		tplName:  s.path,
+		execList: make([]executer, len(s.commands)),
+		writer:   w,
+		sto:      s.store.execStorage(params),
+		stack:    containers.NewStack(5),
+		modified: s.modified,
+		execStop: time.Now().Add(time.Duration(atomic.LoadInt64(&s.root.maxExecDuration))),
+	}
+	copy(res.execList, s.commands)
+	if parent != nil {
+		res.execStop = parent.execStop
+		res.layout = parent.layout + 1
+	}
+	return res
+}
+
+func (s *template) content(w io.Writer, params map[string]interface{}, parent *tplExec) (exists bool, modified time.Time, err error) {
 	var content []byte
 	if content, modified, exists, err = s.requester.RequestUpdate(s.path, s.modified); s.modified.Equal(modified) {
 		s.locker.RLock()
@@ -50,8 +69,7 @@ func (s *template) content(w io.Writer, params map[string]interface{}) (exists b
 			err = s.err
 		} else {
 
-			ex := &tplExec{s.path, make([]executer, len(s.commands)), w, s.store.execStorage(params), containers.NewStack(5), s.modified, false}
-			copy(ex.execList, s.commands)
+			ex := s.initExec(w, parent)
 			s.locker.RUnlock()
 			modified = ex.exec()
 			return
@@ -62,13 +80,11 @@ func (s *template) content(w io.Writer, params map[string]interface{}) (exists b
 		s.modified, s.err = modified, err
 		if s.err == nil {
 			if err = s.parse(content, s.root); err == nil {
-				ex := &tplExec{s.path, make([]executer, len(s.commands)), w, s.store.execStorage(params), containers.NewStack(5), s.modified, false}
-				copy(ex.execList, s.commands)
+				ex := s.initExec(w, parent)
 				s.locker.Unlock()
 				modified = ex.exec()
 				return
 			}
-
 		}
 		s.locker.Unlock()
 	}
@@ -80,8 +96,7 @@ func (s *template) contentWithoutUpdate(w io.Writer, params map[string]interface
 	if s.err != nil {
 		err = s.err
 	} else {
-		ex := &tplExec{s.path, make([]executer, len(s.commands)), w, s.store.execStorage(params), containers.NewStack(5), s.modified, false}
-		copy(ex.execList, s.commands)
+		ex := s.initExec(w, nil)
 		s.locker.RUnlock()
 		modified = ex.exec()
 		return
@@ -100,6 +115,8 @@ type tplExec struct {
 	stack     *containers.Stack
 	modified  time.Time
 	breakFlag bool
+	layout    byte
+	execStop  time.Time
 }
 
 func (s *tplExec) Write(data []byte) *execError {
@@ -111,6 +128,10 @@ func (s *tplExec) Write(data []byte) *execError {
 }
 
 func (s *tplExec) exec() (modified time.Time) {
+	if s.layout > 200 {
+		s.writer.Write([]byte("Fatal error :: include loop - stack owerflow, include layouts > 200\n"))
+		return
+	}
 	//fmt.Println("EXEC.....", s.execList)
 	for _, v := range s.execList {
 		//fmt.Println(v)

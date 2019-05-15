@@ -17,9 +17,6 @@ type Requester interface {
 	RequestUpdate(path string, modified time.Time) (content []byte, marker time.Time, exists bool, err error)
 }
 
-type ContentCallback func(path string) (marker time.Time, content []byte, err error)
-type UpdateCallback func(path string, marker time.Time) (newMarker time.Time, content []byte, err error)
-
 func New(requester Requester) *Metla {
 	return &Metla{int64(DEFAULT_MAX_EXEC_DURATION), requester, containers.NewCache(time.Hour, time.Hour, nil)}
 }

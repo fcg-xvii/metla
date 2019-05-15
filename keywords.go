@@ -50,6 +50,20 @@ var (
 						cycle.closeCycle()
 						p.cycleLayout--
 						p.store.decLayout()
+						/*if cycle.cLayout() != p.cycleLayout {
+							for _, v := range cycle.getCommands() {
+								if c, check := v.(cycler); check && !c.isClosed() {
+									return c.(coordinator).parseError("Unclosed for tag")
+								}
+							}
+						}*/
+						if cycle.tLayout() != p.threadLayout {
+							for _, v := range cycle.getCommands() {
+								if thread, check := v.(*thread); check && !thread.closed {
+									return thread.parseError("Unclosed if tag")
+								}
+							}
+						}
 						return nil
 					}
 				}
@@ -66,6 +80,15 @@ var (
 				copy(lastBlock.commands, p.execList[i+1:])
 				p.execList = p.execList[:i+1]
 				p.store.decLayout()
+				if ck.cycleLayout != p.cycleLayout {
+					for _, block := range ck.blocks {
+						for _, v := range block.commands {
+							if c, check := v.(cycler); check && !c.isClosed() {
+								return c.(coordinator).parseError("Unclosed for tag")
+							}
+						}
+					}
+				}
 				return nil
 			}
 		},

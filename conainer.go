@@ -333,10 +333,12 @@ func newObject(p *parser) *parseError {
 	}
 
 	p.IncPos()
+	p.fieldFlag = true
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		switch ch := p.Char(); ch {
 		case ':':
+			p.fieldFlag = false
 			if key != "" {
 				return p.initParseError(p.Line(), p.LinePos(), "Unexpected ':' splitter, value expected")
 			}
@@ -349,9 +351,10 @@ func newObject(p *parser) *parseError {
 				if key, check = crd.(static).get(nil).(string); !check {
 					return p.initParseError(p.Line(), p.LinePos(), "Expected string token")
 				}
-			case iName:
-				key = crd.(iName).name
+			//case iName:
+			//key = crd.(iName).name
 			default:
+				fmt.Println("CRD", crd)
 				return p.initParseError(p.Line(), p.LinePos(), "Expected string token")
 			}
 			/*if g, check := p.stack.Pop().(static); !check {
@@ -368,8 +371,10 @@ func newObject(p *parser) *parseError {
 			p.IncPos()
 			if ch == '}' {
 				p.stack.Push(object{pos, rMap})
+				p.fieldFlag = false
 				return nil
 			}
+			p.fieldFlag = true
 		default:
 			if err := p.initCodeVal(); err != nil {
 				return err

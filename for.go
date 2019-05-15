@@ -15,18 +15,26 @@ func init() {
 type cycler interface {
 	isClosed() bool
 	closeCycle()
+	getCommands() []executer
 	setCommands([]executer)
+	cLayout() byte
+	tLayout() byte
 }
 
 type cycle struct {
 	position
-	commands []executer
-	closed   bool
+	commands     []executer
+	closed       bool
+	cycleLayout  byte
+	threadLayout byte
 }
 
 func (s *cycle) isClosed() bool                  { return s.closed }
 func (s *cycle) closeCycle()                     { s.closed = true }
 func (s *cycle) setCommands(commands []executer) { s.commands = commands }
+func (s *cycle) getCommands() []executer         { return s.commands }
+func (s *cycle) cLayout() byte                   { return s.cycleLayout }
+func (s *cycle) tLayout() byte                   { return s.threadLayout }
 
 func newForCheck(cycle *cCycle, p *parser) *parseError {
 	p.PassSpaces()
@@ -38,8 +46,8 @@ func newForCheck(cycle *cCycle, p *parser) *parseError {
 }
 
 func newFor(p *parser) (err *parseError) {
+	c := &cCycle{cycle: &cycle{position: position{p.tplName, p.Line(), p.LinePos()}, cycleLayout: p.cycleLayout, threadLayout: p.threadLayout}}
 	p.cycleLayout++
-	c := &cCycle{cycle: &cycle{position: position{p.tplName, p.Line(), p.Pos()}}}
 	p.store.incLayout()
 
 	for !p.IsEndLine() {
@@ -102,12 +110,14 @@ func (s *cCycle) String() string {
 ////////////////////////////////////
 
 func newRange(p *parser) *parseError {
+	r := &cRange{cycle: &cycle{position: position{p.tplName, p.Line(), p.LinePos()}, cycleLayout: p.cycleLayout, threadLayout: p.threadLayout}}
 	p.cycleLayout++
 	p.store.incLayout()
-	r := &cRange{cycle: &cycle{position: position{p.tplName, p.Line(), p.Pos()}}}
+	p.varFlag = true
 	if err := p.initCodeVal(); err != nil {
 		return err
 	}
+	p.varFlag = false
 	cVar, check := p.stack.Pop().(iName)
 	if !check {
 		return r.parseError("Variable name expected")
@@ -228,9 +238,9 @@ func (s *cRange) execType() execType {
 }
 
 func newEach(p *parser) *parseError {
+	r := &cEach{cycle: &cycle{position: position{p.tplName, p.Line(), p.LinePos()}, cycleLayout: p.cycleLayout, threadLayout: p.threadLayout}}
 	p.cycleLayout++
 	p.store.incLayout()
-	r := &cEach{cycle: &cycle{position: position{p.tplName, p.Line(), p.Pos()}}}
 	if err := r.parseVar(p, &r.keyVar); err != nil {
 		return err
 	}
@@ -272,9 +282,11 @@ func (s *cEach) parseVar(p *parser, kVar **iName) *parseError {
 		p.IncPos()
 		return nil
 	} else {
+		p.varFlag = true
 		if err := p.initCodeVal(); err != nil {
 			return err
 		}
+		p.varFlag = false
 		crd := p.stack.Pop().(coordinator)
 		if vVar, check := crd.(iName); !check {
 			return crd.parseError("Expected variable token")

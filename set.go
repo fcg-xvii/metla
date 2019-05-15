@@ -42,7 +42,7 @@ func newValSet(p *parser) *parseError {
 	} else {
 		p.ForwardPos(2)
 	}
-
+	p.varFlag = false
 	for !p.IsEndLine() {
 		if err := p.initCodeVal(); err != nil {
 			return err
@@ -56,7 +56,6 @@ func newValSet(p *parser) *parseError {
 	ex.values = p.stack.PopAllReverse()
 	p.stack.Push(ex)
 	//fmt.Println("ENDST....", string(p.Char()))
-	p.varFlag = false
 	return nil
 }
 

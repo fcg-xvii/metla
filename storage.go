@@ -50,7 +50,6 @@ func (s *storage) initVariable(key string) int {
 }
 
 func (s *storage) setVariable(key string) (int, error) {
-	fmt.Println("LAYOUT...", s.layout, key)
 	if s.findVariableInLayout(key, s.layout) != -1 {
 		return -1, errors.New("Variable already exists in current layout")
 	}
@@ -90,7 +89,6 @@ func (s *storage) globalKeys() map[string]int {
 }
 
 func (s *storage) incLayout() {
-	fmt.Println("INCLAYOUT")
 	s.layout++
 }
 

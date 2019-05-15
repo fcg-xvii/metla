@@ -22,9 +22,9 @@ func findThread(p *parser) (*thread, int, bool) {
 
 func newIf(p *parser) *parseError {
 	//fmt.Println("NEW_IF")
+	ck := &thread{position: position{p.tplName, p.Line(), p.LinePos()}, cycleLayout: p.cycleLayout, threadLayout: p.threadLayout}
 	p.threadLayout++
 	p.store.incLayout()
-	ck := &thread{position: position{p.tplName, p.Line(), p.LinePos()}}
 	for !p.IsEndDocument() {
 		if err := p.initCodeVal(); err != nil {
 			return err
@@ -101,8 +101,10 @@ func (s *threadBlock) exec(exec *tplExec) *execError {
 
 type thread struct {
 	position
-	blocks []*threadBlock
-	closed bool
+	blocks       []*threadBlock
+	closed       bool
+	cycleLayout  byte
+	threadLayout byte
 }
 
 func (s *thread) execType() execType {

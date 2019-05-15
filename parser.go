@@ -59,18 +59,17 @@ func (s *parser) PopExecuters() (list []executer, err *parseError) {
 }
 
 func (s *parser) parseDocument() error {
-	//fmt.Println("444")
 	for !s.IsEndDocument() {
 		if err := s.parseText(); err != nil {
 			return err
 		}
 	}
 	if s.cycleLayout > 0 {
-		return fmt.Errorf("Unclosed for token")
-	}
-	if s.threadLayout > 0 {
-		thread, _, _ := findThread(s)
-		return thread.parseError("Unclosed if tag")
+		for _, v := range s.execList {
+			if c, check := v.(cycler); check && !c.isClosed() {
+				return c.(coordinator).parseError("Unclosed for tag")
+			}
+		}
 	}
 	return nil
 }

@@ -42,7 +42,9 @@ func (s iName) setRaw(exec *tplExec, val interface{}) {
 }
 
 func (s iName) get(exec *tplExec) interface{} {
-	return exec.sto.getValue(s.index)
+	val := exec.sto.getValue(s.index)
+	return val
+	//return exec.sto.getValue(s.index)
 }
 
 func (s iName) String() string {

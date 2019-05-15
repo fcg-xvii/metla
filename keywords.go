@@ -1,36 +1,74 @@
 package metla
 
 import (
-	"fmt"
-	"io"
 	"reflect"
 )
 
-type keywordConstructor func(*parser) (interface{}, error)
+type keywordConstructor func(*parser) *parseError
 
 func init() {
-	keywords["echo"] = keywordEcho
-	keywords["echoln"] = keywordEcholn
-	keywords["print"] = keywordPrint
-	keywords["println"] = keywordPrintln
+	keywords["len"] = func(p *parser) *parseError {
+		return initCoreFunction(coreLen, p)
+	}
+	//keywords["echo"] = keywordEcho
+	//keywords["echoln"] = keywordEcholn
+	//keywords["print"] = keywordPrint
+	//keywords["println"] = keywordPrintln
 }
 
 var (
 	keywords = map[string]keywordConstructor{
-		"nil": func(p *parser) (interface{}, error) {
-			p.stack.Push(nil)
-			return nil, nil
-		}, "true": func(p *parser) (interface{}, error) {
-			p.stack.Push(true)
-			return true, nil
-		}, "false": func(p *parser) (interface{}, error) {
-			p.stack.Push(false)
-			return false, nil
+		"nil": func(p *parser) *parseError {
+			p.stack.Push(initStatic(p, nil, 3))
+			return nil
+		}, "true": func(p *parser) *parseError {
+			p.stack.Push(initStatic(p, true, 4))
+			return nil
+		}, "false": func(p *parser) *parseError {
+			p.stack.Push(initStatic(p, false, 5))
+			return nil
+		}, "var": func(p *parser) *parseError {
+			if p.varFlag {
+				return p.initParseError(p.Line(), p.LinePos()-3, "Unexpected var keyword")
+			}
+			p.varFlag = true
+			return nil
+		}, "endfor": func(p *parser) *parseError {
+			if p.cycleLayout == 0 {
+				return p.initParseError(p.Line(), p.Pos(), "Unexpected endfor token")
+			}
+			for i := len(p.execList) - 1; i >= 0; i-- {
+				switch obj := p.execList[i]; obj.(type) {
+				case cycler:
+					cycle := obj.(cycler)
+					if !cycle.isClosed() {
+						commands := make([]executer, len(p.execList)-i-1)
+						copy(commands, p.execList[i+1:])
+						cycle.setCommands(commands)
+						p.execList = p.execList[:i+1]
+						cycle.closeCycle()
+						p.cycleLayout--
+						return nil
+					}
+				}
+			}
+			return p.initParseError(p.Line(), p.LinePos(), "Unexpected endfor token")
+		}, "endif": func(p *parser) *parseError {
+			if ck, i, check := findThread(p); !check {
+				return p.initParseError(p.Line(), p.LinePos(), "Unexpected endif token - 'if' token not found")
+			} else {
+				ck.closed = true
+				lastBlock := ck.blocks[len(ck.blocks)-1]
+				lastBlock.commands = make([]executer, len(p.execList)-i-1)
+				copy(lastBlock.commands, p.execList[i+1:])
+				p.execList = p.execList[:i+1]
+				return nil
+			}
 		},
 	}
 	functions = map[string]interface{}{
-		"len":     coreLen,
-		"defined": coreDefined,
+		//"len": coreLen,
+		//"defined": coreDefined,
 	}
 )
 
@@ -39,115 +77,61 @@ func getKeywordConstructor(name string) (result keywordConstructor, check bool) 
 	return
 }
 
-// keywords ////////////////////////////////////////////////////////////////////
+func initCoreFunction(method func(*tplExec, position, interface{}) *execError, p *parser) *parseError {
+	r := coreFunc{position: position{p.tplName, p.Line(), p.LinePos()}, method: method}
+	p.PassSpaces()
+	if p.Char() != '(' {
+		return p.initParseError(p.Line(), p.LinePos(), "Expected '(' character")
+	}
+	p.IncPos()
+	if err := p.initCodeVal(); err != nil {
+		return err
+	}
+	r.arg = p.stack.Pop()
+	p.PassSpaces()
+	if p.Char() != ')' {
+		return p.initParseError(p.Line(), p.LinePos(), "Expected ')' character")
+	}
+	p.IncPos()
+	p.stack.Push(r)
+	return nil
+}
 
-func parseKeywordArgs(p *parser, info *rawInfoRecord) (err error) {
-	for !p.IsEndDocument() {
-		p.PassSpaces()
-		if _, err = initCodeVal(p); err != nil {
-			return
+type coreFunc struct {
+	position
+	arg    interface{}
+	method func(*tplExec, position, interface{}) *execError
+}
+
+func (s coreFunc) exec(exec *tplExec) *execError {
+	var val interface{}
+	switch s.arg.(type) {
+	case getter:
+		val = s.arg.(getter).get(exec)
+	case executer:
+		stackLen := exec.stack.Len()
+		if err := s.arg.(executer).exec(exec); err != nil {
+			return err
 		}
-		switch p.Char() {
-		case '\n', ';':
-			return
-		case ',':
-			//p.pushSplitter()
-			p.IncPos()
-		default:
-			p.positionError(fmt.Sprintf("Unexpected symbol '%c'", p.Char()))
+		if stackLen+1 != exec.stack.Len() {
+			return s.execError("Not one return value in argument")
 		}
+		val = exec.stack.Pop().(getter).get(exec)
 	}
-	return info.fatalError("Unexpected end of document")
+	return s.method(exec, s.position, val)
 }
 
-func keywordPrint(p *parser) (res interface{}, err error) {
-	info := p.infoRecordFromPos()
-	res = &execCommand{info, execKeywordPrint, "print", nil}
-	p.stack.Push(res)
-	p.pushSplitter()
-	return res, parseKeywordArgs(p, info)
+func (s coreFunc) execType() execType {
+	return execFunction
 }
 
-func keywordPrintln(p *parser) (res interface{}, err error) {
-	info := p.infoRecordFromPos()
-	res = &execCommand{info, execKeywordPrintln, "println", nil}
-	p.stack.Push(res)
-	p.pushSplitter()
-	return res, parseKeywordArgs(p, info)
-}
-
-func keywordEcho(p *parser) (res interface{}, err error) {
-	info := p.infoRecordFromPos()
-	res = &execCommand{info, execEcho, "echo", nil}
-	p.stack.Push(res)
-	p.pushSplitter()
-	return res, parseKeywordArgs(p, info)
-}
-
-func keywordEcholn(p *parser) (res interface{}, err error) {
-	info := p.infoRecordFromPos()
-	res = &execCommand{info, execEcholn, "echoln", nil}
-	p.stack.Push(res)
-	p.pushSplitter()
-	return res, parseKeywordArgs(p, info)
-}
-
-func execEcho(exec *tplExec, info *rawInfoRecord) (err error) {
-	for exec.st.Len() > 0 {
-		//fmt.Println(exec.st.Peek())
-		exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
-		if exec.st.Len() >= 1 {
-			exec.w.Write([]byte{',', ' '})
-		}
-	}
-	return
-}
-
-func execEcholn(exec *tplExec, info *rawInfoRecord) (err error) {
-	for exec.st.Len() > 0 {
-		//fmt.Println(exec.st.Peek())
-		exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
-		if exec.st.Len() >= 1 {
-			exec.w.Write([]byte{',', ' '})
-		}
-	}
-	exec.w.Write([]byte{'\n'})
-	return
-}
-
-func execKeywordPrint(exec *tplExec, info *rawInfoRecord) (err error) {
-	for exec.st.Len() > 0 {
-		exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
-	}
-	return
-}
-
-func execKeywordPrintln(exec *tplExec, info *rawInfoRecord) (err error) {
-	for exec.st.Len() > 0 {
-		exec.w.Write([]byte(fmt.Sprint(exec.st.Pop())))
-	}
-	exec.w.Write([]byte{'\n'})
-	return
-}
-
-// core functions ///////////////////////////////////////////////////////////////
-
-func coreDefined(w io.Writer, val interface{}) (res bool) {
-	if sVar, check := val.(*variable); check {
-		res = sVar.stored
-	}
-	return
-}
-
-func coreLen(w io.Writer, val interface{}) int {
-	if sVar, check := val.(*variable); check {
-		val = sVar.value
-	}
-	v := reflect.ValueOf(val)
-	switch v.Kind() {
-	case reflect.Array, reflect.Slice, reflect.Map, reflect.String:
-		return v.Len()
+func coreLen(exec *tplExec, pos position, arg interface{}) *execError {
+	rVal := reflect.ValueOf(arg)
+	switch rVal.Kind() {
+	case reflect.Map, reflect.Slice, reflect.Array:
+		exec.stack.Push(static{pos, rVal.Len()})
+		return nil
 	default:
-		return 0
+		return pos.execError("Expected map, slice or array argument")
 	}
 }

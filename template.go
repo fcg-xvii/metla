@@ -1,164 +1,123 @@
 package metla
 
 import (
-	"fmt"
+	_ "fmt"
 	"io"
-	_ "reflect"
 	"sync"
 	"time"
 
-	"github.com/golang-collections/collections/stack"
+	"github.com/fcg-xvii/containers"
 )
 
-var (
-	MaxStorageLayouts = 150
-)
-
-func newTemplate(root *Metla, objPath string) *Template {
-	return &Template{
-		root:    root,
-		objPath: objPath,
-		locker:  new(sync.RWMutex),
+func newTemplate(requester Requester, root *Metla, path string, content []byte, modified time.Time) *template {
+	res := &template{
+		requester: requester,
+		root:      root,
+		path:      path,
+		modified:  modified,
+		locker:    new(sync.RWMutex),
 	}
+	res.parse(content, res.root)
+	return res
 }
 
-type Template struct {
-	root       *Metla
-	objPath    string
-	locker     *sync.RWMutex
-	tokenList  []interface{}
-	updateMark time.Time
-	err        error
+type template struct {
+	requester Requester
+	root      *Metla
+	path      string
+	commands  []executer
+	store     *storage
+	modified  time.Time
+	err       error
+	locker    *sync.RWMutex
 }
 
-func (s *Template) checkUpdate() error {
-	switch s.root.check(s.objPath, &s.updateMark) {
-	case ResourceNotFound:
-		{
-			s.root.removeTempalte(s.objPath)
-			s.err = fmt.Errorf("Document not found :: [%v]", s.objPath)
-			return s.err
+func (s *template) parse(content []byte, root *Metla) error {
+	parser := initParser(s.path, content, root)
+	if err := parser.parseDocument(); err != nil {
+		s.err = err
+	} else {
+		s.err, s.commands, s.store = nil, parser.execList, parser.store
+	}
+	return s.err
+}
+
+func (s *template) content(w io.Writer, params map[string]interface{}) (exists bool, modified time.Time, err error) {
+	var content []byte
+	if content, modified, exists, err = s.requester.RequestUpdate(s.path, s.modified); s.modified.Equal(modified) {
+		s.locker.RLock()
+		if s.err != nil {
+			err = s.err
+		} else {
+
+			ex := &tplExec{s.path, make([]executer, len(s.commands)), w, s.store.execStorage(params), containers.NewStack(5), s.modified, false}
+			copy(ex.execList, s.commands)
+			s.locker.RUnlock()
+			modified = ex.exec()
+			return
 		}
-	case UpdateNeeded:
-		{
-			s.locker.Lock()
-			if content, newMark, state := s.root.content(s.objPath, &s.updateMark); state == UpdateNeeded {
-				s.updateMark = newMark
-				s.tokenList = nil
-				s.err = s.parse(content)
+		s.locker.RUnlock()
+	} else if exists {
+		s.locker.Lock()
+		s.modified, s.err = modified, err
+		if s.err == nil {
+			if err = s.parse(content, s.root); err == nil {
+				ex := &tplExec{s.path, make([]executer, len(s.commands)), w, s.store.execStorage(params), containers.NewStack(5), s.modified, false}
+				copy(ex.execList, s.commands)
+				s.locker.Unlock()
+				modified = ex.exec()
+				return
 			}
-			s.locker.Unlock()
+
 		}
+		s.locker.Unlock()
+	}
+	return
+}
+
+func (s *template) contentWithoutUpdate(w io.Writer, params map[string]interface{}) (modified time.Time, err error) {
+	s.locker.RLock()
+	if s.err != nil {
+		err = s.err
+	} else {
+		ex := &tplExec{s.path, make([]executer, len(s.commands)), w, s.store.execStorage(params), containers.NewStack(5), s.modified, false}
+		copy(ex.execList, s.commands)
+		s.locker.RUnlock()
+		modified = ex.exec()
+		return
+	}
+	s.locker.RUnlock()
+	return
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+type tplExec struct {
+	tplName   string
+	execList  []executer
+	writer    io.Writer
+	sto       *execStorage
+	stack     *containers.Stack
+	modified  time.Time
+	breakFlag bool
+}
+
+func (s *tplExec) Write(data []byte) *execError {
+	_, err := s.writer.Write(data)
+	if err != nil {
+		return &execError{s.tplName, 0, 0, err.Error()}
 	}
 	return nil
 }
 
-func (s *Template) Execute(w io.Writer, vals map[string]interface{}) (modified time.Time, err error) {
-	s.checkUpdate()
-	if s.err != nil {
-		err = s.err
-	} else {
-		sto := newStorage(vals)
-		modified, err = s.result(sto, w)
-	}
-	return
-}
-
-func (s *Template) parse(src []byte) error {
-	parser := newParser(src, s, s.root)
-	return parser.parseDocument()
-}
-
-func (s *Template) pushToken(t interface{}) {
-	s.tokenList = append(s.tokenList, t)
-}
-
-func (s *Template) result(sto *storage, w io.Writer) (modified time.Time, err error) {
-	s.locker.RLock()
-	if s.err != nil {
-		s.locker.RUnlock()
-		err = s.err
-	} else {
-		list := make([]interface{}, len(s.tokenList))
-		copy(list, s.tokenList)
-		s.locker.RUnlock()
-		fmt.Println(list)
-		sto.newLayout()
-		if len(sto.layouts) >= MaxStorageLayouts {
-			err = fmt.Errorf("Fatal error :: Include loop arrived - max storage layouts")
-			return
-		}
-		tplExec := &tplExec{list, stack.New(), sto, 0, w, 0, false, s.root, s.updateMark}
-		modified, err = tplExec.exec()
-		sto.dropLayout()
-	}
-	return
-}
-
-type tplExec struct {
-	list        []interface{}
-	st          *stack.Stack
-	sto         *storage
-	index       int
-	w           io.Writer
-	fieldLayout int
-	breakFlag   bool
-	root        *Metla
-	modified    time.Time
-}
-
-func (s *tplExec) exec() (modified time.Time, err error) {
-	s.index = -1
-	for s.index < len(s.list) {
-		if err = s.execNext(); err != nil {
+func (s *tplExec) exec() (modified time.Time) {
+	//fmt.Println("EXEC.....", s.execList)
+	for _, v := range s.execList {
+		//fmt.Println(v)
+		if execErr := v.exec(s); execErr != nil {
+			s.Write([]byte(execErr.Error()))
 			return
 		}
 	}
-	modified = s.modified
-	//fmt.Println("COMOM")
 	return
 }
-
-func (s *tplExec) execNext() (err error) {
-	s.index++
-	if s.index >= len(s.list) {
-		return
-	}
-	//fmt.Println("EXEC_NEXT", s.list[s.index])
-	switch s.list[s.index].(type) {
-	case *execCommand:
-		//fmt.Println("EXEC_COMMAND", s)
-		exec := s.list[s.index].(*execCommand)
-		//fmt.Println(exec.name)
-		if s.fieldLayout > 0 && (exec.name != "field-end" && exec.name != "field-start") {
-			s.st.Push(exec)
-			break
-		}
-		if err = exec.method(s, exec.rawInfoRecord); err != nil {
-			return
-		}
-	case *valVariable:
-		//fmt.Println("VAL_VARIABLE")
-		s.list[s.index] = s.list[s.index].(*valVariable).StorageVal(s)
-
-	case *operator:
-		//fmt.Println("OPERATOR")
-		if err = s.list[s.index].(*operator).exec(s.st); err != nil {
-			return
-		}
-	default:
-		//fmt.Println("DEFAULT...", s.list[s.index])
-		s.st.Push(s.list[s.index])
-	}
-	return
-}
-
-func (s *tplExec) showStack() {
-	fmt.Println("================================")
-	for s.st.Len() > 0 {
-		fmt.Println(s.st.Pop())
-	}
-	fmt.Println("================================")
-}
-
-////////////////////////////////////////////////////////////////////////

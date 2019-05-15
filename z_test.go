@@ -2,132 +2,156 @@ package metla
 
 import (
 	"bytes"
-	_ "errors"
 	"io/ioutil"
 	"log"
-	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
+
+	_ "github.com/fcg-xvii/containers"
 )
 
-type Child struct {
-	One int64
+type TestSingle struct {
+	Single string
+	Number int
 }
 
-func (s *Child) Min10(left, right int) bool {
-	log.Println("MIN10", left, right)
-	return left < right
+func (s *TestSingle) Methodd(i, j int) (int, int) {
+	return i + 1, j + 1
 }
 
 type Test struct {
-	ChildObj *Child
+	Val *TestSingle
 }
 
-func (s *Test) GetChild() *Child {
-	return s.ChildObj
+func (s *Test) ValStruct() *TestSingle {
+	return s.Val
 }
 
-func printMethod(s interface{}) {
-	log.Println(s)
+func Inc(val int) int {
+	return val + 1
 }
 
-func printTwink(x, y interface{}) {
-	log.Println("XY", x, y)
+func min(left, right int) int {
+	if left < right {
+		return left
+	}
+	return right
 }
 
-func inc(v int64) int64 {
-	return v + 1
-}
+/*func TestParser(t *testing.T) {
+	var null *Test
 
-func incTwo(l int64, r int64) (int64, int64) {
-	return l + 1, r + 1
-}
+	exVals := map[string]interface{}{
+		"inc":  Inc,
+		"min":  min,
+		"null": null,
+		"one":  1,
+		"list": []string{"one", "two", "three", "four", "five"},
+		"mmap": map[string]interface{}{"one": 1, "two": 2, "three": 3},
+		"rMap": map[string]int{"min": 1, "max": 100000},
+		"tVal": &Test{&TestSingle{"SINGLE___", 777}},
+		"map": map[string]interface{}{
+			"one": map[int]interface{}{
+				100: 200,
+			},
+		},
+	}
 
-func cooler(one, two, three int) {
-	log.Println(one, two, three)
-}
-
-func check(path string, marker *time.Time) (res UpdateState) {
-	if info, err := os.Stat(path); err == nil {
-		if marker != nil {
-			if (*marker).Equal(info.ModTime()) {
-				res = UpdateNotNeeded
-			} else {
-				res = UpdateNeeded
-			}
-		} else {
-			res = UpdateNeeded
+	src, _ := ioutil.ReadFile("z_content")
+	//log.Println(string(src))
+	parser := initParser("z_content", src)
+	if err := parser.parseDocument(); err == nil {
+		log.Println(parser.execList)
+		var buf bytes.Buffer
+		ex := &tplExec{
+			"z_content",
+			parser.execList,
+			&buf,
+			parser.store.execStorage(exVals),
+			new(containers.Stack),
+			false,
 		}
-	} else {
-		res = ResourceNotFound
-	}
-	return
-}
-
-func content(path string, marker *time.Time) (res []byte, newMarker time.Time, state UpdateState) {
-	readContent := func() {
-		var err error
-		if res, err = ioutil.ReadFile(path); err != nil {
-			state = ResourceNotFound
-		}
-	}
-	if info, err := os.Stat(path); err == nil {
-		newMarker = info.ModTime()
-		if marker == nil {
-			state = UpdateNeeded
-			readContent()
-		} else {
-			if marker != nil && (*marker).Equal(info.ModTime()) {
-				state = UpdateNotNeeded
-			} else {
-				state = UpdateNeeded
-				readContent()
-			}
-		}
-	} else {
-		state = ResourceNotFound
-	}
-	return
-}
-
-func TestParser(t *testing.T) {
-	root := New(check, content)
-
-	var buf bytes.Buffer
-
-	data := map[string]interface{}{
-		"one":     1,
-		"three":   3,
-		"colonel": "Hello, WORLD!",
-		"print":   printMethod,
-		"twink":   printTwink,
-		"inc":     inc,
-		"incTwo":  incTwo,
-		"sli":     []byte{1, 2, 3, 4},
-		"cooler":  cooler,
-		"tr":      true,
-		"cli":     map[string]string{"one": "over one"},
-		"tst":     &Test{&Child{One: 5}},
-		"req":     httptest.NewRequest("GET", "/index.html", nil),
-	}
-
-	if modified, err := root.Content("z_script", &buf, data); err != nil {
-		log.Println("ERR", err)
-	} else {
-		log.Println("OK", modified)
+		ex.exec()
+		log.Println(ex.sto.values)
+		log.Println("======================")
 		buf.WriteTo(os.Stdout)
+		log.Println("======================")
+	} else {
+		log.Println(err)
 	}
+}*/
 
-	/*for {
+var (
+	m      = New(&MRequester{})
+	buf    bytes.Buffer
+	params = map[string]interface{}{}
+)
 
-		if modified, err := root.Content("z_script", &buf, data); err != nil {
-			log.Println("ERR", err)
-		} else {
-			log.Println("OK", modified)
-			buf.WriteTo(os.Stdout)
+type MRequester struct {
+	path string
+}
+
+func (s *MRequester) RequestContent(path string) (content []byte, marker time.Time, exists bool, err error) {
+	if info, infoErr := os.Stat(path); infoErr == nil {
+		exists, marker = true, info.ModTime()
+		content, err = ioutil.ReadFile(path)
+	}
+	return
+}
+
+func (s *MRequester) RequestUpdate(path string, modified time.Time) (content []byte, marker time.Time, exists bool, err error) {
+	if info, infoErr := os.Stat(path); infoErr == nil {
+		marker, exists = info.ModTime(), true
+		if !modified.Equal(info.ModTime()) {
+			content, err = ioutil.ReadFile(path)
+		}
+	} else {
+		marker = time.Now()
+	}
+	return
+}
+
+func TestMetla(t *testing.T) {
+	m := New(&MRequester{})
+
+	for {
+		var buf bytes.Buffer
+
+		params := map[string]interface{}{
+			"one": 1,
 		}
 
-		time.Sleep(time.Second * 3)
-	}*/
+		log.Println(m.Content("z_content", &buf, params))
+		log.Println("======================")
+		buf.WriteTo(os.Stdout)
+		log.Println("======================")
+
+		//time.Sleep(time.Second * 5)
+		return
+	}
+}
+
+/*func TestRace(t *testing.T) {
+
+	for i := 0; i < 500; i++ {
+		go func() {
+			var buf bytes.Buffer
+
+			params := map[string]interface{}{
+				"one": 1,
+			}
+
+			m.Content("z_content", &buf, params)
+			log.Println("======================")
+			buf.WriteTo(os.Stdout)
+			log.Println("======================")
+		}()
+	}
+}*/
+
+func BenchmarkShow(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		m.Content("z_content", &buf, params)
+	}
 }

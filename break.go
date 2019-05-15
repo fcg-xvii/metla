@@ -1,4 +1,4 @@
-package prod
+package metla
 
 func init() {
 	keywords["break"] = newBreak

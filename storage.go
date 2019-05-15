@@ -1,175 +1,125 @@
 package metla
 
 import (
+	"errors"
 	"fmt"
-	"reflect"
-	"time"
+	_ "time"
 )
 
-func layoutFromMap(src map[string]interface{}) *storageLayout {
-	res := &storageLayout{
-		list: make([]*variable, 0, len(src)),
-	}
-	count := 0
-	for key, val := range src {
-		res.list = append(res.list, &variable{key, val, true})
-		count++
-	}
-	return res
+type variable struct {
+	layout int
+	key    string
+	global bool
 }
 
-type storageLayout struct {
-	list []*variable
-}
-
-func (s *storageLayout) appendVariable(v *variable) {
-	//fmt.Println("APPEND_VARIABLE")
-	v.stored = true
-	s.list = append(s.list, v)
-	/*if _, check := s.findVariable(key); check {
-		err = fmt.Errorf("Set variable error :: variable [%v] exists on current layout", key)
-	} else {
-		res = &variable{key, val}
-		s.list = append(s.list, res)
-	}
-	return*/
-}
-
-func (s *storageLayout) findVariable(key string) (res *variable, check bool) {
-	for i := len(s.list) - 1; i >= 0; i-- {
-		res = s.list[i]
-		if res.key == key {
-			return res, true
-		}
-	}
-	return
-}
-
-//////////////////////////////////////////////////////////////////////
-
-func newStorage(src map[string]interface{}) *storage {
-	layout := layoutFromMap(src)
-	return &storage{
-		execStart: time.Now(),
-		layouts:   []*storageLayout{layout},
-		layout:    layout,
-	}
+func (s *variable) String() string {
+	return fmt.Sprintf("{ key: %v, layout: %v, global: %v }", s.key, s.layout, s.global)
 }
 
 type storage struct {
-	execStart time.Time
-	layouts   []*storageLayout
-	layout    *storageLayout
+	list   []*variable
+	layout int
 }
 
-func (s *storage) checkTimeout() bool {
-	return time.Now().Sub(s.execStart) > time.Second*30
+func (s *storage) findVariable(key string) int {
+	layout := s.layout
+	for layout >= 0 {
+		if index := s.findVariableInLayout(key, layout); index >= 0 {
+			return index
+		}
+		layout--
+	}
+	return -1
 }
 
-func (s *storage) newLayout() *storageLayout {
-	layout := new(storageLayout)
-	s.layouts = append(s.layouts, layout)
-	s.layout = layout
-	return layout
+func (s *storage) findVariableInLayout(key string, layout int) int {
+	for i, v := range s.list {
+		if v.key == key && v.layout == layout {
+			return i
+		}
+	}
+	return -1
 }
 
-func (s *storage) dropLayout() {
-	s.layouts = s.layouts[:len(s.layouts)-1]
-	s.layout = s.layouts[len(s.layouts)-1]
+func (s *storage) initVariable(key string) int {
+	if index := s.findVariable(key); index >= 0 {
+		return index
+	}
+	s.list = append(s.list, &variable{0, key, true})
+	return len(s.list) - 1
 }
 
-func (s *storage) findVariable(key string) (res *variable, check bool) {
-	if res, check = s.layout.findVariable(key); !check && len(s.layouts) > 1 {
-		for i := len(s.layouts) - 2; i >= 0; i-- {
-			if res, check = s.layouts[i].findVariable(key); check {
-				return
-			}
+func (s *storage) setVariable(key string) (int, error) {
+	if s.findVariableInLayout(key, s.layout) != -1 {
+		return -1, errors.New("Variable already exists in current layout")
+	}
+	v := &variable{s.layout, key, false}
+	s.list = append(s.list, v)
+	return len(s.list) - 1, nil
+}
+
+func (s *storage) saveInEmptyIndex(v *variable) int {
+	for i, v := range s.list {
+		if v == nil {
+			s.list[i] = v
+			return i
+		}
+	}
+	s.list = append(s.list, v)
+	return len(s.list) - 1
+}
+
+func (s *storage) globalIndexes() (res []int) {
+	for i, v := range s.list {
+		if v.global {
+			res = append(res, i)
 		}
 	}
 	return
 }
 
-func (s *storage) appendVariable(v *variable) {
-	s.layout.appendVariable(v)
+func (s *storage) incLayout() {
+	s.layout++
 }
 
-func (s *storage) updateVariable(v *variable) (res *variable) {
-	var check bool
-	if res, check = s.findVariable(v.key); check {
-		res.value = v.value
-	} else {
-		res = v
-		s.layout.appendVariable(v)
-	}
-	return
-}
-
-type valuer interface {
-	Value() interface{}
-}
-
-type variable struct {
-	key    string
-	value  interface{}
-	stored bool
-}
-
-func (s *variable) Value() interface{} {
-	return s.value
-}
-
-func (s *variable) Kind() reflect.Kind {
-	return reflect.ValueOf(s.value).Kind()
-}
-
-func (s *variable) IsNil() bool {
-	return reflect.ValueOf(s.value).IsNil()
-}
-
-func (s *variable) String() string { return fmt.Sprint(s.value) }
-
-func (s *variable) IndexVal(index interface{}) interface{} {
-	val, indexVal := reflect.ValueOf(s.value), reflect.ValueOf(index)
-	switch indexVal.Kind() {
-	case reflect.Int64, reflect.Int, reflect.Int32, reflect.Int16, reflect.Int8:
-		{
-			switch val.Kind() {
-			case reflect.Slice, reflect.Array, reflect.String:
-			default:
-				return nil
-			}
-			i := int(indexVal.Int())
-			if i < 0 || i >= val.Len() {
-				return nil
-			}
-			return val.Index(i).Interface()
+func (s *storage) decLayout() {
+	for i, v := range s.list {
+		if v.layout == s.layout {
+			s.list[i] = nil
 		}
-	default:
-		{
-			if val.Kind() != reflect.Map {
-				return nil
-			}
-			res := val.MapIndex(reflect.ValueOf(index))
-			if res.Kind() == reflect.Invalid {
-				return nil
-			} else {
-				return res.Interface()
+	}
+	s.layout--
+}
+
+func (s *storage) execStorage(vals map[string]interface{}) *execStorage {
+	res := &execStorage{
+		values: make([]interface{}, len(s.list)),
+		store:  s,
+	}
+	if global := s.globalIndexes(); len(global) > 0 {
+		for key, val := range vals {
+			for _, index := range global {
+				if key == s.list[index].key {
+					res.values[index] = val
+				}
 			}
 		}
-
 	}
-	return nil
+	//fmt.Println("STO_EXEC", res)
+	return res
 }
 
-type indexVariable struct {
-	v     *variable
-	index interface{}
+/////////////////////////////////////////////
+
+type execStorage struct {
+	values []interface{}
+	store  *storage
 }
 
-func (s indexVariable) String() string {
-	return fmt.Sprint(s.v.IndexVal(s.index))
+func (s *execStorage) setValue(index int, value interface{}) {
+	s.values[index] = value
 }
 
-func (s indexVariable) Value() interface{} {
-	return s.v.IndexVal(s.index)
+func (s *execStorage) getValue(index int) interface{} {
+	return s.values[index]
 }

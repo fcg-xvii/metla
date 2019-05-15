@@ -1,4 +1,4 @@
-package prod
+package metla
 
 import (
 	"fmt"

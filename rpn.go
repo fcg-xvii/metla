@@ -2,411 +2,155 @@ package metla
 
 import (
 	"fmt"
-	"reflect"
 
-	"github.com/fcg-xvii/lineman"
-	"github.com/golang-collections/collections/stack"
+	"github.com/fcg-xvii/containers"
 )
 
-type reflectNum struct {
-	reflect.Value
-}
-
-func (s reflectNum) IsNumber() bool {
-	switch s.Kind() {
-	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int, reflect.Float64, reflect.Float32:
-		return true
+func newRPN(p *parser) *parseError {
+	//fmt.Println("NEW_RPN", string(p.Char()))
+	obj, valAccepted := rpn{position: position{p.tplName, p.Line(), p.LinePos()}}, false
+	st, bracketLayout := new(containers.Stack), 0
+	if p.Char() != '!' && p.Char() != '(' {
+		if p.stack.Len() == 0 {
+			return obj.parseError("RPN parse error :: left side is empty")
+		} else {
+			obj.pn, valAccepted = append(obj.pn, p.stack.Pop()), true
+		}
 	}
-	return false
-}
-
-func (s reflectNum) Add(val int64) interface{} {
-	switch s.Kind() {
-	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
-		return s.Value.Int() + val
-	case reflect.Float64, reflect.Float32:
-		return s.Value.Float() + float64(val)
-	default:
-		return 0
-	}
-}
-
-func (s reflectNum) Int() (res int64) {
-	switch s.Kind() {
-	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
-		return s.Value.Int()
-	case reflect.Float64, reflect.Float32:
-		return int64(s.Value.Float())
-	default:
-		return 0
-	}
-}
-
-func (s reflectNum) Float() (res float64) {
-	switch s.Kind() {
-	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
-		return float64(s.Value.Int())
-	case reflect.Float64, reflect.Float32:
-		return s.Value.Float()
-	default:
-		return 0
-	}
-}
-
-func (s reflectNum) IsNil() bool {
-	switch s.Kind() {
-	case reflect.Invalid:
-		return true
-	case reflect.Func, reflect.Interface, reflect.Map, reflect.UnsafePointer, reflect.Slice:
-		return s.Value.IsNil()
-	default:
-		return false
-	}
-}
-
-func isArifmeticSymbol(ch byte) bool {
-	return isOperatorSymbol(ch) || lineman.CheckLetter(ch) || lineman.CheckNumber(ch) || ch == '(' || ch == ')' || ch == '"' || ch == '\''
-}
-
-func isOperatorSymbol(c byte) bool {
-	return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == '!' || c == '=' || c == '>' || c == '<' || c == '%' || c == '&' || c == '|'
-}
-
-func isOperator(val []byte) bool {
-	switch len(val) {
-	case 0:
-		return false
-	case 1:
-		return val[0] == '+' || val[0] == '-' || val[0] == '*' || val[0] == '/' || val[0] == '^' || val[0] == '!' || val[0] == '>' || val[0] == '<' || val[0] == '%'
-	default:
-		{
-			switch string(val[:2]) {
-			case "==", ">=", "<=", "!=", "++", "--", "&&", "||":
-				return true
+mainLoop:
+	for !p.IsEndDocument() {
+		fmt.Println("!!!")
+		switch {
+		case isOperatorSymbol(p):
+			//fmt.Println("OPSYMBOL", st)
+			if op, err := initOperator(p); err != nil {
+				return err
+			} else {
+				for st.Len() > 0 {
+					if sOp, check := st.Peek().(operator); check {
+						if sOp.prefix || op.priority >= sOp.priority {
+							obj.pn = append(obj.pn, st.Pop())
+						} else {
+							break
+						}
+					} else {
+						break
+					}
+				}
+				if valAccepted {
+					//fmt.Println("ValAccepted")
+					valAccepted = false
+				}
+				st.Push(op)
+				opVal := op.String()
+				//fmt.Println("OPVAL", opVal)
+				if opVal == "++" || opVal == "--" {
+					p.PassSpaces()
+					if !isOperatorSymbol(p) {
+						break mainLoop
+					}
+				}
+			}
+		case p.Char() == '(':
+			st.Push('(')
+			bracketLayout++
+			p.IncPos()
+		case p.Char() == ')':
+			{
+				if bracketLayout == 0 {
+					return p.initParseError(p.Line(), p.LinePos(), "Unexpected bracket close ')'")
+				}
+				bracketLayout--
+			popLoop:
+				for st.Len() > 0 {
+					//fmt.Printf("fff %T\n", st.Peek())
+					switch iface := st.Pop(); iface.(type) {
+					case int32:
+						if iface.(int32) == '(' {
+							break popLoop
+						}
+					default:
+						obj.pn = append(obj.pn, iface)
+					}
+				}
+				p.IncPos()
+				p.PassSpaces()
+				if !isArifmeticSymbol(p) {
+					break mainLoop
+				}
+			}
+		default:
+			if err := p.initCodeVal(); err != nil {
+				return err
+			}
+			obj.pn = append(obj.pn, p.stack.Pop())
+			p.PassSpaces()
+			valAccepted = true
+			if !isArifmeticSymbol(p) {
+				break mainLoop
 			}
 		}
 	}
-	return false
-}
-
-func opPriority(op *operator) byte {
-	if len(op.data) == 1 {
-		switch op.data[0] {
-		case '^', '!':
-			return 4
-		case '*', '/':
-			return 3
-		case '+', '-':
-			return 2
-		}
-	} else if string(op.data) == "++" || string(op.data) == "--" {
-		if op.postfix {
-			return 0
-		} else {
-			return 4
-		}
+	//fmt.Println("BRACKET_LAYOUT", bracketLayout)
+	if bracketLayout != 0 {
+		return obj.parseError("Unclosed bracket")
 	}
-	return 1
-}
-
-type operator struct {
-	*rawInfoRecord
-	data    []byte
-	postfix bool
-}
-
-func (s *operator) String() string {
-	if len(s.data) == 1 {
-		switch s.data[0] {
-		case 43:
-			return "+"
-		case 45:
-			return "-"
-		case 42:
-			return "*"
-		case 47:
-			return "/"
-		case 94:
-			return "^"
-		case 62:
-			return ">"
-		case 60:
-			return "<"
-		case 33:
-			return "!"
-		}
-	}
-	return string(s.data)
-}
-
-func (s *operator) isUnary() bool {
-	return (len(s.data) == 1 && s.data[0] == '!') || (string(s.data) == "++" || string(s.data) == "--")
-}
-
-func (s *operator) exec(st *stack.Stack) error {
-	if s.isUnary() {
-		return s.execUnary(st)
-	} else {
-		return s.execBinary(st)
-	}
-}
-
-func (s *operator) execUnary(st *stack.Stack) error {
-	if st.Len() == 0 {
-		return s.fatalError("Value list is empty")
-	}
-	iface := st.Pop()
-	if vlr, check := iface.(valuer); check {
-		iface = vlr.Value()
-	}
-	val := reflectNum{reflect.ValueOf(iface)}
-	if len(s.data) == 1 {
-		if val.Kind() != reflect.Bool {
-			return fmt.Errorf("Boolean value expected, [%v] given", val.Kind())
-		}
-		st.Push(!val.Bool())
-	} else {
-		if !val.IsNumber() {
-			return fmt.Errorf("Number value expected, [%v] given", val.Kind())
-		}
-		switch string(s.data) {
-		case "++":
-			st.Push(val.Add(1))
-		case "--":
-			st.Push(val.Add(-1))
-		}
-	}
+	obj.pn = append(obj.pn, st.PopAllReverse()...)
+	//fmt.Println("PNNNN", obj.pn)
+	p.stack.Push(obj)
 	return nil
 }
 
-func (s *operator) numberResult(val float64) interface{} {
-	if canInt(val) {
-		return int64(val)
-	} else {
-		return val
-	}
+type rpn struct {
+	position
+	pn []interface{}
 }
 
-func (s *operator) valFromStack(st *stack.Stack) reflectNum {
-	val := st.Pop()
-	if vVal, check := val.(*variable); check {
-		return reflectNum{reflect.ValueOf(vVal.value)}
-	}
-	return reflectNum{reflect.ValueOf(val)}
-}
-
-func (s *operator) valsFromStack(st *stack.Stack) (l, r reflectNum, err error) {
-	//fmt.Println("LEN", st.Len())
-	if st.Len() < 2 {
-		err = fmt.Errorf("Operands less then 2")
-	} else {
-
-		r = s.valFromStack(st)
-		l = s.valFromStack(st)
-		if !l.IsNil() && !r.IsNil() && (l.Kind() != r.Kind()) {
-			lt := l.Type()
-			if !r.Type().ConvertibleTo(lt) {
-				err = fmt.Errorf("RPN :: Coudn't convert type [%v] to [%v]", lt, r.Type())
-				return
+func (s rpn) execRPN(exec *tplExec) (interface{}, *execError) {
+	st, execStackLen := containers.NewStack(len(s.pn)), exec.stack.Len()
+	for _, v := range s.pn {
+		switch v.(type) {
+		case getter:
+			st.Push(v.(getter).get(exec))
+		case executer:
+			if err := v.(executer).exec(exec); err != nil {
+				return nil, err
 			}
-			r = reflectNum{r.Convert(lt)}
+			if exec.stack.Len()-1 != execStackLen {
+				return nil, v.(coordinator).execError("Not one value returned")
+			}
+			st.Push(exec.stack.Pop().(getter).get(exec))
+		case operator:
+			if err := v.(operator).exec(st, exec); err != nil {
+				return nil, err
+			}
 		}
 	}
-	return
+	return st.Pop(), nil
 }
 
-func (s *operator) execBinary(st *stack.Stack) error {
-	//fmt.Println("EXEC_BINARY", st.Len(), s)
-	l, r, err := s.valsFromStack(st)
-	//fmt.Println(l, r)
-	if err != nil {
+func (s rpn) exec(exec *tplExec) *execError {
+	if val, err := s.execRPN(exec); err == nil {
+		exec.stack.Push(static{s.position, val})
+		return nil
+	} else {
 		return err
 	}
-	if len(s.data) == 1 {
-		switch s.data[0] {
-		case '+':
-			st.Push(s.numberResult(l.Float() + r.Float()))
-		case '-':
-			st.Push(s.numberResult(l.Float() - r.Float()))
-		case '*':
-			st.Push(s.numberResult(l.Float() * r.Float()))
-		case '/':
-			if r.Float() == 0 {
-				return fmt.Errorf("Division by zero")
-			}
-			st.Push(s.numberResult(l.Float() / r.Float()))
-		case '%':
-			st.Push(int64(l.Int() % r.Int()))
-		case '>':
-			st.Push(l.Float() > r.Float())
-		case '<':
-			st.Push(l.Float() < r.Float())
-		default:
-			return s.fatalError(fmt.Sprintf("Illegal operator '%c'", s.data[0]))
+}
+
+func (s *rpn) execToBool(exec *tplExec, res *bool) *execError {
+	if val, err := s.execRPN(exec); err == nil {
+		if b, check := val.(bool); check {
+			*res = b
+			return nil
+		} else {
+			return s.execError("Boolean result value expected")
 		}
 	} else {
-		switch string(s.data) {
-		case "==":
-			if l.IsNil() || r.IsNil() {
-				st.Push(l.IsNil() && r.IsNil())
-			} else {
-				st.Push(l.Interface() == r.Interface())
-			}
-		case "!=":
-			if l.IsNil() || r.IsNil() {
-				st.Push(!(l.IsNil() && r.IsNil()))
-			} else {
-				st.Push(!(l.Interface() == r.Interface()))
-			}
-		case "&&", "||":
-			if l.Kind() != reflect.Bool || r.Kind() != reflect.Bool {
-				return fmt.Errorf("Expected boolean values")
-			}
-			if string(s.data) == "&&" {
-				st.Push(l.Bool() && r.Bool())
-			} else {
-				st.Push(l.Bool() || r.Bool())
-			}
-		case ">=", "<=":
-			{
-				switch s.data[0] {
-				case '>':
-					st.Push(l.Float() >= r.Float())
-				case '<':
-					st.Push(l.Float() <= r.Float())
-				}
-			}
-		default:
-			return s.fatalError(fmt.Sprintf("Illegal operator '%c'", s.data[0]))
-		}
+		return err
 	}
-	return nil
 }
 
-func parseRPN(p *parser) (pn []interface{}, err error) {
-	fmt.Println("PARSE_RPN", p.stack.Len(), p.stack.Peek())
-	prevVal := false
-	sPn := stack.New()
-	if p.Char() != '(' && !(p.Char() == '!' && p.NextChar() != '=') {
-		pn = append(pn, p.readStackVal()...)
-	}
-
-	bracketOpened := 0
-	p.PassSpaces()
-loop:
-	for !p.IsEndLine() && isArifmeticSymbol(p.Char()) {
-		switch p.Char() {
-		case '(':
-			{
-				bracketOpened++
-				sPn.Push(byte('('))
-				p.IncPos()
-			}
-		case ')':
-			{
-				if bracketOpened == 0 {
-					break loop
-				}
-				bracketOpened--
-				accepted := false
-				for sPn.Len() > 0 {
-					if c, check := sPn.Peek().(byte); check && c == '(' {
-						sPn.Pop()
-						accepted = true
-						break
-					} else {
-						pn = append(pn, sPn.Pop())
-					}
-				}
-				if !accepted {
-					err = p.positionError("Not closed bracked in arifmetic expression.")
-					return
-				}
-				p.IncPos()
-			}
-		case '+', '-', '*', '/', '^', '!', '=', '>', '<', '%', '&', '|':
-			{
-				p.SetupMark()
-				op := operator{p.infoRecordFromMark(), []byte{p.Char()}, true}
-				if checkOp := []byte{p.Char(), p.NextChar()}; isOperator(checkOp) {
-					op.data = checkOp
-					p.IncPos()
-					if !prevVal {
-						op.postfix = false
-					}
-				} else if !isOperator(op.data) {
-					err = p.positionError(fmt.Sprintf("Unexpected operator '%c'", p.Char()))
-					return
-				}
-				for sPn.Len() > 0 {
-					if val, check := sPn.Peek().(*operator); check && opPriority(val) >= opPriority(&op) {
-						pn = append(pn, sPn.Pop())
-					} else {
-						break
-					}
-				}
-				sPn.Push(&op)
-				p.IncPos()
-				prevVal = false
-			}
-		default:
-			{
-				//fmt.Println("VAL.....")
-				if _, errCV := initCodeVal(p); errCV != nil {
-					return
-				} else {
-					pn, prevVal = append(pn, p.readStackVal()...), true
-				}
-			}
-		}
-		p.PassSpaces()
-	}
-	for sPn.Len() > 0 {
-		pn = append(pn, sPn.Pop())
-	}
-	//fmt.Println("PN", pn, len(pn), cap(pn))
-	return
-}
-
-/*func checkSimple(op *operator, st *stack.Stack) error {
-	if st.Len() == 0 {
-		return op.fatalError("Empty args list")
-	}
-	if isStaticDataObject(st.Peek()) {
-		if op.isUnary() {
-			return op.exec(st)
-		} else {
-			r := st.Pop()
-			if !isStaticDataObject(st.Peek()) {
-				st.Push(r)
-				st.Push(op)
-				return nil
-			} else {
-				st.Push(r)
-				return op.exec(st)
-			}
-		}
-	}
-	st.Push(op)
-	return nil
-}*/
-
-func simpleRPN(pl []interface{}) (res []interface{}, err error) {
-	/*fmt.Println("SIMPLE_RPN")
-	st := stack.New()
-	for _, v := range pl {
-		if op, check := v.(*operator); check {
-			if err = checkSimple(op, st); err != nil {
-				return
-			}
-		} else {
-			st.Push(v)
-		}
-	}
-	res = make([]interface{}, st.Len())
-	for i := len(res) - 1; i >= 0; i-- {
-		res[i] = st.Pop()
-	}
-	fmt.Println("SIMPLE", res)*/
-	return pl, nil
+func (s rpn) execType() execType {
+	return execRPN
 }

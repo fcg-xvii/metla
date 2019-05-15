@@ -1,88 +1,49 @@
 package metla
 
 import (
-	"fmt"
+	_ "fmt"
 	"io"
-	_ "log"
-	"sync"
 	"time"
+
+	"github.com/fcg-xvii/containers"
 )
 
-type UpdateState byte
-
-const (
-	ResourceNotFound UpdateState = iota
-	UpdateNotNeeded
-	UpdateNeeded
-)
-
-func (s UpdateState) String() string {
-	switch s {
-	case UpdateNotNeeded:
-		return "UpdateNotNeeded"
-	case UpdateNeeded:
-		return "UpdateNeeded"
-	case ResourceNotFound:
-		return "ResourceNotFound"
-	default:
-		return "UpdateStateUndefined"
-	}
+type Requester interface {
+	RequestContent(path string) (content []byte, marker time.Time, exists bool, err error)
+	RequestUpdate(path string, modified time.Time) (content []byte, marker time.Time, exists bool, err error)
 }
 
-type CheckMethod func(string, *time.Time) UpdateState
-type ContentMethod func(string, *time.Time) ([]byte, time.Time, UpdateState)
+type ContentCallback func(path string) (marker time.Time, content []byte, err error)
+type UpdateCallback func(path string, marker time.Time) (newMarker time.Time, content []byte, err error)
 
-func New(check CheckMethod, content ContentMethod) *Metla {
-	return &Metla{
-		check:   check,
-		content: content,
-		locker:  new(sync.RWMutex),
-		tpls:    make(map[string]*Template),
-	}
+func New(requester Requester) *Metla {
+	return &Metla{requester, containers.NewCache(time.Hour, time.Hour, nil)}
 }
 
 type Metla struct {
-	check   CheckMethod
-	content ContentMethod
-	locker  *sync.RWMutex
-	tpls    map[string]*Template
+	requester Requester
+	store     *containers.Cache
 }
 
-func (s *Metla) Content(path string, w io.Writer, vals map[string]interface{}) (modified time.Time, err error) {
-	if tpl, err := s.Template(path); err == nil {
-		return tpl.Execute(w, vals)
+func (s *Metla) template(path string) (tpl *template, check bool) {
+	var iface interface{}
+	if iface, check = s.store.GetOrCreate(path, func(key interface{}) (interface{}, bool) {
+		if content, modified, exists, err := s.requester.RequestContent(path); exists && err == nil {
+			return newTemplate(s.requester, s, path, content, modified), true
+		}
+		return nil, false
+	}); check {
+		tpl = iface.(*template)
 	}
 	return
 }
 
-func (s *Metla) getTemplate(path string) (res *Template, check bool) {
-	s.locker.RLock()
-	res, check = s.tpls[path]
-	s.locker.RUnlock()
-	return
-}
-
-func (s *Metla) Template(path string) (res *Template, err error) {
-	var check bool
-	if res, check = s.getTemplate(path); !check {
-		if state := s.check(path, nil); state != ResourceNotFound {
-			s.locker.Lock()
-			if res, check = s.tpls[path]; !check {
-				res = newTemplate(s, path)
-				s.tpls[path] = res
-			}
-			s.locker.Unlock()
-		} else {
-			err = fmt.Errorf("Document not found :: [%v]", path)
+func (s *Metla) Content(path string, w io.Writer, params map[string]interface{}) (modified time.Time, exists bool, err error) {
+	if tpl, check := s.template(path); check {
+		exists, modified, err = tpl.content(w, params)
+		if !exists {
+			s.store.Delete(path)
 		}
 	}
 	return
 }
-
-func (s *Metla) removeTempalte(path string) {
-	s.locker.Lock()
-	delete(s.tpls, path)
-	s.locker.Unlock()
-}
-
-//func (s *Metla) tplArrived(t)

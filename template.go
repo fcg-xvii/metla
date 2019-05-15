@@ -1,7 +1,6 @@
 package metla
 
 import (
-	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -147,6 +146,6 @@ func (s *tplExec) exec() (modified time.Time) {
 		s.parent.sto.compare(s.sto)
 	}
 
-	fmt.Println(s.sto.globalMapNotNil())
+	//fmt.Println(s.sto.globalMapNotNil())
 	return
 }

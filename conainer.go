@@ -8,7 +8,7 @@ import (
 )
 
 func newField(p *parser) *parseError {
-	//fmt.Println("NEW_FIELD")
+	fmt.Println("NEW_FIELD")
 	pos := position{p.tplName, p.Line(), p.LinePos()}
 	if p.stack.Len() == 0 {
 		return p.initParseError(pos.line, pos.pos, "Expected field owner")
@@ -19,7 +19,7 @@ func newField(p *parser) *parseError {
 	p.fieldFlag = true
 mainLoop:
 	for !p.IsEndDocument() {
-		//fmt.Println("FIELD_FLAG", p.fieldFlag)
+		fmt.Println("FIELD_FLAG", p.fieldFlag)
 		p.PassSpaces()
 		switch {
 		case !lineman.CheckLetter(p.Char()) && !lineman.CheckNumber(p.Char()) && p.Char() != '(':
@@ -56,7 +56,7 @@ func (s *field) execType() execType {
 }
 
 func (s *field) exec(exec *tplExec) *execError {
-	//fmt.Println("field_exec")
+	fmt.Println("field_exec")
 	pos, stackLen := s.position, exec.stack.Len()
 	exec.stack.Push(s.list[0])
 	l := s.list[1:]
@@ -66,7 +66,7 @@ func (s *field) exec(exec *tplExec) *execError {
 			return pos.execError("field item returned more that one value")
 		}
 		owner := exec.stack.Pop()
-		//fmt.Println(owner)
+		fmt.Println(owner)
 		switch owner.(type) {
 		case executer:
 			if err := owner.(executer).exec(exec); err != nil {
@@ -79,6 +79,7 @@ func (s *field) exec(exec *tplExec) *execError {
 			}
 			exec.stack.Push(owner.(getter).get(exec))
 		default:
+			fmt.Println("DEFAULT")
 			rOwner := reflect.ValueOf(owner)
 			switch rOwner.Kind() {
 			case reflect.Struct, reflect.Ptr:
@@ -132,7 +133,10 @@ func (s *field) exec(exec *tplExec) *execError {
 				} else {
 					return l[0].(coordinator).execError("Fieldmap static value expected")
 				}
+			default:
+				return s.execError("map, array or slice token expected")
 			}
+
 		}
 	}
 	//fmt.Println(exec.stack.Peek())

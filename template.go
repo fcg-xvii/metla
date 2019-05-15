@@ -1,7 +1,7 @@
 package metla
 
 import (
-	_ "fmt"
+	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -11,6 +11,7 @@ import (
 )
 
 func newTemplate(requester Requester, root *Metla, path string, content []byte, modified time.Time) *template {
+	fmt.Println("NEW_TEMPLATE")
 	res := &template{
 		requester: requester,
 		root:      root,

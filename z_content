@@ -1,8 +1,9 @@
 Строка 1
-{% 
-	o = {
-		name: "vladimir"
-	}
-	echoln o
+{%
+  var o = [0, 1, 2]
+  echoln o.id, o.name
+  each key, val -> o
+    echoln key, "->" val
+  endfor
 %}
 Привет всем ))

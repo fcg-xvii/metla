@@ -228,6 +228,7 @@ func (s *cRange) execType() execType {
 }
 
 func newEach(p *parser) *parseError {
+	fmt.Println("NEW_EXCH")
 	p.cycleLayout++
 	r := &cEach{cycle: &cycle{position: position{p.tplName, p.Line(), p.Pos()}}}
 	if err := r.parseVar(p, &r.keyVar); err != nil {
@@ -285,6 +286,7 @@ func (s *cEach) parseVar(p *parser, kVar **iName) *parseError {
 }
 
 func (s *cEach) exec(exec *tplExec) *execError {
+	fmt.Println("EACH EXEC...")
 	var rVal reflect.Value
 	switch s.objVar.(type) {
 	case getter:

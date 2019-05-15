@@ -124,6 +124,8 @@ func TestMetla(t *testing.T) {
 		}
 
 		log.Println(m.Content("z_content", &buf, params))
+		tst := buf.Bytes()
+		log.Println("TST", len(tst), cap(tst))
 		log.Println("======================")
 		buf.WriteTo(os.Stdout)
 		log.Println("======================")

@@ -258,7 +258,7 @@ func (s *parser) initCodeVal() *parseError {
 					}
 				}
 			} else {
-				return s.initParseError(s.Line(), s.Pos(), "Name read error...")
+				return s.initParseError(s.Line(), s.LinePos(), "Name read error...")
 			}
 		}
 	}

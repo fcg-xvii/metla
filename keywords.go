@@ -1,6 +1,7 @@
 package metla
 
 import (
+	_ "fmt"
 	"reflect"
 )
 
@@ -48,6 +49,7 @@ var (
 						p.execList = p.execList[:i+1]
 						cycle.closeCycle()
 						p.cycleLayout--
+						p.store.decLayout()
 						return nil
 					}
 				}
@@ -63,6 +65,7 @@ var (
 				lastBlock.commands = make([]executer, len(p.execList)-i-1)
 				copy(lastBlock.commands, p.execList[i+1:])
 				p.execList = p.execList[:i+1]
+				p.store.decLayout()
 				return nil
 			}
 		},
@@ -79,23 +82,38 @@ func getKeywordConstructor(name string) (result keywordConstructor, check bool) 
 }
 
 func initCoreFunction(method func(*tplExec, position, interface{}) *execError, p *parser) *parseError {
-	r := coreFunc{position: position{p.tplName, p.Line(), p.LinePos()}, method: method}
+	r, stackLen := coreFunc{position: position{p.tplName, p.Line(), p.LinePos()}, method: method}, p.stack.Len()
 	p.PassSpaces()
 	if p.Char() != '(' {
 		return p.initParseError(p.Line(), p.LinePos(), "Expected '(' character")
 	}
 	p.IncPos()
-	if err := p.initCodeVal(); err != nil {
+	/*if err := p.initCodeVal(); err != nil {
 		return err
 	}
 	r.arg = p.stack.Pop()
 	p.PassSpaces()
 	if p.Char() != ')' {
 		return p.initParseError(p.Line(), p.LinePos(), "Expected ')' character")
+	}*/
+	for !p.IsEndDocument() {
+		p.PassSpaces()
+		switch p.Char() {
+		case ')':
+			if stackLen+1 != p.stack.Len() {
+				return r.parseError("len function - Expected single value")
+			}
+			r.arg = p.stack.Pop()
+			p.stack.Push(r)
+			p.IncPos()
+			return nil
+		default:
+			if err := p.initCodeVal(); err != nil {
+				return err
+			}
+		}
 	}
-	p.IncPos()
-	p.stack.Push(r)
-	return nil
+	return r.parseError("len function - unexpected end document")
 }
 
 type coreFunc struct {

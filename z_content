@@ -1,6 +1,36 @@
 {%
-	var t = 0
-	k = 10
-	include "z_top" { name: "vovan" }
-	echoln k, params
-%} 
+	methods = [
+		{ name: "listLibraries", shortDescription: "Список библиотек"
+			url: "https://www.admefine.ru/api/dictionary/listLibraries"
+			params: []
+		}
+		{ 
+			name: "searchRecordEntry"
+			shortDescription: "Поиск объектов по вхождению указанной строки (пустая строка - любые вхождения)"
+			url: "https://www.admefine.ru/api/dictionary/searchRecordEntry"
+			params: [
+				{
+					name: "entry"
+					type: "string"
+					necessary: true
+					description: "Вхождение. Пустая строка - все вхождения"
+				}, {
+					name: "library"
+					type: "integer, string"
+					necessary: false
+					description: "Идентификатор (или наименование) библиотеки, в которой производим поиск. Пустое значение - поиск по всем библиотекам"
+				}, {
+					name: "parentItem"
+					type: "integer, string"
+					necessary: false
+					description: "vv"
+				}
+			]
+		}
+	]
+	
+	range i in 0 : len(methods)
+		var paramsList = methods[i].params
+		echoln len(paramsList)
+	endfor
+%}

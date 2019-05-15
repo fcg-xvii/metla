@@ -41,7 +41,6 @@ func newFor(p *parser) (err *parseError) {
 	p.cycleLayout++
 	c := &cCycle{cycle: &cycle{position: position{p.tplName, p.Line(), p.Pos()}}}
 	p.store.incLayout()
-	defer p.store.decLayout()
 
 	for !p.IsEndLine() {
 		if err := p.initCodeVal(); err != nil {
@@ -104,6 +103,7 @@ func (s *cCycle) String() string {
 
 func newRange(p *parser) *parseError {
 	p.cycleLayout++
+	p.store.incLayout()
 	r := &cRange{cycle: &cycle{position: position{p.tplName, p.Line(), p.Pos()}}}
 	if err := p.initCodeVal(); err != nil {
 		return err
@@ -229,6 +229,7 @@ func (s *cRange) execType() execType {
 
 func newEach(p *parser) *parseError {
 	p.cycleLayout++
+	p.store.incLayout()
 	r := &cEach{cycle: &cycle{position: position{p.tplName, p.Line(), p.Pos()}}}
 	if err := r.parseVar(p, &r.keyVar); err != nil {
 		return err

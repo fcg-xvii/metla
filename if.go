@@ -23,6 +23,7 @@ func findThread(p *parser) (*thread, int, bool) {
 func newIf(p *parser) *parseError {
 	//fmt.Println("NEW_IF")
 	p.threadLayout++
+	p.store.incLayout()
 	ck := &thread{position: position{p.tplName, p.Line(), p.LinePos()}}
 	for !p.IsEndDocument() {
 		if err := p.initCodeVal(); err != nil {

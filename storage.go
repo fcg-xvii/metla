@@ -50,6 +50,7 @@ func (s *storage) initVariable(key string) int {
 }
 
 func (s *storage) setVariable(key string) (int, error) {
+	fmt.Println("LAYOUT...", s.layout, key)
 	if s.findVariableInLayout(key, s.layout) != -1 {
 		return -1, errors.New("Variable already exists in current layout")
 	}
@@ -71,7 +72,7 @@ func (s *storage) saveInEmptyIndex(v *variable) int {
 
 func (s *storage) globalIndexes() (res []int) {
 	for i, v := range s.list {
-		if v.global {
+		if v != nil && v.global {
 			res = append(res, i)
 		}
 	}
@@ -89,15 +90,16 @@ func (s *storage) globalKeys() map[string]int {
 }
 
 func (s *storage) incLayout() {
+	fmt.Println("INCLAYOUT")
 	s.layout++
 }
 
 func (s *storage) decLayout() {
-	for i, v := range s.list {
+	/*for i, v := range s.list {
 		if v.layout == s.layout {
 			s.list[i] = nil
 		}
-	}
+	}*/
 	s.layout--
 }
 

@@ -342,13 +342,24 @@ func newObject(p *parser) *parseError {
 				return p.initParseError(p.Line(), p.LinePos(), "Unexpected ':' splitter, value expected")
 			}
 			if p.stack.Len() != stackLen+1 {
-				return p.initParseError(p.Line(), p.LinePos(), "Expected string token 1")
+				return p.initParseError(p.Line(), p.LinePos(), "Expected string token")
 			}
-			if g, check := p.stack.Pop().(static); !check {
+			switch crd := p.stack.Pop().(coordinator); crd.(type) {
+			case static:
+				var check bool
+				if key, check = crd.(static).get(nil).(string); !check {
+					return p.initParseError(p.Line(), p.LinePos(), "Expected string token")
+				}
+			case iName:
+				key = crd.(iName).name
+			default:
+				return p.initParseError(p.Line(), p.LinePos(), "Expected string token")
+			}
+			/*if g, check := p.stack.Pop().(static); !check {
 				return p.initParseError(p.Line(), p.LinePos(), "Expected string token 2")
 			} else if key, check = g.get(nil).(string); !check {
 				return p.initParseError(p.Line(), p.LinePos(), "Expected string token 3")
-			}
+			}*/
 			p.IncPos()
 
 		case '\n', ',', '}':

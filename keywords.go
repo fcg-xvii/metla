@@ -172,8 +172,8 @@ func coreLen(exec *tplExec, pos position, arg interface{}) *execError {
 	switch rVal.Kind() {
 	case reflect.Map, reflect.Slice, reflect.Array:
 		exec.stack.Push(static{pos, rVal.Len()})
-		return nil
 	default:
-		return pos.execError("Expected map, slice or array argument")
+		exec.stack.Push(static{pos, 0})
 	}
+	return nil
 }

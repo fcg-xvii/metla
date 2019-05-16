@@ -29,10 +29,5 @@
 		}
 	]
 	
-	if len(methods) > 0
-		range i in 0 : len(methods)
-			var paramsList = methods[i].params
-			echoln i
-		endfor
-	endif
+	echoln len(methods.ini)
 %}

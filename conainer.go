@@ -129,7 +129,9 @@ func (s *field) exec(exec *tplExec) *execError {
 					return l[0].(coordinator).execError("Fieldmap static value expected")
 				}
 			default:
-				return s.execError("map, array or slice token expected")
+				//return s.execError("map, array or slice token expected")
+				exec.stack.Push(static{s.position, nil})
+				return nil
 			}
 
 		}

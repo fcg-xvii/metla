@@ -70,7 +70,6 @@ var (
 			}
 			return p.initParseError(p.Line(), p.LinePos(), "Unexpected endfor token")
 		}, "endif": func(p *parser) *parseError {
-			fmt.Println("ENDIF...")
 			if ck, i, check := findThread(p); !check {
 				return p.initParseError(p.Line(), p.LinePos(), "Unexpected endif token - 'if' token not found")
 			} else {

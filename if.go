@@ -1,7 +1,7 @@
 package metla
 
 import (
-	_ "fmt"
+	"fmt"
 )
 
 func init() {
@@ -105,6 +105,10 @@ type thread struct {
 	closed       bool
 	cycleLayout  byte
 	threadLayout byte
+}
+
+func (s *thread) String() string {
+	return fmt.Sprintf("{ thread, closed: %v }", s.closed)
 }
 
 func (s *thread) execType() execType {

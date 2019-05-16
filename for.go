@@ -70,6 +70,10 @@ type cCycle struct {
 	checkPN rpn
 }
 
+func (s *cCycle) String() string {
+	return "{ for }"
+}
+
 func (s *cycle) checkMaxTime(exec *tplExec) bool {
 	return time.Now().After(exec.execStop)
 }
@@ -103,13 +107,10 @@ func (s *cCycle) execType() execType {
 	return execFor
 }
 
-func (s *cCycle) String() string {
-	return "{ cCycle }"
-}
-
 ////////////////////////////////////
 
 func newRange(p *parser) *parseError {
+	fmt.Println("NEW_RANGE", p.cycleLayout, p.threadLayout)
 	r := &cRange{cycle: &cycle{position: position{p.tplName, p.Line(), p.LinePos()}, cycleLayout: p.cycleLayout, threadLayout: p.threadLayout}}
 	p.cycleLayout++
 	p.store.incLayout()
@@ -153,6 +154,10 @@ type cRange struct {
 	*cycle
 	min, max interface{}
 	countVar iName
+}
+
+func (s *cRange) String() string {
+	return "{ range }"
 }
 
 func (s *cRange) setMinMax(obj interface{}, result *int, exec *tplExec) *execError {
@@ -238,6 +243,7 @@ func (s *cRange) execType() execType {
 }
 
 func newEach(p *parser) *parseError {
+	fmt.Println("NEW_EACH", p.cycleLayout, p.threadLayout, len(p.execList))
 	r := &cEach{cycle: &cycle{position: position{p.tplName, p.Line(), p.LinePos()}, cycleLayout: p.cycleLayout, threadLayout: p.threadLayout}}
 	p.cycleLayout++
 	p.store.incLayout()
@@ -254,19 +260,27 @@ func newEach(p *parser) *parseError {
 	}
 	p.PassSpaces()
 	if !p.PosMatchSlice([]byte("->")) {
-		return r.parseError("Expected '->' keyword after count variable name")
+		return r.parseError("Each :: expected '->' keyword after count variable name")
 	}
 	p.ForwardPos(2)
-	if err := p.initCodeVal(); err != nil {
-		return err
+	stackLen := p.stack.Len()
+	for !p.IsEndDocument() {
+		p.PassSpaces()
+		if p.IsEndLine() {
+			if stackLen+1 != p.stack.Len() {
+				return r.parseError("Each :: single token expected")
+			}
+			r.objVar = p.stack.Pop()
+			fmt.Println("PUSH", r)
+			p.stack.Push(r)
+			return nil
+		} else {
+			if err := p.initCodeVal(); err != nil {
+				return err
+			}
+		}
 	}
-	r.objVar = p.stack.Pop()
-	p.PassSpaces()
-	if !p.IsEndLine() {
-		p.initParseError(p.Line(), p.LinePos(), "Expected endline")
-	}
-	p.stack.Push(r)
-	return nil
+	return r.parseError("Each :: unexpected end of document")
 }
 
 type cEach struct {
@@ -274,6 +288,10 @@ type cEach struct {
 	keyVar *iName
 	valVar *iName
 	objVar interface{}
+}
+
+func (s *cEach) String() string {
+	return "{ each }"
 }
 
 func (s *cEach) parseVar(p *parser, kVar **iName) *parseError {

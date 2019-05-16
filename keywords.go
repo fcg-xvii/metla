@@ -170,7 +170,7 @@ func (s coreFunc) execType() execType {
 func coreLen(exec *tplExec, pos position, arg interface{}) *execError {
 	rVal := reflect.ValueOf(arg)
 	switch rVal.Kind() {
-	case reflect.Map, reflect.Slice, reflect.Array:
+	case reflect.Map, reflect.Slice, reflect.Array, reflect.String:
 		exec.stack.Push(static{pos, rVal.Len()})
 	default:
 		exec.stack.Push(static{pos, 0})

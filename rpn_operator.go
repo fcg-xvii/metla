@@ -132,7 +132,7 @@ func (s operator) lrEqual(r, l interface{}) bool {
 func (s operator) exec(stack *containers.Stack, exec *tplExec) *execError {
 	switch opVal := string(s.source); opVal {
 	case "+":
-		l, r := stack.Pop(), stack.Pop()
+		r, l := stack.Pop(), stack.Pop()
 		switch l.(type) {
 		case string:
 			if _, check := r.(string); !check {
@@ -140,7 +140,7 @@ func (s operator) exec(stack *containers.Stack, exec *tplExec) *execError {
 			}
 			stack.Push(l.(string) + r.(string))
 		default:
-			left, right, err := s.lrNumber(l, r)
+			left, right, err := s.lrNumber(r, l)
 			if err != nil {
 				return err
 			}

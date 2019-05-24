@@ -1,6 +1,6 @@
 package metla
 
-import "fmt"
+import _ "fmt"
 
 func parseSetNames(p *parser) *parseError {
 	for !p.IsEndLine() {

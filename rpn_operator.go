@@ -131,15 +131,28 @@ func (s operator) lrEqual(r, l interface{}) bool {
 
 func (s operator) exec(stack *containers.Stack, exec *tplExec) *execError {
 	switch opVal := string(s.source); opVal {
-	case "+", "-", "*", "/", ">", "<", ">=", "<=":
+	case "+":
+		l, r := stack.Pop(), stack.Pop()
+		switch l.(type) {
+		case string:
+			if _, check := r.(string); !check {
+				return s.execError("Expected string right value")
+			}
+			stack.Push(l.(string) + r.(string))
+		default:
+			left, right, err := s.lrNumber(l, r)
+			if err != nil {
+				return err
+			}
+			stack.Push(left + right)
+		}
+	case "-", "*", "/", ">", "<", ">=", "<=":
 		left, right, err := s.lrNumber(stack.Pop(), stack.Pop())
 		if err != nil {
 			return err
 		}
 		if len(s.source) == 1 {
 			switch s.source[0] {
-			case '+':
-				stack.Push(left + right)
 			case '-':
 				stack.Push(left - right)
 			case '*':

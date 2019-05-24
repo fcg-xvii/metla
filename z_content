@@ -1,4 +1,5 @@
 {%
   res, err = testFunc("321321321")
-  echoln res, err
+  echoln "aa" + "bb"
+  echoln 10 + 20
 %}

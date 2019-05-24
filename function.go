@@ -51,7 +51,7 @@ func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []int
 			if lType.ConvertibleTo(rType) {
 				val = lVal.Convert(rType)
 			} else {
-				err = v.(coordinator).execError(fmt.Sprintf("Wrong function arg %v", len(rArgs)))
+				err = pos.execError(fmt.Sprintf("Wrong function arg %v", len(rArgs)))
 			}
 		} else {
 			return lVal

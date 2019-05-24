@@ -193,6 +193,6 @@ func (s *method) exec(exec *tplExec) (err *execError) {
 	for _, v := range rMethod.Call(args) {
 		exec.stack.Push(static{s.position, v.Interface()})
 	}
-	fmt.Println("F_STACK", exec.stack)
+	//fmt.Println("F_STACK", exec.stack)
 	return
 }

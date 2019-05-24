@@ -95,7 +95,7 @@ func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []int
 
 func newFunction(p *parser) (err *parseError) {
 	f, check, returnCall := function{position: p.posObject()}, false, p.resetFlags()
-	if f.nameVar, check = p.stack.Pop().(*iName); !check {
+	if f.nameVar, check = p.stack.Pop().(iName); !check {
 		return f.parseError("Function parse error :: expected variable in prefix")
 	}
 	p.IncPos()

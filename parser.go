@@ -201,7 +201,11 @@ func (s *parser) initCodeVal() *parseError {
 		if s.fieldFlag {
 			return newMethod(s)
 		} else {
-			if s.Char() == ')' {
+			if s.Char() == '(' {
+				if _, check := s.stack.Peek().(iName); check {
+					return newFunction(s)
+				}
+			} else if s.Char() == ')' {
 				if _, check := s.stack.Peek().(iName); check {
 					return newFunction(s)
 				}

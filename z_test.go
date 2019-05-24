@@ -112,15 +112,20 @@ func (s *MRequester) RequestUpdate(path string, modified time.Time) (content []b
 	return
 }
 
+func testFunc(val string) (string, error) {
+	return "544554454", nil
+}
+
 func TestMetla(t *testing.T) {
-	log.Println("TEST_METLA")
+	//log.Println("TEST_METLA")
 	m := New(&MRequester{})
 	m.SetMaxExecDuration(time.Second * 5)
 	for {
 		var buf bytes.Buffer
 
 		params := map[string]interface{}{
-			"one": 1,
+			"one":      1,
+			"testFunc": testFunc,
 		}
 
 		log.Println(m.Content("z_content", &buf, params))
@@ -133,6 +138,7 @@ func TestMetla(t *testing.T) {
 		//time.Sleep(time.Second * 5)
 		return
 	}
+
 }
 
 /*func TestRace(t *testing.T) {

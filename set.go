@@ -19,7 +19,7 @@ func parseSetNames(p *parser) *parseError {
 }
 
 func newValSet(p *parser) *parseError {
-	fmt.Println("SETTTTTTTTTTTTTTTTTTTTTT >>>>>>>>>>>>>>>>>>.", string(p.Char()))
+	//fmt.Println("SETTTTTTTTTTTTTTTTTTTTTT >>>>>>>>>>>>>>>>>>.", string(p.Char()))
 	ex := set{}
 	if p.Char() == ',' {
 		if err := parseSetNames(p); err != nil {
@@ -55,7 +55,7 @@ func newValSet(p *parser) *parseError {
 	}
 	ex.values = p.stack.PopAllReverse()
 	p.stack.Push(ex)
-	fmt.Println(p.stack)
+	//fmt.Println(p.stack)
 	//fmt.Println("ENDST....", string(p.Char()))
 	return nil
 }

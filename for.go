@@ -334,6 +334,7 @@ func (s *cEach) exec(exec *tplExec) *execError {
 					return s.execError("Fatal error :: Excess maximum execute time")
 				}
 				if s.keyVar != nil {
+					fmt.Println("SET_RAW")
 					s.keyVar.setRaw(exec, i)
 				}
 				if s.valVar != nil {

@@ -38,6 +38,7 @@ func (s iName) set(exec *tplExec, val interface{}) *execError {
 }
 
 func (s iName) setRaw(exec *tplExec, val interface{}) {
+	fmt.Println(s.name, s.index, val)
 	exec.sto.setValue(s.index, val)
 }
 

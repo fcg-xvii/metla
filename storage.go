@@ -1,7 +1,7 @@
 package metla
 
 import (
-	"errors"
+	_ "errors"
 	"fmt"
 	_ "time"
 )
@@ -49,13 +49,13 @@ func (s *storage) initVariable(key string) int {
 	return len(s.list) - 1
 }
 
-func (s *storage) setVariable(key string) (int, error) {
-	if s.findVariableInLayout(key, s.layout) != -1 {
-		return -1, errors.New("Variable already exists in current layout")
+func (s *storage) setVariable(key string) (index int, err error) {
+	if index = s.findVariableInLayout(key, s.layout); index < 0 {
+		v := &variable{s.layout, key, false}
+		s.list = append(s.list, v)
+		index = len(s.list) - 1
 	}
-	v := &variable{s.layout, key, false}
-	s.list = append(s.list, v)
-	return len(s.list) - 1, nil
+	return index, nil
 }
 
 func (s *storage) saveInEmptyIndex(v *variable) int {

@@ -116,8 +116,13 @@ func testFunc(val string) (string, error) {
 	return "544554454", nil
 }
 
+type testFuncStruct struct {
+	F func(string) (string, error)
+}
+
 func TestMetla(t *testing.T) {
 	//log.Println("TEST_METLA")
+
 	m := New(&MRequester{})
 	m.SetMaxExecDuration(time.Second * 5)
 	for {
@@ -126,6 +131,8 @@ func TestMetla(t *testing.T) {
 		params := map[string]interface{}{
 			"one":      1,
 			"testFunc": testFunc,
+			"tf":       &testFuncStruct{testFunc},
+			"ts":       &TestSingle{},
 		}
 
 		log.Println(m.Content("z_content", &buf, params))
@@ -138,7 +145,6 @@ func TestMetla(t *testing.T) {
 		//time.Sleep(time.Second * 5)
 		return
 	}
-
 }
 
 /*func TestRace(t *testing.T) {

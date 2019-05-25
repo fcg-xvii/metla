@@ -54,6 +54,7 @@ func (s *field) execType() execType {
 }
 
 func (s *field) exec(exec *tplExec) *execError {
+	fmt.Println("EXEC_METHOD")
 	pos, stackLen := s.position, exec.stack.Len()
 	exec.stack.Push(s.list[0])
 	l := s.list[1:]
@@ -113,7 +114,9 @@ func (s *field) exec(exec *tplExec) *execError {
 					}
 					rResult := rOwner.MapIndex(rVal)
 					if rResult.Kind() == reflect.Invalid {
-						return st.execError(fmt.Sprintf("Map index [%v] not found", st.get(exec)))
+						exec.stack.Push(static{s.position, nil})
+						return nil
+						//return st.execError(fmt.Sprintf("Map index [%v] not found", st.get(exec)))
 					} else {
 						switch iface := rResult.Interface(); iface.(type) {
 						case static:
@@ -219,32 +222,6 @@ func (s objIndex) exec(exec *tplExec) *execError {
 		}
 	}
 	return nil
-	//fmt.Println(owner, index)
-
-	/*switch s.owner.(type) {
-	case getter:
-		rVal = reflect.ValueOf(s.owner.(getter).get(exec))
-	case executer:
-		stackLen := exec.stack.Len()
-		if err := s.owner.(executer).exec(exec); err != nil {
-			return err
-		}
-		if stackLen+1 != exec.stack.Len() {
-			return s.owner.execError("Expected one return value")
-		}
-		rVal = reflect.ValueOf(exec.stack.Pop())
-	}
-	switch rVal.Kind() {
-	case reflect.Map, reflect.Slice, reflect.Array:
-		{
-			var iVal reflect.Value
-			switch s.index.(type) {
-				case
-			}
-		}
-	default:
-		return s.owner.execError("Expected map, slice or array type")
-	}*/
 }
 
 func (s objIndex) execType() execType {

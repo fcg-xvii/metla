@@ -1,5 +1,18 @@
 {%
-  res, err = testFunc("321321321")
-  echoln "aa" + "bb"
-  echoln 10 + 20
+  //res, err = testFunc("321321321")
+  //echoln "aa" + "bb"
+  //echoln 10 + 20
+  //echoln tf.F("121212")
+  //echoln ts.Methodd(10, 100)
+	//var obj = { id: 10, name: "nameddd" }
+	//if obj.cooler == nil
+	//	echoln "HE IS NILLLLL ;)"
+	//endif
+	var obj = { id: 10, name: "nameddd", check: true }
+	var check = true
+	if !check
+		echoln "!!!"
+	else if obj.check
+		echoln "else..."
+	endif
 %}

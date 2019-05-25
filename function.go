@@ -179,7 +179,13 @@ func (s *method) exec(exec *tplExec) (err *execError) {
 	fmt.Println(rOwner.Kind(), s.nameVar)
 	rMethod := rOwner.MethodByName(s.nameVar)
 	if rMethod.Kind() == reflect.Invalid {
-		return s.execError(fmt.Sprintf("Method '%v' not found", s.nameVar))
+		if rOwner.Kind() == reflect.Ptr {
+			rOwner = rOwner.Elem()
+		}
+		rMethod = rOwner.FieldByName(s.nameVar)
+		if rMethod.Kind() != reflect.Func {
+			return s.execError(fmt.Sprintf("Method '%v' not found", s.nameVar))
+		}
 	}
 	var args []reflect.Value
 	if args, err = execArgsPrepare(s.position, exec, rMethod.Type(), s.args); err != nil {

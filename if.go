@@ -32,13 +32,24 @@ func newIf(p *parser) *parseError {
 		p.PassSpaces()
 		if p.IsEndLine() {
 			crd := p.stack.Pop().(coordinator)
-			if pn, check := crd.(rpn); !check {
-				return crd.parseError("Expected expression token")
-			} else {
-				block := &threadBlock{position: ck.position, pn: &pn}
-				ck.blocks = append(ck.blocks, block)
-				p.stack.Push(ck)
+			var pn interface{}
+			switch crd.(type) {
+			case iName, executer:
+				pn = crd
+			case static:
+				if _, check := crd.(static).val.(bool); !check {
+					return crd.parseError("Expected expression, boolean or variable token")
+				}
+				pn = crd
+			case rpn:
+				exp := crd.(rpn)
+				pn = &exp
+			default:
+				return crd.parseError("Expected expression, boolean or variable token")
 			}
+			block := &threadBlock{position: ck.position, pn: pn.(coordinator)}
+			ck.blocks = append(ck.blocks, block)
+			p.stack.Push(ck)
 			return nil
 		}
 	}
@@ -72,12 +83,23 @@ func newElse(p *parser) *parseError {
 			return block.parseError("Expected expression token")
 		}
 		crd := p.stack.Pop().(coordinator)
-		if pn, check := crd.(rpn); !check {
-			return crd.parseError("Expected expression token")
-		} else {
-			block.pn = &pn
-			ck.blocks = append(ck.blocks, block)
+		//var pn interface{}
+		switch crd.(type) {
+		case iName, executer:
+			block.pn = crd
+		case static:
+			if _, check := crd.(static).val.(bool); !check {
+				return crd.parseError("Expected expression, boolean or variable token")
+			}
+			block.pn = crd
+		case rpn:
+			exp := crd.(rpn)
+			block.pn = &exp
+		default:
+			return crd.parseError("Expected expression, boolean or variable token")
 		}
+		//block.pn = &pn
+		ck.blocks = append(ck.blocks, block)
 	} else {
 		ck.blocks = append(ck.blocks, block)
 	}
@@ -86,7 +108,7 @@ func newElse(p *parser) *parseError {
 
 type threadBlock struct {
 	position
-	pn       *rpn
+	pn       coordinator
 	commands []executer
 }
 
@@ -119,8 +141,25 @@ func (s *thread) exec(exec *tplExec) *execError {
 	var check bool
 	for _, v := range s.blocks {
 		if v.pn != nil {
-			if err := v.pn.execToBool(exec, &check); err != nil {
-				return err
+			switch v.pn.(type) {
+			case *rpn:
+				if err := v.pn.(*rpn).execToBool(exec, &check); err != nil {
+					return err
+				}
+			case getter:
+				var bCheck bool
+				if check, bCheck = v.pn.(getter).get(exec).(bool); !bCheck {
+					return v.pn.execError("Expected bool value")
+				}
+			case executer:
+				var bCheck bool
+				if val, err := execOneReturn(v.pn, exec); err != nil {
+					return err
+				} else if check, bCheck = val.(bool); !bCheck {
+					return v.pn.execError("Expected bool value")
+				}
+			default:
+				v.pn.execError("Expected expression, bool of exec token")
 			}
 			if check {
 				return v.exec(exec)

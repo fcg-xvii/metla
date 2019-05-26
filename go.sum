@@ -1,4 +1,6 @@
 github.com/fcg-xvii/containers v0.0.0-20190514140812-7673a44ef8ef h1:vJvMl/nq3lNsSM4C4bZbEx/gulHE6fC9YR31N0kwIMU=
 github.com/fcg-xvii/containers v0.0.0-20190514140812-7673a44ef8ef/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
+github.com/fcg-xvii/containers v0.0.0-20190526143344-72b46da4895f h1:QUzwwAhRVgNFnYEttHoqtzlz+11vD9JM927ZeZtrdWE=
+github.com/fcg-xvii/containers v0.0.0-20190526143344-72b46da4895f/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
 github.com/fcg-xvii/lineman v0.0.0-20190314154620-36d40fa439af h1:cVXUMWElcdceWd31lyMaTZGFkFYzPDLl6t5j9Bt5z20=
 github.com/fcg-xvii/lineman v0.0.0-20190314154620-36d40fa439af/go.mod h1:VD8ux12NFmRoAUD4YxBSu6YTwpGIozjCJqIcDQ+WXGc=

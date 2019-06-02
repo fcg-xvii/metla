@@ -110,7 +110,7 @@ func (s *cCycle) execType() execType {
 ////////////////////////////////////
 
 func newRange(p *parser) *parseError {
-	fmt.Println("NEW_RANGE", p.cycleLayout, p.threadLayout)
+	//fmt.Println("NEW_RANGE", p.cycleLayout, p.threadLayout)
 	r := &cRange{cycle: &cycle{position: position{p.tplName, p.Line(), p.LinePos()}, cycleLayout: p.cycleLayout, threadLayout: p.threadLayout}}
 	p.cycleLayout++
 	p.store.incLayout()
@@ -243,7 +243,7 @@ func (s *cRange) execType() execType {
 }
 
 func newEach(p *parser) *parseError {
-	fmt.Println("NEW_EACH", p.cycleLayout, p.threadLayout, len(p.execList))
+	//fmt.Println("NEW_EACH", p.cycleLayout, p.threadLayout, len(p.execList))
 	r := &cEach{cycle: &cycle{position: position{p.tplName, p.Line(), p.LinePos()}, cycleLayout: p.cycleLayout, threadLayout: p.threadLayout}}
 	p.cycleLayout++
 	p.store.incLayout()
@@ -271,7 +271,7 @@ func newEach(p *parser) *parseError {
 				return r.parseError("Each :: single token expected")
 			}
 			r.objVar = p.stack.Pop()
-			fmt.Println("PUSH", r)
+			//fmt.Println("PUSH", r)
 			p.stack.Push(r)
 			return nil
 		} else {
@@ -334,7 +334,7 @@ func (s *cEach) exec(exec *tplExec) *execError {
 					return s.execError("Fatal error :: Excess maximum execute time")
 				}
 				if s.keyVar != nil {
-					fmt.Println("SET_RAW")
+					//fmt.Println("SET_RAW")
 					s.keyVar.setRaw(exec, i)
 				}
 				if s.valVar != nil {

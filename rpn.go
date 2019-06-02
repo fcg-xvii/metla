@@ -96,7 +96,7 @@ mainLoop:
 		return obj.parseError("Unclosed bracket")
 	}
 	obj.pn = append(obj.pn, st.PopAllReverse()...)
-	fmt.Println("PNNNN", obj.pn)
+	//fmt.Println("PNNNN", obj.pn)
 	p.stack.Push(obj)
 	return nil
 }

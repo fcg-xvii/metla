@@ -141,7 +141,7 @@ func (s *function) exec(exec *tplExec) (err *execError) {
 	for _, v := range rName.Call(args) {
 		exec.stack.Push(static{s.position, v.Interface()})
 	}
-	fmt.Println("F_STACK", exec.stack)
+	//fmt.Println("F_STACK", exec.stack)
 	return
 }
 
@@ -176,7 +176,7 @@ type method struct {
 
 func (s *method) exec(exec *tplExec) (err *execError) {
 	rOwner := reflect.ValueOf(exec.stack.Pop())
-	fmt.Println(rOwner.Kind(), s.nameVar)
+	//fmt.Println(rOwner.Kind(), s.nameVar)
 	rMethod := rOwner.MethodByName(s.nameVar)
 	if rMethod.Kind() == reflect.Invalid {
 		if rOwner.Kind() == reflect.Ptr {
@@ -191,7 +191,7 @@ func (s *method) exec(exec *tplExec) (err *execError) {
 	if args, err = execArgsPrepare(s.position, exec, rMethod.Type(), s.args); err != nil {
 		return
 	}
-	fmt.Println(len(args), rMethod.Type().NumIn())
+	//fmt.Println(len(args), rMethod.Type().NumIn())
 	if len(args) != rMethod.Type().NumIn() {
 		err = s.execError("Too few method args")
 		return

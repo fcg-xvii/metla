@@ -54,7 +54,7 @@ func (s *field) execType() execType {
 }
 
 func (s *field) exec(exec *tplExec) *execError {
-	fmt.Println("EXEC_METHOD")
+	//fmt.Println("EXEC_METHOD")
 	pos, stackLen := s.position, exec.stack.Len()
 	exec.stack.Push(s.list[0])
 	l := s.list[1:]
@@ -333,7 +333,7 @@ func newObject(p *parser) *parseError {
 			//case iName:
 			//key = crd.(iName).name
 			default:
-				fmt.Println("CRD", crd)
+				//fmt.Println("CRD", crd)
 				return p.initParseError(p.Line(), p.LinePos(), "Expected string token")
 			}
 			/*if g, check := p.stack.Pop().(static); !check {

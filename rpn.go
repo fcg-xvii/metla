@@ -1,8 +1,6 @@
 package metla
 
 import (
-	"fmt"
-
 	"github.com/fcg-xvii/containers"
 )
 

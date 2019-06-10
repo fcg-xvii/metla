@@ -33,11 +33,11 @@ func (s *Metla) SetMaxExecDuration(execTime time.Duration) {
 
 func (s *Metla) template(path string) (tpl *template, check bool) {
 	var iface interface{}
-	if iface, check = s.store.GetOrCreate(path, func(key interface{}, calls containers.CacheCallBacks) (interface{}, bool) {
+	if iface, check = s.store.GetOrCreate(path, nil, func(interface{}) (interface{}, interface{}, bool) {
 		if content, modified, exists, err := s.requester.RequestContent(path); exists && err == nil {
-			return newTemplate(s.requester, s, path, content, modified), true
+			return path, newTemplate(s.requester, s, path, content, modified), true
 		}
-		return nil, false
+		return nil, nil, false
 	}); check {
 		tpl = iface.(*template)
 	}

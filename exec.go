@@ -19,6 +19,7 @@ const (
 	execArray
 	execObject
 	execInclude
+	execSplitter
 )
 
 func (s execType) String() string {

@@ -1,12 +1,6 @@
 {%
-	var arr = [1, 2, 3, 4, 5]
-	each i, v -> arr
-	  echoln ">>>", i, "->", v
-	endfor
+	ts.Nil()
+	i = ts.One()
 	
-	each i, v -> arr
-	  echoln ">>>", i, "->", v
-	endfor
-	
-	echoln "!!!", i
+	echoln i
 %}

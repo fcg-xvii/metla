@@ -142,6 +142,7 @@ func (s *parser) initParseError(line, pos int, text string) *parseError {
 func (s *parser) flushExec() *parseError {
 	if exList, err := s.PopExecuters(); err == nil {
 		s.execList = append(s.execList, exList...)
+		s.execList = append(s.execList, &splitter{position{s.tplName, s.Line(), s.LinePos()}})
 	} else {
 		return err
 	}

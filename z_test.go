@@ -16,6 +16,9 @@ type TestSingle struct {
 	Number int
 }
 
+func (s *TestSingle) Nil() error       { return nil }
+func (s *TestSingle) One() interface{} { return 10 }
+
 func (s *TestSingle) Methodd(i, j int) (int, int) {
 	return i + 1, j + 1
 }

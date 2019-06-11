@@ -44,6 +44,19 @@ mainLoop:
 	return nil
 }
 
+type splitter struct {
+	position
+}
+
+func (s *splitter) execType() execType {
+	return execSplitter
+}
+
+func (s *splitter) exec(exec *tplExec) *execError {
+	exec.stack.PopAll()
+	return nil
+}
+
 type field struct {
 	position
 	list []interface{}

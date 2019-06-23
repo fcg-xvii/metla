@@ -1,6 +1,6 @@
 {%
-	ts.Nil()
-	i = ts.One()
+	//ts.Nil()
+	//i = ts.One()
 	include "z_top" { name: "Я" }
-	echoln i
+	//echoln i
 %}

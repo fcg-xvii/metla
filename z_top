@@ -1,2 +1,2 @@
-{% exit %}
 Привет, {{ params.name }} ;)
+{{ ts }}

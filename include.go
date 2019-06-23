@@ -51,6 +51,7 @@ func (s include) exec(exec *tplExec) *execError {
 	} else {
 		if tpl, check := s.root.template(path); check {
 			vals := exec.sto.globalMapNotNil()
+			fmt.Println(vals)
 			m := make(map[string]interface{})
 			for key, crd := range s.params {
 				if iface, err := execOneReturn(crd, exec); err != nil {

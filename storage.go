@@ -122,6 +122,7 @@ func (s *storage) execStorage(vals map[string]interface{}) *execStorage {
 /////////////////////////////////////////////
 
 type execStorage struct {
+	in     map[string]interface{}
 	values []interface{}
 	store  *storage
 }
@@ -136,6 +137,9 @@ func (s *execStorage) getValue(index int) interface{} {
 
 func (s *execStorage) globalMapNotNil() map[string]interface{} {
 	res := make(map[string]interface{})
+	for key, val := range s.in {
+		res[key] = val
+	}
 	for _, v := range s.store.globalIndexes() {
 		if val := s.values[v]; val != nil {
 			res[s.store.list[v].key] = val

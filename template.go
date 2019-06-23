@@ -53,6 +53,11 @@ func (s *template) initExec(w io.Writer, parent *tplExec, params map[string]inte
 		modified: s.modified,
 		execStop: time.Now().Add(time.Duration(atomic.LoadInt64(&s.root.maxExecDuration))),
 	}
+	if parent != nil {
+		res.sto.in = parent.sto.in
+	} else {
+		res.sto.in = params
+	}
 	copy(res.execList, s.commands)
 	if parent != nil {
 		res.execStop = parent.execStop

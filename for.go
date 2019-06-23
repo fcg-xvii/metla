@@ -91,7 +91,7 @@ func (s *cCycle) exec(exec *tplExec) (err *execError) {
 			for _, v := range s.commands {
 				if err = v.exec(exec); err != nil {
 					return err
-				} else if exec.breakFlag {
+				} else if exec.breakFlag || exec.returnFlag || exec.exitFlag {
 					exec.breakFlag = false
 					return nil
 				}
@@ -210,7 +210,7 @@ func (s *cRange) dec(min, max int, exec *tplExec) *execError {
 			if err := v.exec(exec); err != nil {
 				return err
 			}
-			if exec.breakFlag {
+			if exec.breakFlag || exec.returnFlag || exec.exitFlag {
 				exec.breakFlag = false
 				return nil
 			}
@@ -229,7 +229,7 @@ func (s *cRange) inc(min, max int, exec *tplExec) *execError {
 			if err := v.exec(exec); err != nil {
 				return err
 			}
-			if exec.breakFlag {
+			if exec.breakFlag || exec.returnFlag || exec.exitFlag {
 				exec.breakFlag = false
 				return nil
 			}
@@ -344,6 +344,10 @@ func (s *cEach) exec(exec *tplExec) *execError {
 					if err := v.exec(exec); err != nil {
 						return err
 					}
+					if exec.breakFlag || exec.returnFlag || exec.exitFlag {
+						exec.breakFlag = false
+						return nil
+					}
 				}
 			}
 			return nil
@@ -365,7 +369,7 @@ func (s *cEach) exec(exec *tplExec) *execError {
 					if err := v.exec(exec); err != nil {
 						return err
 					}
-					if exec.breakFlag {
+					if exec.breakFlag || exec.returnFlag || exec.exitFlag {
 						exec.breakFlag = false
 						return nil
 					}

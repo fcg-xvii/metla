@@ -46,7 +46,7 @@ func (s *Metla) template(path string) (tpl *template, check bool) {
 
 func (s *Metla) Content(path string, w io.Writer, params map[string]interface{}) (modified time.Time, exists bool, err error) {
 	if tpl, check := s.template(path); check {
-		exists, modified, err = tpl.content(w, params, nil)
+		exists, modified, _, err = tpl.content(w, params, nil)
 		if !exists {
 			s.store.Delete(path)
 		}

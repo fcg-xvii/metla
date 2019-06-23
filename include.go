@@ -60,7 +60,7 @@ func (s include) exec(exec *tplExec) *execError {
 				}
 			}
 			vals["params"] = m
-			if exists, modified, err := tpl.content(exec.writer, vals, exec); err != nil {
+			if exists, modified, exitFlag, err := tpl.content(exec.writer, vals, exec); err != nil {
 				return s.execError(err.Error())
 			} else if !exists {
 				return s.execError(fmt.Sprintf("Template %v is not exists\n", path))
@@ -68,6 +68,7 @@ func (s include) exec(exec *tplExec) *execError {
 				if exec.modified.Before(modified) {
 					exec.modified = modified
 				}
+				exec.exitFlag = exitFlag
 			}
 		} else {
 			return s.execError(fmt.Sprintf("Template %v is not exists\n", path))

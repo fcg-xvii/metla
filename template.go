@@ -61,7 +61,7 @@ func (s *template) initExec(w io.Writer, parent *tplExec, params map[string]inte
 	return res
 }
 
-func (s *template) content(w io.Writer, params map[string]interface{}, parent *tplExec) (exists bool, modified time.Time, err error) {
+func (s *template) content(w io.Writer, params map[string]interface{}, parent *tplExec) (exists bool, modified time.Time, exitFlag bool, err error) {
 	var content []byte
 	if content, modified, exists, err = s.requester.RequestUpdate(s.path, s.modified); s.modified.Equal(modified) {
 		s.locker.RLock()
@@ -71,7 +71,7 @@ func (s *template) content(w io.Writer, params map[string]interface{}, parent *t
 
 			ex := s.initExec(w, parent, params)
 			s.locker.RUnlock()
-			modified = ex.exec()
+			modified, exitFlag = ex.exec()
 			return
 		}
 		s.locker.RUnlock()
@@ -82,7 +82,7 @@ func (s *template) content(w io.Writer, params map[string]interface{}, parent *t
 			if err = s.parse(content, s.root); err == nil {
 				ex := s.initExec(w, parent, params)
 				s.locker.Unlock()
-				modified = ex.exec()
+				modified, exitFlag = ex.exec()
 				return
 			}
 		}
@@ -98,7 +98,7 @@ func (s *template) contentWithoutUpdate(w io.Writer, params map[string]interface
 	} else {
 		ex := s.initExec(w, nil, params)
 		s.locker.RUnlock()
-		modified = ex.exec()
+		modified, _ = ex.exec()
 		return
 	}
 	s.locker.RUnlock()
@@ -108,16 +108,18 @@ func (s *template) contentWithoutUpdate(w io.Writer, params map[string]interface
 //////////////////////////////////////////////////////////////////////////
 
 type tplExec struct {
-	parent    *tplExec
-	tplName   string
-	execList  []executer
-	writer    io.Writer
-	sto       *execStorage
-	stack     *containers.Stack
-	modified  time.Time
-	breakFlag bool
-	layout    byte
-	execStop  time.Time
+	parent     *tplExec
+	tplName    string
+	execList   []executer
+	writer     io.Writer
+	sto        *execStorage
+	stack      *containers.Stack
+	modified   time.Time
+	breakFlag  bool
+	returnFlag bool
+	exitFlag   bool
+	layout     byte
+	execStop   time.Time
 }
 
 func (s *tplExec) Write(data []byte) *execError {
@@ -128,24 +130,23 @@ func (s *tplExec) Write(data []byte) *execError {
 	return nil
 }
 
-func (s *tplExec) exec() (modified time.Time) {
+func (s *tplExec) exec() (modified time.Time, exitFlag bool) {
 	if s.layout > 200 {
 		s.writer.Write([]byte("Fatal error :: include loop - stack owerflow, include layouts > 200\n"))
 		return
 	}
-	//fmt.Println("EXEC.....", s.execList)
 	for _, v := range s.execList {
-		//fmt.Println(v)
 		if execErr := v.exec(s); execErr != nil {
 			s.Write([]byte(execErr.Error()))
 			return
 		}
+		if s.returnFlag || s.exitFlag {
+			break
+		}
 	}
-	modified = s.modified
+	modified, exitFlag = s.modified, s.exitFlag
 	if s.parent != nil {
 		s.parent.sto.compare(s.sto)
 	}
-
-	//fmt.Println(s.sto.globalMapNotNil())
 	return
 }

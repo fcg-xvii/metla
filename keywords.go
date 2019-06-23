@@ -19,7 +19,15 @@ func init() {
 
 var (
 	keywords = map[string]keywordConstructor{
-		"nil": func(p *parser) *parseError {
+		"return": func(p *parser) *parseError {
+			pos := position{p.tplName, p.Line(), p.LinePos()}
+			p.stack.Push(cReturn{pos})
+			return nil
+		}, "exit": func(p *parser) *parseError {
+			pos := position{p.tplName, p.Line(), p.LinePos()}
+			p.stack.Push(cExit{pos})
+			return nil
+		}, "nil": func(p *parser) *parseError {
 			p.stack.Push(initStatic(p, nil, 3))
 			return nil
 		}, "true": func(p *parser) *parseError {

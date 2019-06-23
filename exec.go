@@ -20,6 +20,7 @@ const (
 	execObject
 	execInclude
 	execSplitter
+	execCommand
 )
 
 func (s execType) String() string {

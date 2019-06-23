@@ -93,11 +93,6 @@ func (s *storage) incLayout() {
 }
 
 func (s *storage) decLayout() {
-	/*for i, v := range s.list {
-		if v.layout == s.layout {
-			s.list[i] = nil
-		}
-	}*/
 	s.layout--
 }
 

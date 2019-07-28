@@ -31,8 +31,6 @@ func (s iName) set(exec *tplExec, val interface{}) *execError {
 	//fmt.Println("VAL.....", val)
 	if g, check := val.(getter); check {
 		exec.sto.setValue(s.index, g.get(exec))
-	} else {
-		return val.(coordinator).execError("Set variable error - expected getter right side")
 	}
 	return nil
 }

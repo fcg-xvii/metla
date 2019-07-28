@@ -39,7 +39,7 @@ func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []int
 	rArgs = make([]reflect.Value, 0, fCount)
 
 	argsLenCheck := func(v interface{}) {
-		if fCount <= len(rArgs) {
+		if fCount <= len(rArgs) && !fType.IsVariadic() {
 			err = pos.execError("Args count more than needed")
 		}
 	}
@@ -48,6 +48,10 @@ func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []int
 		lVal := reflect.ValueOf(v)
 		lType := lVal.Type()
 		if lType != rType {
+			fmt.Println(">>>>>>", lType, rType)
+			if fType.IsVariadic() {
+				rType = rType.Elem()
+			}
 			if lType.ConvertibleTo(rType) {
 				val = lVal.Convert(rType)
 			} else {
@@ -65,7 +69,11 @@ func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []int
 		}
 		switch v.(type) {
 		case getter:
-			if rArg := convert(v.(getter).get(exec), fType.In(len(rArgs))); err != nil {
+			index := len(rArgs)
+			if index >= fCount {
+				index = fType.NumIn() - 1
+			}
+			if rArg := convert(v.(getter).get(exec), fType.In(index)); err != nil {
 				return
 			} else {
 				rArgs = append(rArgs, rArg)
@@ -134,7 +142,7 @@ func (s *function) exec(exec *tplExec) (err *execError) {
 	if args, err = execArgsPrepare(s.position, exec, rName.Type(), s.args); err != nil {
 		return
 	}
-	if len(args) != rName.Type().NumIn() {
+	if len(args) != rName.Type().NumIn() && !rName.Type().IsVariadic() {
 		err = s.execError("Too few function args")
 		return
 	}

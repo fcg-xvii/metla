@@ -1,6 +1,7 @@
 {%
 	//ts.Nil()
 	//i = ts.One()
-	include "z_top" { name: "Я" }
+	//include "z_top" { name: "Я" }
 	//echoln i
+	appendContent("111", "222")
 %}

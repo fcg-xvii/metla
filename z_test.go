@@ -136,6 +136,11 @@ func TestMetla(t *testing.T) {
 			"testFunc": testFunc,
 			"tf":       &testFuncStruct{testFunc},
 			"ts":       &TestSingle{},
+			"appendContent": func(args ...interface{}) {
+				for i, v := range args {
+					log.Printf("%v: %v\n", i, v)
+				}
+			},
 		}
 
 		log.Println(m.Content("z_content", &buf, params))

@@ -1,7 +1,7 @@
 package metla
 
 import (
-	_ "fmt"
+	"fmt"
 	"reflect"
 )
 
@@ -10,6 +10,9 @@ type keywordConstructor func(*parser) *parseError
 func init() {
 	keywords["len"] = func(p *parser) *parseError {
 		return initCoreFunction(coreLen, p)
+	}
+	keywords["string"] = func(p *parser) *parseError {
+		return initCoreFunction(coreString, p)
 	}
 	//keywords["echo"] = keywordEcho
 	//keywords["echoln"] = keywordEcholn
@@ -183,5 +186,10 @@ func coreLen(exec *tplExec, pos position, arg interface{}) *execError {
 	default:
 		exec.stack.Push(static{pos, 0})
 	}
+	return nil
+}
+
+func coreString(exec *tplExec, pos position, arg interface{}) *execError {
+	exec.stack.Push(fmt.Sprint(arg))
 	return nil
 }

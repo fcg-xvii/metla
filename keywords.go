@@ -190,6 +190,6 @@ func coreLen(exec *tplExec, pos position, arg interface{}) *execError {
 }
 
 func coreString(exec *tplExec, pos position, arg interface{}) *execError {
-	exec.stack.Push(fmt.Sprint(arg))
+	exec.stack.Push(static{pos, fmt.Sprint(arg)})
 	return nil
 }

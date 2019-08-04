@@ -11,13 +11,6 @@
 		{ link: "two" }
 		{ link: "three" }
 	]
-	
-	k = "kikiki"
-	u = { link: "rerererere" }
+	echoln len([1, 2, 3])
+	echoln cmp("one", "two")
 %}
-
-{% each i, val -> add %}
-	okokoko/{{ val.link }}?ijijiji
-{% endfor %}
-uhcudhcudshcuhds/{{ u.link }}?cdcjdjcs
-jijijiji/{{ k }}?ccdsvrefre

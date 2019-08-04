@@ -14,6 +14,9 @@ func init() {
 	keywords["string"] = func(p *parser) *parseError {
 		return initCoreFunction(coreString, p)
 	}
+	keywords["cmp"] = func(p *parser) *parseError {
+		return initCoreFunction(coreCMP, p)
+	}
 	//keywords["echo"] = keywordEcho
 	//keywords["echoln"] = keywordEcholn
 	//keywords["print"] = keywordPrint
@@ -115,8 +118,9 @@ func getKeywordConstructor(name string) (result keywordConstructor, check bool) 
 	return
 }
 
-func initCoreFunction(method func(*tplExec, position, interface{}) *execError, p *parser) *parseError {
-	r, stackLen := coreFunc{position: position{p.tplName, p.Line(), p.LinePos()}, method: method}, p.stack.Len()
+func initCoreFunction(method func(*tplExec, position, ...interface{}) *execError, p *parser) *parseError {
+	//r, stackLen := coreFunc{position: position{p.tplName, p.Line(), p.LinePos()}, method: method}, p.stack.Len()
+	r := coreFunc{position: position{p.tplName, p.Line(), p.LinePos()}, method: method}
 	p.PassSpaces()
 	if p.Char() != '(' {
 		return p.initParseError(p.Line(), p.LinePos(), "Expected '(' character")
@@ -134,13 +138,13 @@ func initCoreFunction(method func(*tplExec, position, interface{}) *execError, p
 		p.PassSpaces()
 		switch p.Char() {
 		case ')':
-			if stackLen+1 != p.stack.Len() {
-				return r.parseError("len function - Expected single value")
-			}
-			r.arg = p.stack.Pop()
+			r.args = append(r.args, p.stack.Pop())
 			p.stack.Push(r)
 			p.IncPos()
 			return nil
+		case ',':
+			r.args = append(r.args, p.stack.Pop())
+			p.IncPos()
 		default:
 			if err := p.initCodeVal(); err != nil {
 				return err
@@ -152,34 +156,38 @@ func initCoreFunction(method func(*tplExec, position, interface{}) *execError, p
 
 type coreFunc struct {
 	position
-	arg    interface{}
-	method func(*tplExec, position, interface{}) *execError
+	args   []interface{}
+	method func(*tplExec, position, ...interface{}) *execError
 }
 
 func (s coreFunc) exec(exec *tplExec) *execError {
-	var val interface{}
-	switch s.arg.(type) {
-	case getter:
-		val = s.arg.(getter).get(exec)
-	case executer:
-		stackLen := exec.stack.Len()
-		if err := s.arg.(executer).exec(exec); err != nil {
-			return err
+	var val []interface{}
+	for i := 0; i < len(s.args); i++ {
+		switch s.args[i].(type) {
+		case getter:
+			val = append(val, s.args[i].(getter).get(exec))
+		case executer:
+			stackLen := exec.stack.Len()
+			if err := s.args[i].(executer).exec(exec); err != nil {
+				return err
+			}
+			for exec.stack.Len() > stackLen {
+				val = append(val, exec.stack.Pop().(getter).get(exec))
+			}
 		}
-		if stackLen+1 != exec.stack.Len() {
-			return s.execError("Not one return value in argument")
-		}
-		val = exec.stack.Pop().(getter).get(exec)
 	}
-	return s.method(exec, s.position, val)
+	return s.method(exec, s.position, val...)
 }
 
 func (s coreFunc) execType() execType {
 	return execFunction
 }
 
-func coreLen(exec *tplExec, pos position, arg interface{}) *execError {
-	rVal := reflect.ValueOf(arg)
+func coreLen(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 1 {
+		return pos.execError("coreLen - expected 1 argument")
+	}
+	rVal := reflect.ValueOf(arg[0])
 	switch rVal.Kind() {
 	case reflect.Map, reflect.Slice, reflect.Array, reflect.String:
 		exec.stack.Push(static{pos, rVal.Len()})
@@ -189,7 +197,20 @@ func coreLen(exec *tplExec, pos position, arg interface{}) *execError {
 	return nil
 }
 
-func coreString(exec *tplExec, pos position, arg interface{}) *execError {
-	exec.stack.Push(static{pos, fmt.Sprint(arg)})
+func coreString(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 1 {
+		return pos.execError("coreLen - expected 1 argument")
+	}
+	exec.stack.Push(static{pos, fmt.Sprint(arg[0])})
+	return nil
+}
+
+func coreCMP(exec *tplExec, pos position, arg ...interface{}) *execError {
+	var str string
+	for _, v := range arg {
+		str = fmt.Sprintf("%v%v", str, v)
+	}
+	//fmt.Println("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR", arg)
+	exec.stack.Push(static{pos, str})
 	return nil
 }

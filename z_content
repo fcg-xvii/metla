@@ -1,7 +1,23 @@
 {%
+
 	//ts.Nil()
 	//i = ts.One()
 	//include "z_top" { name: "Я" }
 	//echoln i
-	appendContent("111", "222")
+	//appendContent("111", "222")
+	
+	add = [
+		{ link: "one" }
+		{ link: "two" }
+		{ link: "three" }
+	]
+	
+	k = "kikiki"
+	u = { link: "rerererere" }
 %}
+
+{% each i, val -> add %}
+	okokoko/{{ val.link }}?ijijiji
+{% endfor %}
+uhcudhcudshcuhds/{{ u.link }}?cdcjdjcs
+jijijiji/{{ k }}?ccdsvrefre

@@ -95,7 +95,7 @@ func (s print) exec(exec *tplExec) *execError {
 			return nil
 		}
 		for exec.stack.Len() > 0 {
-			if err := exec.Write([]byte(fmt.Sprint(exec.stack.Pop().(getter).get(exec)) + " ")); err != nil {
+			if err := exec.Write([]byte(fmt.Sprint(exec.stack.Pop().(getter).get(exec)))); err != nil {
 				return nil
 			}
 		}

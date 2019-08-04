@@ -11,6 +11,9 @@
 		{ link: "two" }
 		{ link: "three" }
 	]
-	echoln len([1, 2, 3])
-	echoln cmp("one", "two")
+	
+	ts.Methodd(okoko, tytyryr)
+	
+	//echoln len([1, 2, 3])
+	//echoln cmp("one", "two")
 %}

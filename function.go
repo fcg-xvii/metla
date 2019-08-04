@@ -46,7 +46,7 @@ func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []int
 
 	convert := func(v interface{}, rType reflect.Type) (val reflect.Value) {
 		if v == nil {
-			return
+			return reflect.Zero(rType)
 		}
 		lVal := reflect.ValueOf(v)
 		lType := lVal.Type()

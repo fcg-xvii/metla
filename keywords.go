@@ -3,6 +3,7 @@ package metla
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 type keywordConstructor func(*parser) *parseError
@@ -16,6 +17,9 @@ func init() {
 	}
 	keywords["cmp"] = func(p *parser) *parseError {
 		return initCoreFunction(coreCMP, p)
+	}
+	keywords["int"] = func(p *parser) *parseError {
+		return initCoreFunction(coreInt, p)
 	}
 	//keywords["echo"] = keywordEcho
 	//keywords["echoln"] = keywordEcholn
@@ -210,7 +214,18 @@ func coreCMP(exec *tplExec, pos position, arg ...interface{}) *execError {
 	for _, v := range arg {
 		str = fmt.Sprintf("%v%v", str, v)
 	}
-	//fmt.Println("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR", arg)
 	exec.stack.Push(static{pos, str})
+	return nil
+}
+
+func coreInt(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 1 {
+		return pos.execError("coreLen - expected 1 argument")
+	}
+	res, err := strconv.ParseInt(fmt.Sprint(arg[0]), 10, 64)
+	if err != nil {
+		return pos.execError(err.Error())
+	}
+	exec.stack.Push(static{pos, res})
 	return nil
 }

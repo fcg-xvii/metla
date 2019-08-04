@@ -12,7 +12,7 @@
 		{ link: "three" }
 	]
 	
-	ts.Methodd(okoko, tytyryr)
+	echoln int("10ff")
 	
 	//echoln len([1, 2, 3])
 	//echoln cmp("one", "two")

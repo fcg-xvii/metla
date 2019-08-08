@@ -115,7 +115,11 @@ type threadBlock struct {
 func (s *threadBlock) exec(exec *tplExec) *execError {
 	for _, v := range s.commands {
 		if err := v.exec(exec); err != nil {
+
 			return err
+		}
+		if exec.returnFlag || exec.exitFlag {
+			return nil
 		}
 	}
 	return nil

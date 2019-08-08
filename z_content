@@ -12,8 +12,9 @@
 		{ link: "three" }
 	]
 	
-	echoln int("10ff")
-	
-	//echoln len([1, 2, 3])
-	//echoln cmp("one", "two")
+	if len(add) > 0
+		echoln "0000000"
+		exit
+		echoln "1111111"
+	endif
 %}

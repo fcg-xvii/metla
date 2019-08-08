@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 type keywordConstructor func(*parser) *parseError
@@ -20,6 +21,9 @@ func init() {
 	}
 	keywords["int"] = func(p *parser) *parseError {
 		return initCoreFunction(coreInt, p)
+	}
+	keywords["join"] = func(p *parser) *parseError {
+		return initCoreFunction(coreJoin, p)
 	}
 	//keywords["echo"] = keywordEcho
 	//keywords["echoln"] = keywordEcholn
@@ -227,5 +231,26 @@ func coreInt(exec *tplExec, pos position, arg ...interface{}) *execError {
 		return pos.execError(err.Error())
 	}
 	exec.stack.Push(static{pos, res})
+	return nil
+}
+
+func coreJoin(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 2 {
+		return pos.execError("coreLen - expected 2 arguments - array and string splitter")
+	}
+	splitter := fmt.Sprint(arg[1])
+	switch arg[0].(type) {
+	case []interface{}:
+		sl := arg[0].([]interface{})
+		tmp := make([]string, len(sl))
+		for i, v := range sl {
+			tmp[i] = fmt.Sprint(v)
+		}
+		exec.stack.Push(static{pos, strings.Join(tmp, splitter)})
+	case []string:
+		exec.stack.Push(static{pos, strings.Join(arg[0].([]string), splitter)})
+	default:
+		return pos.execError("First argument slice or array expected")
+	}
 	return nil
 }

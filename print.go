@@ -53,18 +53,18 @@ func (s echoln) exec(exec *tplExec) *execError {
 }
 
 func newPrint(p *parser) *parseError {
-	pos, stackLen, closeTag := position{p.tplName, p.Line(), p.LinePos()}, p.stack.Len(), []byte("}}")
+	pos, closeTag := position{p.tplName, p.Line(), p.LinePos()}, []byte("}}")
 	p.ForwardPos(2)
 	for !p.IsEndDocument() {
 		if err := p.initCodeVal(); err != nil {
 			return err
 		}
 		p.PassSpaces()
-		//fmt.Println(string(p.Char()))
+		//fmt.Println(stackLen)
 		if p.PosMatchSlice(closeTag) {
-			if stackLen+1 != p.stack.Len() {
+			/*if stackLen+1 != p.stack.Len() {
 				return pos.parseError("Expected single token")
-			}
+			}*/
 			p.stack.Push(print{pos, p.stack.Pop().(coordinator)})
 			p.ForwardPos(2)
 			return nil

@@ -23,3 +23,9 @@
 {{ item.acc[0].id }}
 
 {{ join(arr, "---") }}
+
+{% 
+	if rec.trm == nil
+		echoln "!!!!!"
+	endif
+%}

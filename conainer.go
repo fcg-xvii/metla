@@ -85,7 +85,8 @@ func (s *field) exec(exec *tplExec) *execError {
 		case getter:
 			val := owner.(getter).get(exec)
 			if val == nil {
-				return owner.(coordinator).execError("Invalid field owner")
+				exec.stack.Push(static{s.position, nil})
+				return nil
 			}
 			exec.stack.Push(owner.(getter).get(exec))
 		default:

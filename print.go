@@ -87,16 +87,22 @@ func (s print) exec(exec *tplExec) *execError {
 	switch s.item.(type) {
 	case getter:
 		//exec.stack.Push(s.item.(getter).get(exec))
-		if err := exec.Write([]byte(fmt.Sprint(s.item.(getter).get(exec)))); err != nil {
-			return nil
+		val := s.item.(getter).get(exec)
+		if val != nil {
+			if err := exec.Write([]byte(fmt.Sprint(val))); err != nil {
+				return nil
+			}
 		}
 	case executer:
 		if err := s.item.(executer).exec(exec); err != nil {
 			return nil
 		}
 		for exec.stack.Len() > 0 {
-			if err := exec.Write([]byte(fmt.Sprint(exec.stack.Pop().(getter).get(exec)))); err != nil {
-				return nil
+			val := exec.stack.Pop().(getter).get(exec)
+			if val != nil {
+				if err := exec.Write([]byte(fmt.Sprint(val))); err != nil {
+					return nil
+				}
 			}
 		}
 	}

@@ -45,8 +45,11 @@ func (s echoln) exec(exec *tplExec) *execError {
 		}
 	}
 	for exec.stack.Len() > 0 {
-		if err := exec.Write([]byte(fmt.Sprint(exec.stack.Pop().(getter).get(exec)) + " ")); err != nil {
-			return err
+		val := exec.stack.Pop().(getter).get(exec)
+		if val != nil {
+			if err := exec.Write([]byte(fmt.Sprint(val))); err != nil {
+				return err
+			}
 		}
 	}
 	return exec.Write([]byte{'\n'})
@@ -95,7 +98,7 @@ func (s print) exec(exec *tplExec) *execError {
 		}
 	case executer:
 		if err := s.item.(executer).exec(exec); err != nil {
-			return nil
+			return err
 		}
 		for exec.stack.Len() > 0 {
 			val := exec.stack.Pop().(getter).get(exec)

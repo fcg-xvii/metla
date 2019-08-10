@@ -1,33 +1,3 @@
-{%
-
-	//ts.Nil()
-	//i = ts.One()
-	//include "z_top" { name: "Я" }
-	//echoln i
-	//appendContent("111", "222")
-	
-	add = [
-		{ link: "one" }
-		{ link: "two" }
-		{ link: "three" }
-	]
-	
-	/*if len(add) > 0
-		echoln "0000000"
-		exit
-		echoln "1111111"
-	endif*/
-	arr = [ "cvdfvfvd", "vfvdbgbf" ]
+{%	
+	echoln "000", mp.oko[1].pee
 %}
-
-{{ item.acc[0].id }}
-
-{{ join(arr, "---") }}
-
-{% 
-	if rec.trm == nil
-		echoln "!!!!!"
-	endif
-%}
-
-{{ vdfvfdbhv.vnfdjvbdhf.vndfvdfhb }}

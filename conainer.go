@@ -20,7 +20,7 @@ mainLoop:
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		switch {
-		case !lineman.CheckLetter(p.Char()) && !lineman.CheckNumber(p.Char()) && p.Char() != '(':
+		case !lineman.CheckLetter(p.Char()) && !lineman.CheckNumber(p.Char()) && p.Char() != '(' && p.Char() != '[':
 			//fmt.Println(stackLen, p.stack.Len(), string(p.Char()))
 			if stackLen != p.stack.Len()-1 {
 				return p.initParseError(p.Line(), p.LinePos(), "Field parse error :: unexpected value")
@@ -90,6 +90,7 @@ func (s *field) exec(exec *tplExec) *execError {
 			}
 			exec.stack.Push(owner.(getter).get(exec))
 		default:
+			fmt.Printf("%T\n", owner)
 			rOwner := reflect.ValueOf(owner)
 			switch rOwner.Kind() {
 			case reflect.Struct, reflect.Ptr:
@@ -143,6 +144,35 @@ func (s *field) exec(exec *tplExec) *execError {
 						l = l[1:]
 					}
 				} else {
+					switch l[0].(type) {
+					case objIndex:
+						index := l[0].(objIndex)
+						name := index.Name()
+						if index.Name() != "" {
+							switch rOwner.Kind() {
+							case reflect.Ptr, reflect.Struct:
+								if rOwner.Kind() == reflect.Ptr {
+									rOwner = rOwner.Elem()
+								}
+								f := rOwner.FieldByName(name)
+								if !f.IsValid() {
+									return nil
+								}
+								index.owner = static{s.position, f.Interface()}
+							case reflect.Map:
+								f := rOwner.MapIndex(reflect.ValueOf(name))
+								if !f.IsValid() {
+									return nil
+								}
+								index.owner = static{s.position, f.Interface()}
+							}
+							if err := index.exec(exec); err != nil {
+								return nil
+							}
+							l = l[1:]
+							continue
+						}
+					}
 					return l[0].(coordinator).execError("Fieldmap static value expected")
 				}
 			default:
@@ -183,6 +213,17 @@ type objIndex struct {
 	index coordinator
 }
 
+func (s objIndex) Name() string {
+	if v, check := s.owner.(static); check {
+		return fmt.Sprint(v.get(nil))
+	}
+	return ""
+}
+
+func (s objIndex) String() string {
+	return fmt.Sprintf("{ index, owner: %v, index: %v }", s.owner, s.index)
+}
+
 func (s objIndex) exec(exec *tplExec) *execError {
 	owner, err := execOneReturn(s.owner, exec)
 	if err != nil {
@@ -220,10 +261,13 @@ func (s objIndex) exec(exec *tplExec) *execError {
 			case reflect.Float32, reflect.Float64:
 				index = int(iVal.Float())
 			}
-			rVal = oVal.Index(index)
+			if index < oVal.Len() {
+				rVal = oVal.Index(index)
+			}
 		}
 	default:
-		return s.owner.execError("Expected array, slice or map object")
+		exec.stack.Push(static{s.owner.getPosition(), nil})
+		return nil
 	}
 	if rVal.Kind() == reflect.Invalid {
 		exec.stack.Push(static{s.owner.getPosition(), nil})

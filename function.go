@@ -83,9 +83,9 @@ func execArgsPrepare(pos position, exec *tplExec, fType reflect.Type, args []int
 			}
 		case executer:
 			obj := v.(executer)
-			if !functionCheckExecType(obj.execType()) {
+			/*if !functionCheckExecType(obj.execType()) {
 				return nil, obj.execError(fmt.Sprintf("Type %v isn't valid function argument", obj.execType()))
-			}
+			}*/
 			if err = obj.exec(exec); err != nil {
 				return
 			}

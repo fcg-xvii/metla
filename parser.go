@@ -230,7 +230,7 @@ func (s *parser) initCodeVal() *parseError {
 	case '{':
 		return newObject(s)
 	case '[':
-		if _, check := s.stack.Peek().(iName); check {
+		if _, check := s.stack.Peek().(iName); check || s.fieldFlag {
 			return newIndex(s)
 		} else {
 			return newArray(s)

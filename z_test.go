@@ -23,6 +23,10 @@ func (s *TestSingle) Methodd(i, j int) (int, int) {
 	return i + 1, j + 1
 }
 
+func (s *TestSingle) Print(i interface{}) {
+	log.Println("TESTSINGLAPREING", i)
+}
+
 type Test struct {
 	Val *TestSingle
 }
@@ -140,6 +144,19 @@ func TestMetla(t *testing.T) {
 				for i, v := range args {
 					log.Printf("%v: %v\n", i, v)
 				}
+			},
+			"m": func(m map[string]interface{}) {
+				log.Println("OKOKOKOKO", m)
+			},
+			"l": func(l []interface{}) {
+				log.Println("CDCDCDCCD", l)
+			},
+			"mp": map[string]interface{}{
+				"oko": []interface{}{
+					map[string]interface{}{
+						"pee": 100,
+					},
+				},
 			},
 		}
 

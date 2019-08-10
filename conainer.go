@@ -90,7 +90,6 @@ func (s *field) exec(exec *tplExec) *execError {
 			}
 			exec.stack.Push(owner.(getter).get(exec))
 		default:
-			fmt.Printf("%T\n", owner)
 			rOwner := reflect.ValueOf(owner)
 			switch rOwner.Kind() {
 			case reflect.Struct, reflect.Ptr:

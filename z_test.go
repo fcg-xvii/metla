@@ -129,7 +129,7 @@ type testFuncStruct struct {
 
 func TestMetla(t *testing.T) {
 	//log.Println("TEST_METLA")
-
+	var o []int
 	m := New(&MRequester{})
 	m.SetMaxExecDuration(time.Second * 5)
 	for {
@@ -158,6 +158,7 @@ func TestMetla(t *testing.T) {
 					},
 				},
 			},
+			"o": o,
 		}
 
 		log.Println(m.Content("z_content", &buf, params))

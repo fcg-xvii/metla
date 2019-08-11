@@ -1,3 +1,5 @@
 {%	
-	echoln "000", mp.oko[1].pee
+	range v -> o.its
+	  echoln v
+	endfor
 %}

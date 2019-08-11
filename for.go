@@ -175,7 +175,7 @@ func (s *cRange) setMinMax(obj interface{}, result *int, exec *tplExec) *execErr
 		}
 		rVal = reflect.ValueOf(exec.stack.Pop().(getter).get(exec))
 	}
-	if rVal.IsValid() {
+	if !rVal.IsValid() {
 		return s.execError("Invalid loop object value")
 	}
 	resType := reflect.ValueOf(*result).Type()

@@ -1,5 +1,5 @@
 {%	
-	range v -> o.its
-	  echoln v
+	range i in 0:2
+	  echoln i
 	endfor
 %}

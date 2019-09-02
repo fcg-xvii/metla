@@ -263,9 +263,12 @@ func coreTimestampToDate(exec *tplExec, pos position, arg ...interface{}) *execE
 	if len(arg) != 1 {
 		return pos.execError("coreLen - expected 1 argument")
 	}
-	tmps, check := arg[0].(int64)
-	if !check {
-		return pos.execError("Expected int64 value")
+	var tmps int64
+	switch arg[0].(type) {
+	case int64:
+		tmps = arg[0].(int64)
+	case float64:
+		tmps = int64(arg[0].(float64))
 	}
 	layout := "2006-01-02"
 	t := time.Unix(tmps, 0)

@@ -263,10 +263,6 @@ func coreTimestampToDate(exec *tplExec, pos position, arg ...interface{}) *execE
 	if len(arg) != 1 {
 		return pos.execError("coreLen - expected 1 argument")
 	}
-	/*tmps, err := strconv.ParseInt(fmt.Sprint(arg[0]), 10, 64)
-	if err != nil {
-		return pos.execError(err.Error())
-	}*/
 	tmps, check := arg[0].(int64)
 	if !check {
 		return pos.execError("Expected int64 value")

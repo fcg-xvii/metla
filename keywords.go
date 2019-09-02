@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type keywordConstructor func(*parser) *parseError
@@ -24,6 +25,9 @@ func init() {
 	}
 	keywords["join"] = func(p *parser) *parseError {
 		return initCoreFunction(coreJoin, p)
+	}
+	keywords["unixToDate"] = func(p *parser) *parseError {
+		return initCoreFunction(coreTimestampToDate, p)
 	}
 	//keywords["echo"] = keywordEcho
 	//keywords["echoln"] = keywordEcholn
@@ -252,5 +256,19 @@ func coreJoin(exec *tplExec, pos position, arg ...interface{}) *execError {
 	default:
 		return pos.execError("First argument slice or array expected")
 	}
+	return nil
+}
+
+func coreTimestampToDate(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 1 {
+		return pos.execError("coreLen - expected 1 argument")
+	}
+	tmps, err := strconv.ParseInt(fmt.Sprint(arg[0]), 10, 64)
+	if err != nil {
+		return pos.execError(err.Error())
+	}
+	layout := "2006-01-02"
+	t := time.Unix(tmps, 0)
+	exec.stack.Push(static{pos, t.Format(layout)})
 	return nil
 }

@@ -158,7 +158,8 @@ func TestMetla(t *testing.T) {
 					},
 				},
 			},
-			"o": o,
+			"o":  o,
+			"sl": []int64{1, 2, 3, 4, 5},
 		}
 
 		log.Println(m.Content("z_content", &buf, params))

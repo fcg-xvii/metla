@@ -29,6 +29,9 @@ func init() {
 	keywords["unixToDate"] = func(p *parser) *parseError {
 		return initCoreFunction(coreTimestampToDate, p)
 	}
+	keywords["search"] = func(p *parser) *parseError {
+		return initCoreFunction(coreSearch, p)
+	}
 	//keywords["echo"] = keywordEcho
 	//keywords["echoln"] = keywordEcholn
 	//keywords["print"] = keywordPrint
@@ -274,4 +277,26 @@ func coreTimestampToDate(exec *tplExec, pos position, arg ...interface{}) *execE
 	t := time.Unix(tmps, 0)
 	exec.stack.Push(static{pos, t.Format(layout)})
 	return nil
+}
+
+func coreSearch(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 2 {
+		return pos.execError("coreSliceSearch - expected 2 arguments")
+	}
+	rSl := reflect.ValueOf(arg[0])
+	switch rSl.Kind() {
+	case reflect.Slice, reflect.Array, reflect.String:
+		{
+			for i := 0; i < rSl.Len(); i++ {
+				if rSl.Index(i).Interface() == arg[1] {
+					exec.stack.Push(static{pos, i})
+					return nil
+				}
+			}
+			exec.stack.Push(static{pos, -1})
+			return nil
+		}
+	default:
+		return pos.execError("coreSliceSearch - first arg slice, array or string expected")
+	}
 }

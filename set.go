@@ -94,9 +94,9 @@ func (s set) exec(exec *tplExec) *execError {
 				return s.values[valsIndex].(coordinator).execError("Expected executer or getter token")
 			}
 			valsIndex++
-			if len(s.values) == valsIndex {
+			/*if len(s.values) == valsIndex {
 				return nil
-			}
+			}*/
 		}
 		if err := v.set(exec, exec.stack.Pop()); err != nil {
 			return err

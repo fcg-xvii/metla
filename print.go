@@ -103,7 +103,14 @@ func (s print) exec(exec *tplExec) *execError {
 		for exec.stack.Len() > 0 {
 			val := exec.stack.Pop().(getter).get(exec)
 			if val != nil {
-				if err := exec.Write([]byte(fmt.Sprint(val))); err != nil {
+				var cnt string
+				switch val.(type) {
+				case int, int8, int32, int64, float32, float64:
+					cnt = fmt.Sprintf("%f", val)
+				default:
+					cnt = fmt.Sprintf("%v", val)
+				}
+				if err := exec.Write([]byte(cnt)); err != nil {
 					return nil
 				}
 			}

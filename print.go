@@ -108,7 +108,7 @@ func (s print) exec(exec *tplExec) *execError {
 				case int, int8, int32, int64:
 					cnt = fmt.Sprintf("%d", val)
 				case float32, float64:
-					cnt = fmt.Sprintf("%f", val)
+					cnt = fmt.Sprintf("%g", val)
 				default:
 					cnt = fmt.Sprintf("%v", val)
 				}

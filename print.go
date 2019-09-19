@@ -105,7 +105,9 @@ func (s print) exec(exec *tplExec) *execError {
 			if val != nil {
 				var cnt string
 				switch val.(type) {
-				case int, int8, int32, int64, float32, float64:
+				case int, int8, int32, int64:
+					cnt = fmt.Sprintf("%d", val)
+				case float32, float64:
 					cnt = fmt.Sprintf("%f", val)
 				default:
 					cnt = fmt.Sprintf("%v", val)

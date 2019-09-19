@@ -109,7 +109,7 @@ func (s print) exec(exec *tplExec) *execError {
 					if val.(float64) == float64(int64(val.(float64))) {
 						cnt = fmt.Sprintf("%v", int64(val.(float64)))
 					} else {
-						cnt = fmt.Sprintf("%d", val)
+						cnt = fmt.Sprintf("%v", val)
 					}
 				default:
 					cnt = fmt.Sprintf("%v", val)

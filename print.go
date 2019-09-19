@@ -47,8 +47,19 @@ func (s echoln) exec(exec *tplExec) *execError {
 	for exec.stack.Len() > 0 {
 		val := exec.stack.Pop().(getter).get(exec)
 		if val != nil {
-			if err := exec.Write([]byte(fmt.Sprint(val))); err != nil {
-				return err
+			var cnt string
+			switch val.(type) {
+			case float64:
+				if val.(float64) == float64(int64(val.(float64))) {
+					cnt = fmt.Sprintf("%v", int64(val.(float64)))
+				} else {
+					cnt = fmt.Sprintf("%v", val)
+				}
+			default:
+				cnt = fmt.Sprintf("%v", val)
+			}
+			if err := exec.Write([]byte(cnt)); err != nil {
+				return nil
 			}
 		}
 	}

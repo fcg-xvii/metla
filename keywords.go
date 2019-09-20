@@ -29,6 +29,9 @@ func init() {
 	keywords["unixToDate"] = func(p *parser) *parseError {
 		return initCoreFunction(coreTimestampToDate, p)
 	}
+	keywords["unixToDateFormat"] = func(p *parser) *parseError {
+		return initCoreFunction(coreTimestampToDateFormat, p)
+	}
 	keywords["search"] = func(p *parser) *parseError {
 		return initCoreFunction(coreSearch, p)
 	}
@@ -274,6 +277,24 @@ func coreTimestampToDate(exec *tplExec, pos position, arg ...interface{}) *execE
 		tmps = int64(arg[0].(float64))
 	}
 	layout := "2006-01-02"
+	t := time.Unix(tmps, 0)
+	exec.stack.Push(static{pos, t.Format(layout)})
+	return nil
+}
+
+func coreTimestampToDateFormat(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 2 {
+		return pos.execError("coreLen - expected 1 argument")
+	}
+	var tmps int64
+	switch arg[0].(type) {
+	case int64:
+		tmps = arg[0].(int64)
+	case float64:
+		tmps = int64(arg[0].(float64))
+	}
+	//layout := "2006-01-02"
+	layout := fmt.Sprint(arg[1])
 	t := time.Unix(tmps, 0)
 	exec.stack.Push(static{pos, t.Format(layout)})
 	return nil

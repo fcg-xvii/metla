@@ -1,3 +1,5 @@
+github.com/cockroachdb/apd v1.1.0 h1:3LFP3629v+1aKXU5Q37mxmRxX/pIu1nijXydLShEq5I=
+github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=
 github.com/fcg-xvii/containers v0.0.0-20190514140812-7673a44ef8ef h1:vJvMl/nq3lNsSM4C4bZbEx/gulHE6fC9YR31N0kwIMU=
 github.com/fcg-xvii/containers v0.0.0-20190514140812-7673a44ef8ef/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
 github.com/fcg-xvii/containers v0.0.0-20190526143344-72b46da4895f h1:QUzwwAhRVgNFnYEttHoqtzlz+11vD9JM927ZeZtrdWE=
@@ -8,3 +10,10 @@ github.com/fcg-xvii/containers v0.0.0-20190610194336-f11a83d43995 h1:c2f/Ftt4UgM
 github.com/fcg-xvii/containers v0.0.0-20190610194336-f11a83d43995/go.mod h1:0UbAC30mILJAEgvlcoSPnOMkHbxHiz+rdku4QRE1MOI=
 github.com/fcg-xvii/lineman v0.0.0-20190314154620-36d40fa439af h1:cVXUMWElcdceWd31lyMaTZGFkFYzPDLl6t5j9Bt5z20=
 github.com/fcg-xvii/lineman v0.0.0-20190314154620-36d40fa439af/go.mod h1:VD8ux12NFmRoAUD4YxBSu6YTwpGIozjCJqIcDQ+WXGc=
+github.com/leekchan/accounting v0.0.0-20190702062627-a09595581342 h1:vzuUv5azbeM31DiEL386i5eQESs5FNN2gDfkPowzNkk=
+github.com/leekchan/accounting v0.0.0-20190702062627-a09595581342/go.mod h1:VfQkU+lPM8fjkGqiTn6R+4MX4A/pVwE1XGdDBqp0JFk=
+github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
+github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
+github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 h1:pntxY8Ary0t43dCZ5dqY4YTJCObLY1kIXl0uzMv+7DE=
+github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24/go.mod h1:M+9NzErvs504Cn4c5DxATwIqPbtswREoFCre64PpcG4=

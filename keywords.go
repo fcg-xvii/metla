@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/leekchan/accounting"
 )
 
 type keywordConstructor func(*parser) *parseError
@@ -34,6 +36,9 @@ func init() {
 	}
 	keywords["search"] = func(p *parser) *parseError {
 		return initCoreFunction(coreSearch, p)
+	}
+	keywords["money"] = func(p *parser) *parseError {
+		return initCoreFunction(coreMoney, p)
 	}
 	//keywords["echo"] = keywordEcho
 	//keywords["echoln"] = keywordEcholn
@@ -320,4 +325,20 @@ func coreSearch(exec *tplExec, pos position, arg ...interface{}) *execError {
 	default:
 		return pos.execError("coreSliceSearch - first arg slice, array or string expected")
 	}
+}
+
+func coreMoney(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 2 {
+		return pos.execError("Expected 2 arguments (float, string)")
+	}
+	/*var num float64
+	switch arg[0].(type) {
+	case int64:
+		num = float64(arg[0])
+	case float64:
+		num = float64(arg[0])
+	}*/
+	res := accounting.FormatNumber(arg[0], 3, fmt.Sprint(arg[1]), ".")
+	exec.stack.Push(static{pos, res[:len(res)-1]})
+	return nil
 }

@@ -2,6 +2,7 @@ package metla
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -39,6 +40,15 @@ func init() {
 	}
 	keywords["money"] = func(p *parser) *parseError {
 		return initCoreFunction(coreMoney, p)
+	}
+	keywords["floor"] = func(p *parser) *parseError {
+		return initCoreFunction(coreFloor, p)
+	}
+	keywords["ceil"] = func(p *parser) *parseError {
+		return initCoreFunction(coreCeil, p)
+	}
+	keywords["round"] = func(p *parser) *parseError {
+		return initCoreFunction(coreRound, p)
 	}
 	//keywords["echo"] = keywordEcho
 	//keywords["echoln"] = keywordEcholn
@@ -340,5 +350,56 @@ func coreMoney(exec *tplExec, pos position, arg ...interface{}) *execError {
 	}*/
 	res := accounting.FormatNumber(arg[0], 3, fmt.Sprint(arg[1]), ".")
 	exec.stack.Push(static{pos, res[:len(res)-1]})
+	return nil
+}
+
+func coreFloor(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 1 {
+		return pos.execError("Expected float argument")
+	}
+	var num float64
+	switch arg[0].(type) {
+	case int64:
+		num = float64(arg[0].(int64))
+	case float64:
+		num = arg[0].(float64)
+	default:
+		return pos.execError("Expected float argument")
+	}
+	exec.stack.Push(static{pos, math.Floor(num)})
+	return nil
+}
+
+func coreCeil(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 1 {
+		return pos.execError("Expected float argument")
+	}
+	var num float64
+	switch arg[0].(type) {
+	case int64:
+		num = float64(arg[0].(int64))
+	case float64:
+		num = arg[0].(float64)
+	default:
+		return pos.execError("Expected float argument")
+	}
+	exec.stack.Push(static{pos, math.Ceil(num)})
+	return nil
+}
+
+func coreRound(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) != 1 {
+		return pos.execError("Expected float argument")
+	}
+	var num float64
+	switch arg[0].(type) {
+	case int64:
+		num = float64(arg[0].(int64))
+	case float64:
+		num = arg[0].(float64)
+	default:
+		return pos.execError("Expected float argument")
+	}
+	exec.stack.Push(static{pos, math.Round(num)})
 	return nil
 }

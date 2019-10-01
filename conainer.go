@@ -303,6 +303,16 @@ func newArray(p *parser) *parseError {
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		switch p.Char() {
+		case '/':
+			if p.IsEndDocument() {
+				return p.initParseError(p.Line(), p.LinePos(), "Unexpected '/' symbol in object init")
+			}
+			if p.NextChar() == '/' {
+				p.ToChar('\n')
+				p.IncPos()
+			} else {
+				return p.initParseError(p.Line(), p.LinePos(), "Unexpected '/' symbol in object init")
+			}
 		case ']':
 			if valArrived {
 				flushArg()
@@ -373,6 +383,16 @@ func newObject(p *parser) *parseError {
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		switch ch := p.Char(); ch {
+		case '/':
+			if p.IsEndDocument() {
+				return p.initParseError(p.Line(), p.LinePos(), "Unexpected '/' symbol in object init")
+			}
+			if p.NextChar() == '/' {
+				p.ToChar('\n')
+				p.IncPos()
+			} else {
+				return p.initParseError(p.Line(), p.LinePos(), "Unexpected '/' symbol in object init")
+			}
 		case ':':
 			p.fieldFlag = false
 			if key != "" {

@@ -1,1 +1,9 @@
-{{ round(1000.55) }}
+{%
+	obj = {
+		// okokoko
+		one: 1
+		two: 2
+	}
+%}
+
+{{ obj }}

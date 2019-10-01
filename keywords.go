@@ -155,21 +155,12 @@ func getKeywordConstructor(name string) (result keywordConstructor, check bool) 
 }
 
 func initCoreFunction(method func(*tplExec, position, ...interface{}) *execError, p *parser) *parseError {
-	//r, stackLen := coreFunc{position: position{p.tplName, p.Line(), p.LinePos()}, method: method}, p.stack.Len()
 	r := coreFunc{position: position{p.tplName, p.Line(), p.LinePos()}, method: method}
 	p.PassSpaces()
 	if p.Char() != '(' {
 		return p.initParseError(p.Line(), p.LinePos(), "Expected '(' character")
 	}
 	p.IncPos()
-	/*if err := p.initCodeVal(); err != nil {
-		return err
-	}
-	r.arg = p.stack.Pop()
-	p.PassSpaces()
-	if p.Char() != ')' {
-		return p.initParseError(p.Line(), p.LinePos(), "Expected ')' character")
-	}*/
 	for !p.IsEndDocument() {
 		p.PassSpaces()
 		switch p.Char() {
@@ -344,13 +335,6 @@ func coreMoney(exec *tplExec, pos position, arg ...interface{}) *execError {
 	if len(arg) != 2 {
 		return pos.execError("Expected 2 arguments (float, string)")
 	}
-	/*var num float64
-	switch arg[0].(type) {
-	case int64:
-		num = float64(arg[0])
-	case float64:
-		num = float64(arg[0])
-	}*/
 	res := accounting.FormatNumber(arg[0], 3, fmt.Sprint(arg[1]), ".")
 	exec.stack.Push(static{pos, res[:len(res)-1]})
 	return nil

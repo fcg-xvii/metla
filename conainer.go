@@ -309,7 +309,6 @@ func newArray(p *parser) *parseError {
 			}
 			if p.NextChar() == '/' {
 				p.ToChar('\n')
-				p.IncPos()
 			} else {
 				return p.initParseError(p.Line(), p.LinePos(), "Unexpected '/' symbol in object init")
 			}
@@ -389,7 +388,7 @@ func newObject(p *parser) *parseError {
 			}
 			if p.NextChar() == '/' {
 				p.ToChar('\n')
-				p.IncPos()
+				//p.IncPos()
 			} else {
 				return p.initParseError(p.Line(), p.LinePos(), "Unexpected '/' symbol in object init")
 			}

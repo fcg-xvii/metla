@@ -50,6 +50,9 @@ func init() {
 	keywords["round"] = func(p *parser) *parseError {
 		return initCoreFunction(coreRound, p)
 	}
+	keywords["replace"] = func(p *parser) *parseError {
+		return initCoreFunction(coreReplace, p)
+	}
 	//keywords["echo"] = keywordEcho
 	//keywords["echoln"] = keywordEcholn
 	//keywords["print"] = keywordPrint
@@ -401,5 +404,14 @@ func coreRound(exec *tplExec, pos position, arg ...interface{}) *execError {
 		return pos.execError("Expected float argument")
 	}
 	exec.stack.Push(static{pos, math.Round(num)})
+	return nil
+}
+
+func coreReplace(exec *tplExec, pos position, arg ...interface{}) *execError {
+	if len(arg) < 3 {
+		return pos.execError("Expected minimum 3 string args")
+	}
+	src, sOld, sNew := fmt.Sprint(arg[0]), fmt.Sprint(arg[1]), fmt.Sprint(arg[2])
+	exec.stack.Push(static{pos, strings.Replace(src, sOld, sNew, -1)})
 	return nil
 }

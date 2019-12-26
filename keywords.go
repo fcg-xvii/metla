@@ -315,7 +315,7 @@ func coreSearch(exec *tplExec, pos position, arg ...interface{}) *execError {
 	}
 	rSl := reflect.ValueOf(arg[0])
 	switch rSl.Kind() {
-	case reflect.Slice, reflect.Array, reflect.String:
+	case reflect.Slice, reflect.Array:
 		{
 			for i := 0; i < rSl.Len(); i++ {
 				if rSl.Index(i).Interface() == arg[1] {
@@ -326,6 +326,9 @@ func coreSearch(exec *tplExec, pos position, arg ...interface{}) *execError {
 			exec.stack.Push(static{pos, -1})
 			return nil
 		}
+	case reflect.String:
+		exec.stack.Push(static{pos, strings.Index(fmt.Sprint(arg[0]), fmt.Sprint(arg[1]))})
+		return nil
 	default:
 		return pos.execError("coreSliceSearch - first arg slice, array or string expected")
 	}

@@ -1,9 +1,4 @@
 {%
-	obj = {
-		// vfdbvfdbhvbdhf
-		one: 1  // vnjfvndfbhvdfbhbh
-		two: 2
-	}
+	echoln "!!!!!!!!!!!!"
+	echoln search("One", "O")
 %}
-
-{{ obj }}

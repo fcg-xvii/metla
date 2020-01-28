@@ -2,198 +2,40 @@ package metla
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"testing"
-	"time"
-
-	_ "github.com/fcg-xvii/containers"
 )
 
-type TestSingle struct {
-	Single string
-	Number int
+var contentPath = "content"
+
+func filePath(name string) string {
+	return fmt.Sprintf("%v/%v", contentPath, name)
 }
 
-func (s *TestSingle) Nil() error       { return nil }
-func (s *TestSingle) One() interface{} { return 10 }
-
-func (s *TestSingle) Methodd(i, j int) (int, int) {
-	return i + 1, j + 1
-}
-
-func (s *TestSingle) Print(i interface{}) {
-	log.Println("TESTSINGLAPREING", i)
-}
-
-type Test struct {
-	Val *TestSingle
-}
-
-func (s *Test) ValStruct() *TestSingle {
-	return s.Val
-}
-
-func Inc(val int) int {
-	return val + 1
-}
-
-func min(left, right int) int {
-	if left < right {
-		return left
-	}
-	return right
-}
-
-/*func TestParser(t *testing.T) {
-	var null *Test
-
-	exVals := map[string]interface{}{
-		"inc":  Inc,
-		"min":  min,
-		"null": null,
-		"one":  1,
-		"list": []string{"one", "two", "three", "four", "five"},
-		"mmap": map[string]interface{}{"one": 1, "two": 2, "three": 3},
-		"rMap": map[string]int{"min": 1, "max": 100000},
-		"tVal": &Test{&TestSingle{"SINGLE___", 777}},
-		"map": map[string]interface{}{
-			"one": map[int]interface{}{
-				100: 200,
-			},
-		},
-	}
-
-	src, _ := ioutil.ReadFile("z_content")
-	//log.Println(string(src))
-	parser := initParser("z_content", src)
-	if err := parser.parseDocument(); err == nil {
-		log.Println(parser.execList)
-		var buf bytes.Buffer
-		ex := &tplExec{
-			"z_content",
-			parser.execList,
-			&buf,
-			parser.store.execStorage(exVals),
-			new(containers.Stack),
-			false,
-		}
-		ex.exec()
-		log.Println(ex.sto.values)
-		log.Println("======================")
-		buf.WriteTo(os.Stdout)
-		log.Println("======================")
-	} else {
-		log.Println(err)
-	}
-}*/
-
-var (
-	m      = New(&MRequester{})
-	buf    bytes.Buffer
-	params = map[string]interface{}{}
-)
-
-type MRequester struct {
-	path string
-}
-
-func (s *MRequester) RequestContent(path string) (content []byte, marker time.Time, exists bool, err error) {
-	if info, infoErr := os.Stat(path); infoErr == nil {
-		exists, marker = true, info.ModTime()
-		content, err = ioutil.ReadFile(path)
+func modified(name string) (res int64) {
+	if info, err := os.Stat(filePath(name)); err == nil {
+		res = info.ModTime().Unix()
 	}
 	return
 }
 
-func (s *MRequester) RequestUpdate(path string, modified time.Time) (content []byte, marker time.Time, exists bool, err error) {
-	if info, infoErr := os.Stat(path); infoErr == nil {
-		marker, exists = info.ModTime(), true
-		if !modified.Equal(info.ModTime()) {
-			content, err = ioutil.ReadFile(path)
-		}
-	} else {
-		marker = time.Now()
-	}
-	return
+func content(name string) ([]byte, error) {
+	return ioutil.ReadFile(filePath(name))
 }
 
-func testFunc(val string) (string, error) {
-	return "544554454", nil
-}
+func TestParser(t *testing.T) {
+	m := New(modified, content)
+	log.Println(m)
 
-type testFuncStruct struct {
-	F func(string) (string, error)
-}
+	var b bytes.Buffer
 
-func TestMetla(t *testing.T) {
-	//log.Println("TEST_METLA")
-	var o []int
-	m := New(&MRequester{})
-	m.SetMaxExecDuration(time.Second * 5)
-	for {
-		var buf bytes.Buffer
-
-		params := map[string]interface{}{
-			"one":      1,
-			"testFunc": testFunc,
-			"tf":       &testFuncStruct{testFunc},
-			"ts":       &TestSingle{},
-			"appendContent": func(args ...interface{}) {
-				for i, v := range args {
-					log.Printf("%v: %v\n", i, v)
-				}
-			},
-			"m": func(m map[string]interface{}) {
-				log.Println("OKOKOKOKO", m)
-			},
-			"l": func(l []interface{}) {
-				log.Println("CDCDCDCCD", l)
-			},
-			"mp": map[string]interface{}{
-				"oko": []interface{}{
-					map[string]interface{}{
-						"pee": 100,
-					},
-				},
-			},
-			"o":  o,
-			"sl": []int64{1, 2, 3, 4, 5},
-		}
-
-		log.Println(m.Content("z_content", &buf, params))
-		tst := buf.Bytes()
-		log.Println("TST", len(tst), cap(tst))
-		log.Println("======================")
-		buf.WriteTo(os.Stdout)
-		log.Println("======================")
-
-		//time.Sleep(time.Second * 5)
-		return
+	params := map[string]interface{}{
+		"title": "Heya ))",
 	}
-}
+	log.Println(m.Exec("z_source", params, &b))
 
-/*func TestRace(t *testing.T) {
-
-	for i := 0; i < 500; i++ {
-		go func() {
-			var buf bytes.Buffer
-
-			params := map[string]interface{}{
-				"one": 1,
-			}
-
-			m.Content("z_content", &buf, params)
-			log.Println("======================")
-			buf.WriteTo(os.Stdout)
-			log.Println("======================")
-		}()
-	}
-}*/
-
-func BenchmarkShow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		m.Content("z_content", &buf, params)
-	}
+	log.Println(b.String())
 }

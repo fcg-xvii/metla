@@ -1,4 +1,0 @@
-{%
-	echoln "!!!!!!!!!!!!"
-	echoln search("One", "O")
-%}

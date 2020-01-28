@@ -1,55 +1,40 @@
 package metla
 
 import (
+	"fmt"
 	"io"
-	"sync/atomic"
-	"time"
 
-	"github.com/fcg-xvii/containers"
+	"github.com/fcg-xvii/mjs"
 )
 
-var (
-	DEFAULT_MAX_EXEC_DURATION = time.Second * 30
-)
-
-type Requester interface {
-	RequestContent(path string) (content []byte, marker time.Time, exists bool, err error)
-	RequestUpdate(path string, modified time.Time) (content []byte, marker time.Time, exists bool, err error)
-}
-
-func New(requester Requester) *Metla {
-	return &Metla{int64(DEFAULT_MAX_EXEC_DURATION), requester, containers.NewCache(time.Hour, time.Hour, nil)}
+func New(modifiedCallback func(string) int64, contentCallback func(string) ([]byte, error)) *Metla {
+	m := &Metla{
+		contentCallback: contentCallback,
+	}
+	m.js = mjs.New(modifiedCallback, m.content)
+	return m
 }
 
 type Metla struct {
-	maxExecDuration int64
-	requester       Requester
-	store           *containers.Cache
+	js              *mjs.Mjs
+	contentCallback func(string) ([]byte, error)
 }
 
-func (s *Metla) SetMaxExecDuration(execTime time.Duration) {
-	atomic.StoreInt64(&s.maxExecDuration, int64(execTime))
-}
-
-func (s *Metla) template(path string) (tpl *template, check bool) {
-	var iface interface{}
-	if iface, check = s.store.GetOrCreate(path, nil, func(interface{}) (interface{}, interface{}, bool) {
-		if content, modified, exists, err := s.requester.RequestContent(path); exists && err == nil {
-			return path, newTemplate(s.requester, s, path, content, modified), true
-		}
-		return nil, nil, false
-	}); check {
-		tpl = iface.(*template)
+func (s *Metla) content(name string) (content []byte, err error) {
+	if content, err = s.contentCallback(name); err == nil {
+		content, err = parseBytes(content, name)
 	}
 	return
 }
 
-func (s *Metla) Content(path string, w io.Writer, params map[string]interface{}) (modified time.Time, exists bool, err error) {
-	if tpl, check := s.template(path); check {
-		exists, modified, _, err = tpl.content(w, params, nil)
-		if !exists {
-			s.store.Delete(path)
+func (s *Metla) Exec(name string, data map[string]interface{}, w io.Writer) (modified int64, err error) {
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+	data["flush"] = func(vals ...interface{}) {
+		for _, v := range vals {
+			w.Write([]byte(fmt.Sprint(v)))
 		}
 	}
-	return
+	return s.js.Exec(name, data)
 }

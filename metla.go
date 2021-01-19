@@ -3,6 +3,7 @@ package metla
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 
 	"github.com/fcg-xvii/mjs"
 )
@@ -22,7 +23,9 @@ type Metla struct {
 
 func (s *Metla) content(name string) (content []byte, err error) {
 	if content, err = s.contentCallback(name); err == nil {
-		content, err = parseBytes(content, name)
+		if filepath.Ext(name) != ".script" {
+			content, err = parseBytes(content, name)
+		}
 	}
 	return
 }

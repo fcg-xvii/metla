@@ -35,7 +35,7 @@ func TestParser(t *testing.T) {
 	params := map[string]interface{}{
 		"title": "Heya ))",
 	}
-	log.Println(m.Exec("z_source", params, &b))
+	log.Println(m.Exec("z_source.html", params, &b))
 
 	log.Println(b.String())
 }
